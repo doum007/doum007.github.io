@@ -49,19 +49,26 @@
   },
   {
     "title": "Elastic Certified Analyst",
-  "path": "il/",
+  "path": "ECA/",
   "description": "Full study guide to ECA",
   "tags": ["elastic", "certification","analyst"],
   "pages": [
-    { "title": "Overview",  "path": "ECA/elastic-analyst-topic1-searching-data.html" },
-    { "title": "Queries",   "path": "ECA/elastic-analyst-topic2-visualizing-data.html" },
-    { "title": "Practice",  "path": "ECA/elastic-analyst-topic3-analyzing-data.html" }
+    { "title": "Overview",  "path": "elastic-analyst-topic1-searching-data.html" },
+    { "title": "Queries",   "path": "elastic-analyst-topic2-visualizing-data.html" },
+    { "title": "Practice",  "path": "elastic-analyst-topic3-analyzing-data.html" }
   ]  },
   {
-    "title": "osquery threat hunt",
-    "path": "osquery-threat-hunt.html",
-    "description": "osquery threat hunt",
-    "tags": ["osquery", "threat-hunting", "security", "endpoint", "detection"]
+    "title": "Elastic Certified Engineer",
+  "path": "ECE/",
+  "description": "Full study guide to ECA",
+  "tags": ["elastic", "certification","analyst"],
+  "pages": [
+    { "title": "Overview",  "path": "ece-topic1-data-management.html" },
+    { "title": "Queries",   "path": "ece-topic2-searching-data.html" },
+    { "title": "Queries",   "path": "ece-topic3-search-applications.html" },
+    { "title": "Queries",   "path": "ece-topic4-data-processing.html" },
+    { "title": "Queries",   "path": "ece-topic5-cluster-management.html" }
+  ]
   },
   {
     "title": "osquery threat hunt",
