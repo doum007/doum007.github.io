@@ -1,0 +1,1992 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ECE Topic 4: Data Processing</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Fira+Code:wght@300;400;500;600&family=Barlow:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:      #080e09;
+    --bg2:     #0d1610;
+    --bg3:     #101c12;
+    --panel:   #141f16;
+    --panel2:  #182118;
+    --border:  #1e3020;
+    --border2: #254028;
+    --acid:    #3dff6e;
+    --acid2:   #2ecc58;
+    --acid3:   #20a040;
+    --teal:    #3ab89a;
+    --teal2:   #28906e;
+    --amber:   #f0a830;
+    --rust:    #d64020;
+    --dim:     #4a6850;
+    --muted:   #2a4030;
+    --text:    #b8d4b0;
+    --text2:   #8aaa80;
+    --mono:    'Fira Code', monospace;
+    --display: 'Rajdhani', sans-serif;
+    --body:    'Barlow', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--body);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Scanline texture */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.03) 2px,
+      rgba(0,0,0,0.03) 4px
+    );
+    pointer-events: none; z-index: 0;
+  }
+
+  /* Corner accent */
+  body::after {
+    content: '';
+    position: fixed; bottom: 0; right: 0;
+    width: 200px; height: 200px;
+    background: radial-gradient(ellipse at bottom right, rgba(61,255,110,0.04) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+
+  .container { max-width: 1080px; margin: 0 auto; padding: 0 40px; position: relative; z-index: 1; }
+
+  /* ── HEADER ── */
+  header { padding: 44px 0 0; margin-bottom: 52px; }
+
+  .header-band {
+    background: var(--panel); border: 1px solid var(--border2);
+    padding: 20px 28px; margin-bottom: 28px;
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;
+    position: relative; overflow: hidden;
+  }
+  .header-band::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+    background: linear-gradient(180deg, var(--acid), var(--teal));
+  }
+
+  .cert-id {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 3px;
+    color: var(--acid); text-transform: uppercase;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .cert-id::before { content: '▶'; font-size: 8px; }
+
+  .header-stats { display: flex; gap: 0; }
+  .hstat {
+    padding: 8px 18px; border: 1px solid var(--border2); border-right: none;
+    text-align: center; background: var(--bg2);
+  }
+  .hstat:last-child { border-right: 1px solid var(--border2); }
+  .hstat.hl { background: rgba(61,255,110,0.08); border-color: rgba(61,255,110,0.25); }
+  .hsv { font-family: var(--display); font-size: 1.8rem; font-weight: 700; color: var(--acid); line-height: 1; }
+  .hsl { font-family: var(--mono); font-size: 8px; color: var(--dim); letter-spacing: 2px; text-transform: uppercase; margin-top: 1px; }
+
+  h1 {
+    font-family: var(--display);
+    font-size: clamp(3.2rem, 8vw, 6.5rem);
+    font-weight: 700; line-height: 0.9;
+    letter-spacing: 3px; text-transform: uppercase;
+    color: var(--text);
+  }
+  h1 .acid-word { color: var(--acid); display: block; }
+  h1 .sub-line {
+    font-family: var(--mono); font-size: 11px; font-weight: 400;
+    color: var(--dim); letter-spacing: 3px; display: block;
+    margin-top: 14px; text-transform: uppercase;
+  }
+
+  /* Nav */
+  .topic-nav {
+    display: flex; margin-top: 22px;
+    border: 1px solid var(--border2); overflow: hidden;
+  }
+  .topic-nav a {
+    font-family: var(--mono); font-size: 10px; padding: 10px 16px;
+    text-decoration: none; color: var(--dim); letter-spacing: 1px; text-transform: uppercase;
+    border-right: 1px solid var(--border2); transition: all 0.12s; white-space: nowrap;
+  }
+  .topic-nav a:last-child { border-right: none; }
+  .topic-nav a.active { background: var(--acid); color: var(--bg); font-weight: 600; }
+  .topic-nav a:hover:not(.active) { background: var(--panel); color: var(--text2); }
+
+  /* Progress */
+  .prog-row { display: flex; align-items: center; gap: 14px; margin: 22px 0 56px; }
+  .prog-track { flex: 1; height: 2px; background: var(--border2); }
+  .prog-fill { height: 100%; background: linear-gradient(90deg, var(--acid3), var(--acid)); width: 0%; transition: width 0.4s; }
+  .prog-txt { font-family: var(--mono); font-size: 10px; color: var(--dim); letter-spacing: 1px; white-space: nowrap; }
+
+  /* ── SECTION ── */
+  .section { margin-bottom: 68px; animation: fadeUp 0.4s ease both; }
+  .section:nth-child(1){animation-delay:.05s}.section:nth-child(2){animation-delay:.1s}
+  .section:nth-child(3){animation-delay:.15s}.section:nth-child(4){animation-delay:.2s}
+  .section:nth-child(5){animation-delay:.25s}
+  @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+  .sec-hd { display: flex; align-items: center; gap: 0; margin-bottom: 24px; }
+  .sec-num {
+    font-family: var(--display); font-size: 1rem; font-weight: 700;
+    background: var(--acid); color: var(--bg);
+    padding: 5px 14px; letter-spacing: 2px; text-transform: uppercase;
+    margin-right: 0;
+  }
+  .sec-title-wrap {
+    background: var(--panel); border: 1px solid var(--border2); border-left: none;
+    padding: 5px 20px; flex: 1;
+  }
+  .sec-label { font-family: var(--mono); font-size: 8px; color: var(--dim); letter-spacing: 3px; text-transform: uppercase; }
+  .sec-title { font-family: var(--display); font-size: 1.2rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--text); }
+
+  /* Card */
+  .card {
+    background: var(--panel); border: 1px solid var(--border2);
+    padding: 24px 28px; position: relative;
+  }
+  .card p { font-size: 0.95rem; line-height: 1.9; color: var(--text2); margin-bottom: 14px; font-weight: 300; }
+  .card p:last-child { margin-bottom: 0; }
+  strong { color: var(--text); font-weight: 600; }
+  code { font-family: var(--mono); font-size: 11px; color: var(--acid2); background: rgba(61,255,110,0.07); padding: 1px 5px; border: 1px solid rgba(61,255,110,0.15); }
+
+  /* ── PIPELINE DIAGRAM ── */
+  .pipeline-visual {
+    margin: 22px 0; overflow-x: auto; padding-bottom: 4px;
+  }
+  .pipe-flow {
+    display: flex; align-items: stretch; gap: 0; min-width: 600px;
+  }
+  .pipe-stage {
+    flex: 1; background: var(--panel2); border: 1px solid var(--border2);
+    border-right: none; padding: 16px 14px; cursor: pointer;
+    transition: all 0.15s; position: relative; overflow: hidden;
+  }
+  .pipe-stage:last-child { border-right: 1px solid var(--border2); }
+  .pipe-stage:hover { background: var(--bg3); border-color: var(--acid3); }
+  .pipe-stage.active { background: var(--bg3); border-color: var(--acid); }
+  .pipe-stage::after {
+    content: '▶'; position: absolute; right: -12px; top: 50%;
+    transform: translateY(-50%); color: var(--border2); font-size: 1.2rem; z-index: 2;
+  }
+  .pipe-stage:last-child::after { display: none; }
+
+  .ps-type { font-family: var(--mono); font-size: 8px; color: var(--dim); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 6px; }
+  .ps-name { font-family: var(--display); font-size: 1rem; font-weight: 600; color: var(--acid2); letter-spacing: 1px; margin-bottom: 8px; }
+  .pipe-stage.active .ps-name { color: var(--acid); }
+  .ps-examples { font-family: var(--mono); font-size: 10px; color: var(--dim); line-height: 1.7; }
+
+  .pipe-detail {
+    background: var(--bg2); border: 1px solid var(--border2); border-top: none;
+    display: none; overflow: hidden;
+  }
+  .pipe-detail.show { display: block; animation: slideDown 0.2s ease; }
+  @keyframes slideDown { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
+
+  /* ── CODE EXPLORER ── */
+  .cex { background: var(--bg2); border: 1px solid var(--border2); overflow: hidden; margin: 22px 0; }
+  .cex-hd {
+    background: var(--panel); border-bottom: 1px solid var(--border2);
+    padding: 0; display: flex; align-items: stretch; flex-wrap: wrap;
+  }
+  .cex-label {
+    font-family: var(--mono); font-size: 10px; color: var(--acid); letter-spacing: 2px;
+    text-transform: uppercase; padding: 11px 18px; border-right: 1px solid var(--border2);
+    display: flex; align-items: center;
+  }
+  .cex-tabs { display: flex; flex-wrap: wrap; }
+  .cex-tab {
+    font-family: var(--mono); font-size: 10px; padding: 11px 18px;
+    background: none; border: none; border-right: 1px solid var(--border2); color: var(--dim);
+    cursor: pointer; transition: all 0.12s; letter-spacing: 1px; text-transform: uppercase;
+  }
+  .cex-tab.active { background: var(--acid); color: var(--bg); font-weight: 600; }
+  .cex-tab:hover:not(.active) { background: var(--panel2); color: var(--text2); }
+
+  .cex-panel { display: none; }
+  .cex-panel.active { display: block; }
+
+  .cex-body { display: grid; grid-template-columns: 1.15fr 0.85fr; }
+  @media(max-width:680px){ .cex-body { grid-template-columns: 1fr; } }
+
+  .cex-left { padding: 20px 22px; border-right: 1px solid var(--border2); background: rgba(0,0,0,0.2); }
+  .cex-right { padding: 20px 22px; }
+  .cex-sl { font-family: var(--mono); font-size: 9px; color: var(--dim); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+
+  pre.co {
+    font-family: var(--mono); font-size: 12px; line-height: 1.9;
+    white-space: pre-wrap; word-break: break-word; overflow-x: auto;
+  }
+  .cm { color: var(--acid); font-weight: 600; }
+  .cp { color: #88cc88; }
+  .ck { color: #66bbcc; }
+  .cs { color: #aaddaa; }
+  .cn { color: var(--amber); }
+  .cb { color: #cc88ff; }
+  .cmt{ color: var(--muted); font-style: italic; }
+
+  .ann-list { display: flex; flex-direction: column; gap: 8px; }
+  .ann {
+    font-family: var(--mono); font-size: 11px; line-height: 1.7;
+    padding: 9px 12px; border-left: 2px solid;
+  }
+  .ann.i { border-color: var(--teal);  background: rgba(58,184,154,0.06); color: var(--teal); }
+  .ann.i strong { color: #55ddbb; }
+  .ann.w { border-color: var(--amber); background: rgba(240,168,48,0.06); color: #aa8830; }
+  .ann.w strong { color: var(--amber); }
+  .ann.g { border-color: var(--acid2); background: rgba(61,255,110,0.05); color: var(--acid3); }
+  .ann.g strong { color: var(--acid2); }
+  .ann.r { border-color: var(--rust);  background: rgba(214,64,32,0.06); color: #cc7060; }
+  .ann.r strong { color: #ee8870; }
+
+  /* Processor cards */
+  .proc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; margin: 20px 0; }
+  .proc-card {
+    background: var(--panel); border: 1px solid var(--border2); padding: 14px 16px;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .proc-card:hover { border-color: var(--acid3); background: var(--panel2); transform: translateY(-2px); }
+  .proc-card.open { border-color: var(--acid); background: var(--panel2); }
+  .pc-type { font-family: var(--mono); font-size: 8px; color: var(--dim); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
+  .pc-name { font-family: var(--display); font-size: 1.1rem; font-weight: 600; color: var(--acid2); letter-spacing: 1px; margin-bottom: 5px; }
+  .proc-card.open .pc-name { color: var(--acid); }
+  .pc-desc { font-family: var(--body); font-size: 11.5px; color: var(--dim); line-height: 1.55; font-weight: 300; }
+
+  .proc-detail {
+    display: none; grid-column: 1 / -1; background: var(--bg2);
+    border: 1px solid var(--acid); padding: 18px 22px;
+    animation: fadeIn 0.18s ease;
+  }
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+  .proc-detail.show { display: block; }
+  .pd-label { font-family: var(--mono); font-size: 9px; color: var(--acid); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 12px; }
+
+  /* Inline note */
+  .inote {
+    border-left: 3px solid var(--acid3); background: rgba(61,255,110,0.04);
+    padding: 11px 16px; margin: 14px 0; font-family: var(--mono);
+    font-size: 11.5px; color: var(--dim); line-height: 1.75;
+  }
+  .inote.w { border-color: var(--amber); background: rgba(240,168,48,0.04); }
+  .inote.r { border-color: var(--rust);  background: rgba(214,64,32,0.04); color: #cc7060; }
+  .inote strong { color: var(--text); }
+  .inote.w strong { color: var(--amber); }
+  .inote.r strong { color: #ee8870; }
+
+  /* Drills */
+  .drills { border: 1px solid var(--border2); overflow: hidden; margin: 22px 0; }
+  .drill { border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.12s; }
+  .drill:last-child { border-bottom: none; }
+  .drill:hover { background: var(--panel2); }
+  .drill.open { background: var(--panel); }
+  .drill-hd { padding: 16px 20px; display: flex; align-items: flex-start; gap: 16px; }
+  .drill-n { font-family: var(--display); font-size: 2.5rem; font-weight: 700; color: var(--muted); min-width: 46px; line-height: 1; transition: color 0.15s; }
+  .drill:hover .drill-n, .drill.open .drill-n { color: var(--acid); }
+  .drill-content { flex: 1; }
+  .drill-cat { font-family: var(--mono); font-size: 9px; color: var(--dim); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
+  .drill-task { font-family: var(--body); font-size: 0.93rem; color: var(--text2); line-height: 1.55; font-weight: 300; }
+  .drill-body { display: none; border-top: 1px solid var(--border2); }
+  .drill-body.show { display: block; }
+  .drill-sol { padding: 18px 20px; }
+  .ds-lbl { font-family: var(--mono); font-size: 9px; color: var(--acid3); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 10px; }
+  pre.ds-code {
+    font-family: var(--mono); font-size: 11.5px; line-height: 1.85;
+    background: rgba(0,0,0,0.4); padding: 18px; overflow-x: auto; white-space: pre-wrap;
+    border-left: 3px solid var(--acid3); color: var(--text2);
+  }
+  .ds-note { font-family: var(--body); font-size: 12px; color: var(--dim); margin-top: 12px; line-height: 1.75; padding: 10px 14px; background: rgba(61,255,110,0.04); border: 1px solid var(--border2); font-weight: 300; }
+  .ds-note strong { color: var(--acid2); }
+
+  /* Quick ref table */
+  .ref-table { width: 100%; border-collapse: collapse; margin: 18px 0; font-family: var(--mono); font-size: 11px; border: 1px solid var(--border2); }
+  .ref-table th { background: var(--panel); color: var(--acid); padding: 10px 14px; text-align: left; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; border-bottom: 1px solid var(--border2); }
+  .ref-table td { padding: 9px 14px; border-bottom: 1px solid var(--border); color: var(--text2); vertical-align: top; }
+  .ref-table tr:last-child td { border-bottom: none; }
+  .ref-table tr:hover td { background: var(--panel2); }
+  .ref-table td:first-child { color: var(--acid2); font-weight: 600; }
+
+  /* ── QUIZ ── */
+  .quiz {
+    background: var(--panel); border: 1px solid var(--border2);
+    padding: 48px 38px; margin-top: 68px; position: relative;
+  }
+  .quiz::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--acid), var(--teal), var(--acid3));
+  }
+  .quiz-title { font-family: var(--display); font-size: 3.5rem; font-weight: 700; letter-spacing: 3px; color: var(--acid); text-transform: uppercase; margin-bottom: 4px; }
+  .quiz-sub { font-family: var(--mono); font-size: 11px; color: var(--dim); margin-bottom: 44px; letter-spacing: 1px; }
+
+  .qb { margin-bottom: 42px; padding-bottom: 42px; border-bottom: 1px solid var(--border); }
+  .qb:last-of-type { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .q-n { font-family: var(--mono); font-size: 9px; color: var(--dim); letter-spacing: 3px; margin-bottom: 8px; }
+  .q-t { font-family: var(--body); font-weight: 300; font-size: 0.98rem; color: var(--text); line-height: 1.65; margin-bottom: 6px; }
+  pre.q-code {
+    font-family: var(--mono); font-size: 11px; line-height: 1.8;
+    background: rgba(0,0,0,0.4); border-left: 2px solid var(--acid3);
+    padding: 13px 16px; color: var(--text2); margin: 12px 0; overflow-x: auto; white-space: pre;
+  }
+
+  .opts { display: flex; flex-direction: column; gap: 6px; margin-top: 14px; }
+  .opt {
+    display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px;
+    border: 1px solid var(--border2); background: var(--bg2); color: var(--dim);
+    font-family: var(--mono); font-size: 11.5px; cursor: pointer; transition: all 0.12s;
+    text-align: left; width: 100%; line-height: 1.55;
+  }
+  .opt:hover:not(.locked) { border-color: var(--acid3); color: var(--text2); background: rgba(61,255,110,0.04); }
+  .opt .ol { color: var(--acid2); font-weight: 700; min-width: 18px; }
+  .opt.correct { border-color: var(--acid2); background: rgba(61,255,110,0.08); color: var(--acid2); }
+  .opt.wrong   { border-color: var(--rust);  background: rgba(214,64,32,0.08);  color: #cc7060; }
+  .opt.revealc { border-color: var(--acid3); background: rgba(61,255,110,0.03); color: var(--acid3); opacity: 0.5; }
+
+  .exp {
+    display: none; margin-top: 10px; padding: 12px 16px;
+    background: rgba(0,0,0,0.3); border: 1px solid var(--border2);
+    font-family: var(--mono); font-size: 11px; color: var(--dim); line-height: 1.85;
+  }
+  .exp.show { display: block; }
+  .exp strong { color: var(--acid2); }
+
+  .scorebox { display: none; margin-top: 34px; padding: 34px; background: var(--bg2); border: 1px solid var(--border2); text-align: center; }
+  .scorebox.show { display: block; }
+  .score-big { font-family: var(--display); font-size: 6rem; font-weight: 700; color: var(--acid); letter-spacing: 4px; line-height: 1; }
+  .score-sub { font-family: var(--mono); font-size: 10px; color: var(--dim); letter-spacing: 3px; margin: 8px 0 12px; text-transform: uppercase; }
+  .score-msg { font-family: var(--body); font-weight: 300; font-size: 0.95rem; color: var(--text2); }
+  .btn-reset {
+    margin-top: 20px; background: none; border: 1px solid var(--acid3); color: var(--acid3);
+    font-family: var(--mono); font-size: 11px; padding: 11px 30px; cursor: pointer;
+    letter-spacing: 3px; text-transform: uppercase; transition: all 0.15s;
+  }
+  .btn-reset:hover { background: var(--acid3); color: var(--bg); }
+
+  footer {
+    margin-top: 80px; padding: 30px 0; border-top: 1px solid var(--border2);
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;
+  }
+  .ft { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 2px; }
+  .nav-btns { display: flex; gap: 0; }
+  .nbtn {
+    font-family: var(--mono); font-size: 11px; padding: 11px 20px;
+    border: 1px solid var(--border2); border-right: none; color: var(--dim);
+    background: none; cursor: pointer; letter-spacing: 1px; text-decoration: none;
+    transition: all 0.12s; text-transform: uppercase;
+  }
+  .nbtn:last-child { border-right: 1px solid var(--border2); }
+  .nbtn:hover { background: var(--panel); color: var(--text2); }
+  .nbtn.primary { background: var(--acid3); color: var(--bg); border-color: var(--acid3); font-weight: 600; }
+  .nbtn.primary:hover { background: var(--acid2); border-color: var(--acid2); }
+
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg2); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- ── HEADER ── -->
+<header>
+  <div class="header-band">
+    <div class="cert-id">Elastic Certified Engineer · ECE · Domain IV</div>
+    <div class="header-stats">
+      <div class="hstat"><div class="hsv">4</div><div class="hsl">of 5</div></div>
+      <div class="hstat"><div class="hsv">5</div><div class="hsl">Subtopics</div></div>
+      <div class="hstat hl"><div class="hsv">7</div><div class="hsl">Quiz Qs</div></div>
+    </div>
+  </div>
+  <h1>DATA<span class="acid-word">PROCESSING</span>
+    <span class="sub-line">// ingest pipelines · processors · painless · simulate · reindex · update_by_query</span>
+  </h1>
+  <nav class="topic-nav">
+    <a href="#">01 · Data Mgmt</a>
+    <a href="#">02 · Searching</a>
+    <a href="#">03 · Search Apps</a>
+    <a href="#" class="active">04 · Data Processing</a>
+    <a href="#">05 · Cluster Mgmt</a>
+  </nav>
+</header>
+
+<div class="prog-row">
+  <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+  <span class="prog-txt" id="progTxt">0 / 7 answered</span>
+</div>
+
+<!-- ══════════════════════
+     04.01 INGEST PIPELINES
+══════════════════════════ -->
+<div class="section">
+  <div class="sec-hd">
+    <div class="sec-num">04.01</div>
+    <div class="sec-title-wrap">
+      <div class="sec-label">04.01</div>
+      <div class="sec-title">Ingest Pipelines — Architecture</div>
+    </div>
+  </div>
+  <div class="card">
+    <p>An <strong>ingest pipeline</strong> is a series of processors that transform documents before they are indexed. Pipelines run on <strong>ingest nodes</strong> (any node with the ingest role) and are defined at the cluster level. Every document passes through each processor in order — if any processor fails, the document is rejected unless <code>ignore_failure: true</code> is set.</p>
+
+    <!-- Pipeline flow diagram -->
+    <div class="pipeline-visual">
+      <div class="pipe-flow" id="pipeFlow">
+        <div class="pipe-stage" onclick="showPipe(this,'pipe-source')">
+          <div class="ps-type">Input</div>
+          <div class="ps-name">Document Source</div>
+          <div class="ps-examples">Bulk API<br>Index API<br>Beats / Agent<br>Logstash</div>
+        </div>
+        <div class="pipe-stage" onclick="showPipe(this,'pipe-char')">
+          <div class="ps-type">Stage 1</div>
+          <div class="ps-name">Field Extraction</div>
+          <div class="ps-examples">grok<br>dissect<br>kv<br>csv</div>
+        </div>
+        <div class="pipe-stage" onclick="showPipe(this,'pipe-enrich')">
+          <div class="ps-type">Stage 2</div>
+          <div class="ps-name">Enrichment</div>
+          <div class="ps-examples">geoip<br>set<br>convert<br>date</div>
+        </div>
+        <div class="pipe-stage" onclick="showPipe(this,'pipe-clean')">
+          <div class="ps-type">Stage 3</div>
+          <div class="ps-name">Cleanup</div>
+          <div class="ps-examples">remove<br>rename<br>trim<br>lowercase</div>
+        </div>
+        <div class="pipe-stage" onclick="showPipe(this,'pipe-script')">
+          <div class="ps-type">Stage 4</div>
+          <div class="ps-name">Scripting</div>
+          <div class="ps-examples">script<br>fingerprint<br>community_id<br>redact</div>
+        </div>
+        <div class="pipe-stage" onclick="showPipe(this,'pipe-index')">
+          <div class="ps-type">Output</div>
+          <div class="ps-name">Index Storage</div>
+          <div class="ps-examples">Primary shards<br>Replica sync<br>ILM applied<br>Template matched</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pipeline detail panel -->
+    <div class="pipe-detail" id="pipe-source">
+      <div class="cex-body">
+        <div class="cex-left" style="padding:16px 20px">
+          <div class="cex-sl">// Pipeline attachment methods</div>
+          <pre class="co"><span class="cmt">// Method 1: Per-request pipeline parameter</span>
+<span class="cm">POST</span> <span class="cp">/logs/_doc?pipeline=my_pipeline</span>
+{ <span class="ck">"message"</span>: <span class="cs">"192.168.1.1 GET /index.html 200"</span> }
+
+<span class="cmt">// Method 2: Bulk API with pipeline param</span>
+<span class="cm">POST</span> <span class="cp">/_bulk?pipeline=my_pipeline</span>
+{ "index": { "_index": "logs" } }
+{ "message": "..." }
+
+<span class="cmt">// Method 3: Default pipeline on index</span>
+<span class="cm">PUT</span> <span class="cp">/logs/_settings</span>
+{
+  <span class="ck">"index.default_pipeline"</span>: <span class="cs">"my_pipeline"</span>
+}
+
+<span class="cmt">// Method 4: Final pipeline (always runs last)</span>
+<span class="cm">PUT</span> <span class="cp">/logs/_settings</span>
+{
+  <span class="ck">"index.final_pipeline"</span>: <span class="cs">"cleanup_pipeline"</span>
+}</pre>
+        </div>
+        <div class="cex-right" style="padding:16px 20px">
+          <div class="ann-list">
+            <div class="ann i"><strong>default_pipeline:</strong> Runs on every document indexed to this index unless the request specifies a different pipeline or pipeline: _none.</div>
+            <div class="ann i"><strong>final_pipeline:</strong> Always runs AFTER the default or requested pipeline. Cannot be overridden by the indexing request. Use for mandatory post-processing.</div>
+            <div class="ann w"><strong>pipeline: "_none":</strong> Explicitly disables pipeline processing for a request, bypassing even the default_pipeline.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pipe-detail" id="pipe-char">
+      <div class="cex-body">
+        <div class="cex-left" style="padding:16px 20px">
+          <div class="cex-sl">// grok vs dissect</div>
+          <pre class="co"><span class="cmt">// grok — regex-based named capture (slower, flexible)</span>
+{
+  <span class="ck">"grok"</span>: {
+    <span class="ck">"field"</span>:   <span class="cs">"message"</span>,
+    <span class="ck">"patterns"</span>: [
+      <span class="cs">"%{IP:client_ip} %{WORD:method} %{URIPATH:path} %{NUMBER:status:int}"</span>
+    ]
+  }
+}
+<span class="cmt">// Built-in patterns: IP, NUMBER, WORD, URIPATH, etc.</span>
+<span class="cmt">// :type conversion: %{NUMBER:status:int}</span>
+
+<span class="cmt">// dissect — delimiter-based (faster, structured logs)</span>
+{
+  <span class="ck">"dissect"</span>: {
+    <span class="ck">"field"</span>:   <span class="cs">"message"</span>,
+    <span class="ck">"pattern"</span>: <span class="cs">"%{client_ip} %{method} %{path} %{status}"</span>
+  }
+}
+<span class="cmt">// Uses literal delimiters — much faster than grok</span>
+<span class="cmt">// Use dissect when log format is predictable/fixed</span></pre>
+        </div>
+        <div class="cex-right" style="padding:16px 20px">
+          <div class="ann-list">
+            <div class="ann i"><strong>grok:</strong> Based on Oniguruma regex with named patterns. Supports built-in pattern library (%{IP}, %{NUMBER}, etc). Slower but handles variable-format logs.</div>
+            <div class="ann g"><strong>dissect:</strong> Token-based, delimiter-driven. 10–100x faster than grok for structured logs. No regex overhead. If log format is consistent, always prefer dissect.</div>
+            <div class="ann w"><strong>EXAM TIP:</strong> "Parse nginx access log" → grok with %{COMBINEDAPACHELOG}. "Parse structured CSV-like log" → dissect. Know both syntaxes.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pipe-detail" id="pipe-enrich">
+      <div class="cex-body">
+        <div class="cex-left" style="padding:16px 20px">
+          <div class="cex-sl">// Enrichment processors</div>
+          <pre class="co"><span class="cmt">// geoip — add geo coords from IP address</span>
+{
+  <span class="ck">"geoip"</span>: {
+    <span class="ck">"field"</span>:        <span class="cs">"client_ip"</span>,
+    <span class="ck">"target_field"</span>: <span class="cs">"source.geo"</span>,
+    <span class="ck">"properties"</span>:  [<span class="cs">"country_name"</span>, <span class="cs">"city_name"</span>, <span class="cs">"location"</span>]
+  }
+}
+<span class="cmt">// location = geo_point type, enables Kibana Maps</span>
+
+<span class="cmt">// set — add or overwrite a field</span>
+{
+  <span class="ck">"set"</span>: {
+    <span class="ck">"field"</span>: <span class="cs">"event.dataset"</span>,
+    <span class="ck">"value"</span>: <span class="cs">"nginx.access"</span>
+  }
+}
+
+<span class="cmt">// convert — change field type</span>
+{
+  <span class="ck">"convert"</span>: {
+    <span class="ck">"field"</span>:       <span class="cs">"status_code"</span>,
+    <span class="ck">"type"</span>:        <span class="cs">"integer"</span>,
+    <span class="ck">"ignore_missing"</span>: <span class="cb">true</span>
+  }
+}
+
+<span class="cmt">// date — parse date string to @timestamp</span>
+{
+  <span class="ck">"date"</span>: {
+    <span class="ck">"field"</span>:   <span class="cs">"timestamp_str"</span>,
+    <span class="ck">"formats"</span>: [<span class="cs">"dd/MMM/yyyy:HH:mm:ss Z"</span>, <span class="cs">"ISO8601"</span>],
+    <span class="ck">"target_field"</span>: <span class="cs">"@timestamp"</span>
+  }
+}</pre>
+        </div>
+        <div class="cex-right" style="padding:16px 20px">
+          <div class="ann-list">
+            <div class="ann i"><strong>geoip:</strong> Enriches documents with geographic data from an IP address. Requires the GeoIP database (bundled with Elasticsearch). location produces a geo_point field used by Kibana Maps.</div>
+            <div class="ann i"><strong>set + copy_from:</strong> Can copy value from another field: "copy_from": "source_field". Or set a literal value: "value": "constant".</div>
+            <div class="ann w"><strong>convert type options:</strong> integer, long, float, double, string, boolean, ip, auto. Use auto to detect type. Use ignore_missing: true to skip if field absent.</div>
+            <div class="ann i"><strong>date formats array:</strong> Tried in order — first match wins. Supports Joda-Time patterns and named formats (ISO8601, UNIX, UNIX_MS, TAI64N).</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pipe-detail" id="pipe-clean">
+      <div class="cex-body">
+        <div class="cex-left" style="padding:16px 20px">
+          <div class="cex-sl">// Cleanup processors</div>
+          <pre class="co"><span class="cmt">// remove — delete fields</span>
+{
+  <span class="ck">"remove"</span>: {
+    <span class="ck">"field"</span>:          [<span class="cs">"message"</span>, <span class="cs">"temp_field"</span>],
+    <span class="ck">"ignore_missing"</span>: <span class="cb">true</span>
+  }
+}
+
+<span class="cmt">// rename — rename a field</span>
+{
+  <span class="ck">"rename"</span>: {
+    <span class="ck">"field"</span>:        <span class="cs">"host"</span>,
+    <span class="ck">"target_field"</span>: <span class="cs">"host.name"</span>
+  }
+}
+
+<span class="cmt">// trim — strip leading/trailing whitespace</span>
+{ <span class="ck">"trim"</span>: { <span class="ck">"field"</span>: <span class="cs">"username"</span> } }
+
+<span class="cmt">// lowercase / uppercase</span>
+{ <span class="ck">"lowercase"</span>: { <span class="ck">"field"</span>: <span class="cs">"method"</span> } }
+
+<span class="cmt">// drop — discard the entire document</span>
+{
+  <span class="ck">"drop"</span>: {
+    <span class="ck">"if"</span>: <span class="cs">"ctx.status == 200"</span>
+  }
+}
+<span class="cmt">// The document is not indexed at all</span>
+<span class="cmt">// Use for filtering out noise (health checks, etc.)</span></pre>
+        </div>
+        <div class="cex-right" style="padding:16px 20px">
+          <div class="ann-list">
+            <div class="ann i"><strong>remove with array:</strong> Can remove multiple fields in one processor using an array. Use ignore_missing: true if field may not exist.</div>
+            <div class="ann g"><strong>drop processor:</strong> Most powerful filtering tool. Use the "if" condition to drop entire documents that match criteria (e.g., health check requests). Dropped docs are never indexed.</div>
+            <div class="ann w"><strong>Conditional "if":</strong> All processors support an "if" field containing a Painless expression. The processor only runs if the condition evaluates to true. ctx = the document. Example: "if": "ctx.status != null &amp;&amp; ctx.status == 200"</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pipe-detail" id="pipe-script">
+      <div class="cex-body">
+        <div class="cex-left" style="padding:16px 20px">
+          <div class="cex-sl">// Script processor + on_failure</div>
+          <pre class="co"><span class="cmt">// script processor — arbitrary Painless logic</span>
+{
+  <span class="ck">"script"</span>: {
+    <span class="ck">"source"</span>: <span class="cs">"""
+      if (ctx.containsKey('bytes_in') &amp;&amp;
+          ctx.containsKey('bytes_out')) {
+        ctx.total_bytes = ctx.bytes_in +
+                          ctx.bytes_out;
+      }
+    """</span>
+  }
+}
+
+<span class="cmt">// on_failure — handle processor errors</span>
+{
+  <span class="ck">"grok"</span>: {
+    <span class="ck">"field"</span>: <span class="cs">"message"</span>,
+    <span class="ck">"patterns"</span>: [<span class="cs">"%{IP:client_ip} ..."</span>]
+  },
+  <span class="ck">"on_failure"</span>: [
+    {
+      <span class="ck">"set"</span>: {
+        <span class="ck">"field"</span>: <span class="cs">"parse_error"</span>,
+        <span class="ck">"value"</span>: <span class="cs">"{{_ingest.on_failure_message}}"</span>
+      }
+    }
+  ]
+}
+
+<span class="cmt">// Pipeline-level on_failure (fallback for all)</span>
+<span class="cm">PUT</span> <span class="cp">/_ingest/pipeline/my_pipeline</span>
+{
+  <span class="ck">"processors"</span>: [ ... ],
+  <span class="ck">"on_failure"</span>: [
+    { <span class="ck">"set"</span>: { <span class="ck">"field"</span>: <span class="cs">"_index"</span>, <span class="ck">"value"</span>: <span class="cs">"failed-docs"</span> }}
+  ]
+}</pre>
+        </div>
+        <div class="cex-right" style="padding:16px 20px">
+          <div class="ann-list">
+            <div class="ann i"><strong>script processor:</strong> Full Painless access to the document via ctx. Can create new fields, modify existing ones, perform calculations. Slower than native processors — use only when no native processor fits.</div>
+            <div class="ann i"><strong>on_failure (processor-level):</strong> Runs if that specific processor fails. Execution continues with the next processor after on_failure completes.</div>
+            <div class="ann g"><strong>on_failure (pipeline-level):</strong> Catches unhandled failures from any processor. Common pattern: route failed docs to a different index by setting ctx._index.</div>
+            <div class="ann w"><strong>{{_ingest.on_failure_message}}:</strong> Template variable inside on_failure that contains the error message from the failed processor. Use with a set processor to capture the error reason in the document.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pipe-detail" id="pipe-index">
+      <div class="cex-body">
+        <div class="cex-left" style="padding:16px 20px">
+          <div class="cex-sl">// Creating & managing pipelines</div>
+          <pre class="co"><span class="cmt">// Create pipeline</span>
+<span class="cm">PUT</span> <span class="cp">/_ingest/pipeline/nginx_pipeline</span>
+{
+  <span class="ck">"description"</span>: <span class="cs">"Parse nginx access logs"</span>,
+  <span class="ck">"processors"</span>: [
+    { <span class="ck">"grok"</span>: { ... } },
+    { <span class="ck">"geoip"</span>: { ... } },
+    { <span class="ck">"date"</span>: { ... } },
+    { <span class="ck">"remove"</span>: { <span class="ck">"field"</span>: <span class="cs">"message"</span> } }
+  ]
+}
+
+<span class="cmt">// Simulate pipeline (test without indexing)</span>
+<span class="cm">POST</span> <span class="cp">/_ingest/pipeline/nginx_pipeline/_simulate</span>
+{
+  <span class="ck">"docs"</span>: [
+    {
+      <span class="ck">"_source"</span>: {
+        <span class="ck">"message"</span>: <span class="cs">"127.0.0.1 GET /index.html 200"</span>
+      }
+    }
+  ]
+}
+
+<span class="cmt">// Get pipeline definition</span>
+<span class="cm">GET</span> <span class="cp">/_ingest/pipeline/nginx_pipeline</span>
+
+<span class="cmt">// Delete pipeline</span>
+<span class="cm">DELETE</span> <span class="cp">/_ingest/pipeline/nginx_pipeline</span></pre>
+        </div>
+        <div class="cex-right" style="padding:16px 20px">
+          <div class="ann-list">
+            <div class="ann g"><strong>_simulate API:</strong> Tests pipeline against sample documents WITHOUT actually indexing them. Returns the transformed document after each processor. Essential for development and debugging.</div>
+            <div class="ann i"><strong>verbose mode:</strong> POST /_ingest/pipeline/name/_simulate?verbose=true — shows the document state after EACH processor in the chain, making it easy to isolate which step transforms what.</div>
+            <div class="ann w"><strong>EXAM WORKFLOW:</strong> Always simulate first. Create pipeline → simulate with test docs → verify output → apply to index via default_pipeline setting or per-request ?pipeline= param.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════
+     04.02 PROCESSOR GALLERY
+══════════════════════════ -->
+<div class="section">
+  <div class="sec-hd">
+    <div class="sec-num">04.02</div>
+    <div class="sec-title-wrap">
+      <div class="sec-label">04.02</div>
+      <div class="sec-title">Processor Quick Reference</div>
+    </div>
+  </div>
+  <div class="card">
+    <p>Click any processor to see syntax and exam notes. These are the most frequently tested processors on the ECE exam.</p>
+
+    <div class="proc-grid" id="procGrid">
+      <div class="proc-card" onclick="openProc(this,'pr-grok')">
+        <div class="pc-type">Parse</div><div class="pc-name">grok</div>
+        <div class="pc-desc">Extract fields from unstructured text using regex patterns</div>
+      </div>
+      <div class="proc-card" onclick="openProc(this,'pr-dissect')">
+        <div class="pc-type">Parse</div><div class="pc-name">dissect</div>
+        <div class="pc-desc">Extract fields from structured text using delimiter tokens</div>
+      </div>
+      <div class="proc-card" onclick="openProc(this,'pr-geoip')">
+        <div class="pc-type">Enrich</div><div class="pc-name">geoip</div>
+        <div class="pc-desc">Add geographic location data from an IP address field</div>
+      </div>
+      <div class="proc-card" onclick="openProc(this,'pr-date')">
+        <div class="pc-type">Transform</div><div class="pc-name">date</div>
+        <div class="pc-desc">Parse a date string into a date field (usually @timestamp)</div>
+      </div>
+      <div class="proc-card" onclick="openProc(this,'pr-set')">
+        <div class="pc-type">Field Ops</div><div class="pc-name">set</div>
+        <div class="pc-desc">Add a new field or overwrite an existing field's value</div>
+      </div>
+      <div class="proc-card" onclick="openProc(this,'pr-remove')">
+        <div class="pc-type">Field Ops</div><div class="pc-name">remove</div>
+        <div class="pc-desc">Delete one or more fields from the document</div>
+      </div>
+      <div class="proc-card" onclick="openProc(this,'pr-convert')">
+        <div class="pc-type">Transform</div><div class="pc-name">convert</div>
+        <div class="pc-desc">Change a field's data type (string→int, string→boolean, etc.)</div>
+      </div>
+      <div class="proc-card" onclick="openProc(this,'pr-script')">
+        <div class="pc-type">Scripting</div><div class="pc-name">script</div>
+        <div class="pc-desc">Execute arbitrary Painless code to modify the document</div>
+      </div>
+      <div class="proc-card" onclick="openProc(this,'pr-rename')">
+        <div class="pc-type">Field Ops</div><div class="pc-name">rename</div>
+        <div class="pc-desc">Rename a field (effectively move it to a new name)</div>
+      </div>
+      <div class="proc-card" onclick="openProc(this,'pr-append')">
+        <div class="pc-type">Field Ops</div><div class="pc-name">append</div>
+        <div class="pc-desc">Add a value to an array field, or create array if not present</div>
+      </div>
+      <div class="proc-card" onclick="openProc(this,'pr-foreach')">
+        <div class="pc-type">Control</div><div class="pc-name">foreach</div>
+        <div class="pc-desc">Apply a processor to each element of an array field</div>
+      </div>
+      <div class="proc-card" onclick="openProc(this,'pr-pipeline')">
+        <div class="pc-type">Control</div><div class="pc-name">pipeline</div>
+        <div class="pc-desc">Execute another named pipeline as a processor step</div>
+      </div>
+    </div>
+
+    <div class="proc-detail" id="proc-detail">
+      <div class="pd-label" id="pd-label">// —</div>
+      <div id="pd-body" style="display:grid;grid-template-columns:1fr 1fr;gap:0">
+        <div id="pd-code" style="border-right:1px solid var(--border2);padding-right:20px"></div>
+        <div id="pd-notes" style="padding-left:20px"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════
+     04.03 PAINLESS SCRIPTING
+══════════════════════════ -->
+<div class="section">
+  <div class="sec-hd">
+    <div class="sec-num">04.03</div>
+    <div class="sec-title-wrap">
+      <div class="sec-label">04.03</div>
+      <div class="sec-title">Painless Scripting</div>
+    </div>
+  </div>
+  <div class="card">
+    <p>Painless is Elasticsearch's purpose-built scripting language — designed to be fast, safe, and easy to use. It appears in <strong>ingest pipelines</strong>, <strong>runtime fields</strong>, <strong>update requests</strong>, <strong>aggregation scripts</strong>, and <strong>search queries</strong>. The ECE exam tests Painless in multiple contexts.</p>
+
+    <div class="cex">
+      <div class="cex-hd">
+        <span class="cex-label">// Painless Contexts</span>
+        <div class="cex-tabs">
+          <button class="cex-tab active" onclick="switchTab('pain','p1',this)">Ingest (ctx)</button>
+          <button class="cex-tab" onclick="switchTab('pain','p2',this)">Update (_source)</button>
+          <button class="cex-tab" onclick="switchTab('pain','p3',this)">Runtime Field</button>
+          <button class="cex-tab" onclick="switchTab('pain','p4',this)">Common Patterns</button>
+        </div>
+      </div>
+
+      <div id="pain-p1" class="cex-panel active">
+        <div class="cex-body">
+          <div class="cex-left">
+            <div class="cex-sl">// Ingest pipeline script processor</div>
+            <pre class="co"><span class="cmt">// ctx = the document being processed</span>
+<span class="cmt">// ctx.field_name to read/write fields</span>
+
+<span class="cmt">// Example: compute derived field</span>
+{
+  <span class="ck">"script"</span>: {
+    <span class="ck">"source"</span>: <span class="cs">"""
+      // Calculate request rate (reqs per sec)
+      if (ctx.duration_ms != null &amp;&amp; ctx.duration_ms &gt; 0) {
+        ctx.req_rate = ctx.request_count /
+                       (ctx.duration_ms / 1000.0);
+      }
+    """</span>
+  }
+}
+
+<span class="cmt">// Set @timestamp from epoch milliseconds</span>
+{
+  <span class="ck">"script"</span>: {
+    <span class="ck">"source"</span>: <span class="cs">"""
+      if (ctx.epoch_ms != null) {
+        ctx['@timestamp'] = Instant
+          .ofEpochMilli(ctx.epoch_ms)
+          .toString();
+      }
+    """</span>
+  }
+}
+
+<span class="cmt">// Tag document based on field value</span>
+{
+  <span class="ck">"script"</span>: {
+    <span class="ck">"source"</span>: <span class="cs">"""
+      if (ctx.status >= 500) {
+        ctx.event_category = 'error';
+      } else if (ctx.status >= 400) {
+        ctx.event_category = 'warning';
+      } else {
+        ctx.event_category = 'info';
+      }
+    """</span>
+  }
+}</pre>
+          </div>
+          <div class="cex-right">
+            <div class="cex-sl">// Notes</div>
+            <div class="ann-list">
+              <div class="ann i"><strong>ctx object:</strong> In ingest context, ctx is a map representing the document. Read with ctx.field or ctx['field'] (use bracket notation for fields with dots or special chars).</div>
+              <div class="ann i"><strong>Null checks:</strong> Always check for null before operating on optional fields. ctx.containsKey('field') or ctx.field != null.</div>
+              <div class="ann w"><strong>No return:</strong> Ingest scripts modify ctx directly — they don't return values. Contrast with runtime field scripts which use emit().</div>
+              <div class="ann i"><strong>Available classes:</strong> Math, String methods, Collections, Instant (for dates), ZonedDateTime, and all Java primitives.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="pain-p2" class="cex-panel">
+        <div class="cex-body">
+          <div class="cex-left">
+            <div class="cex-sl">// Update API with Painless</div>
+            <pre class="co"><span class="cmt">// ctx._source = document in update context</span>
+
+<span class="cmt">// Increment a counter</span>
+<span class="cm">POST</span> <span class="cp">/products/_update/123</span>
+{
+  <span class="ck">"script"</span>: {
+    <span class="ck">"source"</span>: <span class="cs">"ctx._source.view_count++"</span>
+  }
+}
+
+<span class="cmt">// Update with params (safer than inline values)</span>
+<span class="cm">POST</span> <span class="cp">/products/_update/123</span>
+{
+  <span class="ck">"script"</span>: {
+    <span class="ck">"source"</span>: <span class="cs">"ctx._source.price = params.new_price"</span>,
+    <span class="ck">"params"</span>: { <span class="ck">"new_price"</span>: <span class="cn">29.99</span> }
+  }
+}
+
+<span class="cmt">// Append to an array field</span>
+<span class="cm">POST</span> <span class="cp">/posts/_update/456</span>
+{
+  <span class="ck">"script"</span>: {
+    <span class="ck">"source"</span>: <span class="cs">"""
+      if (!ctx._source.tags.contains(params.tag)) {
+        ctx._source.tags.add(params.tag);
+      }
+    """</span>,
+    <span class="ck">"params"</span>: { <span class="ck">"tag"</span>: <span class="cs">"featured"</span> }
+  }
+}
+
+<span class="cmt">// Conditional: delete document if expired</span>
+<span class="cm">POST</span> <span class="cp">/sessions/_update/789</span>
+{
+  <span class="ck">"script"</span>: {
+    <span class="ck">"source"</span>: <span class="cs">"""
+      if (ctx._source.expires_at &lt; params.now) {
+        ctx.op = 'delete';
+      }
+    """</span>,
+    <span class="ck">"params"</span>: { <span class="ck">"now"</span>: <span class="cn">1709856000000</span> }
+  }
+}</pre>
+          </div>
+          <div class="cex-right">
+            <div class="cex-sl">// Notes</div>
+            <div class="ann-list">
+              <div class="ann i"><strong>ctx._source:</strong> In update context, the document is accessed via ctx._source (not ctx directly). Read and write fields through this object.</div>
+              <div class="ann g"><strong>params:</strong> Always pass dynamic values through params rather than string-interpolating them into the script source. Params are compiled once — much faster for repeated execution.</div>
+              <div class="ann i"><strong>ctx.op:</strong> Control the operation outcome. Set to "delete" to delete the doc, "noop" to make no change (no write). Default is "update".</div>
+              <div class="ann w"><strong>UPSERT:</strong> Use upsert alongside script to handle the case where the document doesn't exist: { "script": {...}, "upsert": { "view_count": 1 } }</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="pain-p3" class="cex-panel">
+        <div class="cex-body">
+          <div class="cex-left">
+            <div class="cex-sl">// Runtime field scripts (emit)</div>
+            <pre class="co"><span class="cmt">// Runtime fields use doc[] and emit()</span>
+<span class="cmt">// doc['field'].value = typed field access</span>
+
+<span class="cmt">// Extract hour from timestamp</span>
+<span class="ck">"runtime_mappings"</span>: {
+  <span class="ck">"hour_of_day"</span>: {
+    <span class="ck">"type"</span>: <span class="cs">"long"</span>,
+    <span class="ck">"script"</span>: {
+      <span class="ck">"source"</span>: <span class="cs">"""
+        emit(doc['@timestamp'].value.getHour());
+      """</span>
+    }
+  }
+}
+
+<span class="cmt">// Parse IP octets for subnet matching</span>
+<span class="ck">"first_octet"</span>: {
+  <span class="ck">"type"</span>: <span class="cs">"keyword"</span>,
+  <span class="ck">"script"</span>: {
+    <span class="ck">"source"</span>: <span class="cs">"""
+      String ip = doc['source.ip'].value;
+      int dot = ip.indexOf('.');
+      if (dot &gt; 0) {
+        emit(ip.substring(0, dot));
+      }
+    """</span>
+  }
+}
+
+<span class="cmt">// Combine two fields</span>
+<span class="ck">"full_name"</span>: {
+  <span class="ck">"type"</span>: <span class="cs">"keyword"</span>,
+  <span class="ck">"script"</span>: <span class="cs">"""
+    emit(doc['first_name'].value + ' ' +
+         doc['last_name'].value);
+  """</span>
+}</pre>
+          </div>
+          <div class="cex-right">
+            <div class="cex-sl">// Notes</div>
+            <div class="ann-list">
+              <div class="ann i"><strong>emit():</strong> The ONLY way to output a value in runtime field scripts. Must call emit() — not return(). Can call emit() multiple times for multi-value fields.</div>
+              <div class="ann i"><strong>doc['field'].value:</strong> Typed access to indexed field values. Returns the correct Java type (ZonedDateTime for dates, double for numeric, String for keyword). Always prefer doc[] over params._source in runtime fields.</div>
+              <div class="ann w"><strong>doc[] vs params._source:</strong> doc[] reads from the field data cache (fast). params._source reads the raw stored _source (slower, requires _source stored). Runtime fields should use doc[].</div>
+              <div class="ann r"><strong>Missing fields:</strong> Check doc['field'].size() != 0 before accessing doc['field'].value to avoid NullPointerException when field is absent.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="pain-p4" class="cex-panel">
+        <div class="cex-body">
+          <div class="cex-left">
+            <div class="cex-sl">// Common Painless patterns</div>
+            <pre class="co"><span class="cmt">// Null-safe field access</span>
+if (ctx.containsKey('field') &amp;&amp; ctx.field != null) {
+  <span class="cmt">// safe to use ctx.field</span>
+}
+
+<span class="cmt">// String operations</span>
+ctx.lower_msg = ctx.message.toLowerCase();
+ctx.trimmed   = ctx.message.trim();
+boolean found = ctx.message.contains("ERROR");
+int pos       = ctx.message.indexOf(":");
+String sub    = ctx.message.substring(0, pos);
+
+<span class="cmt">// Numeric conversions</span>
+ctx.as_int    = Integer.parseInt(ctx.str_val);
+ctx.as_double = Double.parseDouble(ctx.str_val);
+ctx.formatted = String.format("%.2f", ctx.price);
+
+<span class="cmt">// List/Array operations</span>
+ctx.tags.add("new_tag");
+ctx.tags.remove("old_tag");
+boolean has = ctx.tags.contains("featured");
+int size = ctx.tags.size();
+
+<span class="cmt">// Date operations (ingest ctx)</span>
+ZonedDateTime dt = ZonedDateTime.parse(ctx.date_str);
+ctx.year  = dt.getYear();
+ctx.month = dt.getMonthValue();
+ctx.day   = dt.getDayOfMonth();
+
+<span class="cmt">// Math operations</span>
+ctx.ratio = (double) ctx.a / ctx.b;
+ctx.abs   = Math.abs(ctx.diff);
+ctx.round = Math.round(ctx.decimal);</pre>
+          </div>
+          <div class="cex-right">
+            <div class="cex-sl">// Notes</div>
+            <div class="ann-list">
+              <div class="ann i"><strong>Type safety:</strong> Painless is statically typed but uses dynamic dispatch. Integer division truncates — always cast to double for fractional results: (double) a / b.</div>
+              <div class="ann g"><strong>String methods:</strong> All Java String methods available. Most commonly tested: toLowerCase(), toUpperCase(), trim(), contains(), indexOf(), substring(), split(), replace().</div>
+              <div class="ann i"><strong>Collections:</strong> ctx fields are accessed as Java Maps (for objects) and Lists (for arrays). Standard Java collection methods work: .add(), .remove(), .contains(), .size(), .get(index).</div>
+              <div class="ann w"><strong>PERFORMANCE:</strong> Avoid expensive operations in scripts run on every document. Prefer native processors (geoip, date, convert) over script when a native alternative exists.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════
+     04.04 REINDEX & UPDATE BY QUERY
+══════════════════════════ -->
+<div class="section">
+  <div class="sec-hd">
+    <div class="sec-num">04.04</div>
+    <div class="sec-title-wrap">
+      <div class="sec-label">04.04</div>
+      <div class="sec-title">Reindex API & Update By Query</div>
+    </div>
+  </div>
+  <div class="card">
+    <p>The <strong>_reindex</strong> and <strong>_update_by_query</strong> APIs are bulk operations that process existing documents. Both use a query to select documents and can apply scripted transformations during processing.</p>
+
+    <div class="cex">
+      <div class="cex-hd">
+        <span class="cex-label">// Bulk Document Operations</span>
+        <div class="cex-tabs">
+          <button class="cex-tab active" onclick="switchTab('rbq','r1',this)">Reindex</button>
+          <button class="cex-tab" onclick="switchTab('rbq','r2',this)">Reindex + Script</button>
+          <button class="cex-tab" onclick="switchTab('rbq','r3',this)">Update By Query</button>
+          <button class="cex-tab" onclick="switchTab('rbq','r4',this)">Delete By Query</button>
+        </div>
+      </div>
+
+      <div id="rbq-r1" class="cex-panel active">
+        <div class="cex-body">
+          <div class="cex-left">
+            <div class="cex-sl">// Reindex patterns</div>
+            <pre class="co"><span class="cmt">// Basic reindex — copy all docs</span>
+<span class="cm">POST</span> <span class="cp">/_reindex</span>
+{
+  <span class="ck">"source"</span>: { <span class="ck">"index"</span>: <span class="cs">"old_index"</span> },
+  <span class="ck">"dest"</span>:   { <span class="ck">"index"</span>: <span class="cs">"new_index"</span> }
+}
+
+<span class="cmt">// Reindex with query filter</span>
+<span class="cm">POST</span> <span class="cp">/_reindex</span>
+{
+  <span class="ck">"source"</span>: {
+    <span class="ck">"index"</span>: <span class="cs">"logs-2023"</span>,
+    <span class="ck">"query"</span>: {
+      <span class="ck">"range"</span>: {
+        <span class="ck">"@timestamp"</span>: {
+          <span class="ck">"gte"</span>: <span class="cs">"2023-06-01"</span>
+        }
+      }
+    },
+    <span class="ck">"_source"</span>: [<span class="cs">"@timestamp"</span>, <span class="cs">"message"</span>, <span class="cs">"level"</span>]
+  },
+  <span class="ck">"dest"</span>: {
+    <span class="ck">"index"</span>:    <span class="cs">"logs-2023-h2"</span>,
+    <span class="ck">"op_type"</span>: <span class="cs">"create"</span>
+  }
+}
+<span class="cmt">// op_type: "create" — fails if doc ID already exists</span>
+<span class="cmt">// (prevents accidental overwrites)</span>
+
+<span class="cmt">// Async reindex (for large datasets)</span>
+<span class="cm">POST</span> <span class="cp">/_reindex?wait_for_completion=false</span>
+{
+  <span class="ck">"source"</span>: { <span class="ck">"index"</span>: <span class="cs">"large_index"</span> },
+  <span class="ck">"dest"</span>:   { <span class="ck">"index"</span>: <span class="cs">"new_large_index"</span> }
+}
+<span class="cmt">// Returns task ID — monitor with:</span>
+<span class="cm">GET</span> <span class="cp">/_tasks/&lt;task_id&gt;</span></pre>
+          </div>
+          <div class="cex-right">
+            <div class="cex-sl">// Notes</div>
+            <div class="ann-list">
+              <div class="ann r"><strong>Does NOT copy settings/mappings.</strong> Create destination index with correct mappings BEFORE reindexing. _reindex only copies documents.</div>
+              <div class="ann i"><strong>_source field list:</strong> Specify which source fields to include. Useful for migrating only a subset of fields to the new index.</div>
+              <div class="ann i"><strong>op_type: "create":</strong> Only indexes documents that don't already exist in the destination (by _id). Prevents overwriting existing data during incremental reindex.</div>
+              <div class="ann g"><strong>Throttling:</strong> Add "conflicts": "proceed" to skip version conflicts. Add "requests_per_second": 500 to throttle and avoid overwhelming the cluster during large reindexes.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="rbq-r2" class="cex-panel">
+        <div class="cex-body">
+          <div class="cex-left">
+            <div class="cex-sl">// Reindex with script transformation</div>
+            <pre class="co"><span class="cmt">// Reindex and transform fields during copy</span>
+<span class="cm">POST</span> <span class="cp">/_reindex</span>
+{
+  <span class="ck">"source"</span>: { <span class="ck">"index"</span>: <span class="cs">"old_products"</span> },
+  <span class="ck">"dest"</span>:   { <span class="ck">"index"</span>: <span class="cs">"new_products"</span> },
+  <span class="ck">"script"</span>: {
+    <span class="ck">"source"</span>: <span class="cs">"""
+      // Rename field
+      ctx._source.product_name = ctx._source.name;
+      ctx._source.remove('name');
+
+      // Convert price from cents to dollars
+      ctx._source.price_usd =
+        ctx._source.price_cents / 100.0;
+
+      // Add a new classification field
+      if (ctx._source.price_usd > 1000) {
+        ctx._source.tier = 'premium';
+      } else {
+        ctx._source.tier = 'standard';
+      }
+
+      // Route to a different index based on value
+      if (ctx._source.region == 'eu') {
+        ctx._index = 'products-eu';
+      }
+    """</span>
+  }
+}
+
+<span class="cmt">// ctx._index — change destination index per document</span>
+<span class="cmt">// ctx._id    — change document ID</span>
+<span class="cmt">// ctx.op = 'noop' — skip this document</span></pre>
+          </div>
+          <div class="cex-right">
+            <div class="cex-sl">// Notes</div>
+            <div class="ann-list">
+              <div class="ann i"><strong>Script in reindex:</strong> ctx._source gives access to the document. Can rename fields, transform values, add new fields, or remove fields during the copy.</div>
+              <div class="ann g"><strong>Dynamic routing:</strong> Set ctx._index in the script to route different documents to different destination indices in a single reindex operation.</div>
+              <div class="ann g"><strong>Skip documents:</strong> Set ctx.op = 'noop' in the script to skip a document (it won't be indexed in the destination). Useful for conditional migration.</div>
+              <div class="ann w"><strong>EXAM PATTERN:</strong> "Reindex products and rename the 'name' field to 'product_name'" → _reindex with script that copies and removes. Remember to create destination mapping first.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="rbq-r3" class="cex-panel">
+        <div class="cex-body">
+          <div class="cex-left">
+            <div class="cex-sl">// Update by query</div>
+            <pre class="co"><span class="cmt">// Update matching documents in-place</span>
+<span class="cm">POST</span> <span class="cp">/products/_update_by_query</span>
+{
+  <span class="ck">"script"</span>: {
+    <span class="ck">"source"</span>: <span class="cs">"""
+      ctx._source.price =
+        ctx._source.price * params.multiplier;
+    """</span>,
+    <span class="ck">"params"</span>: { <span class="ck">"multiplier"</span>: <span class="cn">1.1</span> }
+  },
+  <span class="ck">"query"</span>: {
+    <span class="ck">"term"</span>: { <span class="ck">"currency"</span>: <span class="cs">"usd"</span> }
+  }
+}
+
+<span class="cmt">// Add a new field to all matching docs</span>
+<span class="cm">POST</span> <span class="cp">/users/_update_by_query</span>
+{
+  <span class="ck">"script"</span>: {
+    <span class="ck">"source"</span>: <span class="cs">"ctx._source.migrated = true"</span>
+  },
+  <span class="ck">"query"</span>: {
+    <span class="ck">"bool"</span>: {
+      <span class="ck">"must_not"</span>: [{ <span class="ck">"exists"</span>: { <span class="ck">"field"</span>: <span class="cs">"migrated"</span> }}]
+    }
+  }
+}
+
+<span class="cmt">// Re-apply ingest pipeline to existing documents</span>
+<span class="cm">POST</span> <span class="cp">/logs/_update_by_query?pipeline=new_pipeline</span>
+{
+  <span class="ck">"query"</span>: { <span class="ck">"match_all"</span>: {} }
+}
+<span class="cmt">// Runs the pipeline on every matched document</span>
+<span class="cmt">// Updates each doc with the pipeline output</span></pre>
+          </div>
+          <div class="cex-right">
+            <div class="cex-sl">// Notes</div>
+            <div class="ann-list">
+              <div class="ann i"><strong>In-place update:</strong> _update_by_query modifies documents in the same index. Unlike _reindex, documents stay in place — it's a bulk partial update.</div>
+              <div class="ann g"><strong>?pipeline= parameter:</strong> Re-run an ingest pipeline against existing documents. Extremely useful when you create a new pipeline and need to enrich historical data already in the index.</div>
+              <div class="ann w"><strong>Version conflicts:</strong> By default, version conflicts abort the operation. Add "conflicts": "proceed" to skip conflicting documents and continue. Check the response for "version_conflicts" count.</div>
+              <div class="ann i"><strong>EXAM COMPARISON:</strong><br>_update_by_query = update docs IN-PLACE<br>_reindex = copy docs to NEW index<br>Use ubq for: adding new fields, applying pipelines<br>Use reindex for: mapping changes, new shard count</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="rbq-r4" class="cex-panel">
+        <div class="cex-body">
+          <div class="cex-left">
+            <div class="cex-sl">// Delete by query</div>
+            <pre class="co"><span class="cmt">// Delete all matching documents</span>
+<span class="cm">POST</span> <span class="cp">/logs/_delete_by_query</span>
+{
+  <span class="ck">"query"</span>: {
+    <span class="ck">"range"</span>: {
+      <span class="ck">"@timestamp"</span>: {
+        <span class="ck">"lt"</span>: <span class="cs">"now-90d"</span>
+      }
+    }
+  }
+}
+
+<span class="cmt">// Delete with conflict handling</span>
+<span class="cm">POST</span> <span class="cp">/sessions/_delete_by_query</span>
+{
+  <span class="ck">"conflicts"</span>: <span class="cs">"proceed"</span>,
+  <span class="ck">"query"</span>: {
+    <span class="ck">"term"</span>: { <span class="ck">"expired"</span>: <span class="cb">true</span> }
+  }
+}
+
+<span class="cmt">// Async delete for large deletions</span>
+<span class="cm">POST</span> <span class="cp">/large_index/_delete_by_query?wait_for_completion=false</span>
+{
+  <span class="ck">"query"</span>: { <span class="ck">"match_all"</span>: {} }
+}
+<span class="cmt">// Monitor: GET /_tasks/&lt;task_id&gt;</span>
+<span class="cmt">// Cancel: POST /_tasks/&lt;task_id&gt;/_cancel</span></pre>
+          </div>
+          <div class="cex-right">
+            <div class="cex-sl">// Notes</div>
+            <div class="ann-list">
+              <div class="ann i"><strong>_delete_by_query:</strong> Removes all documents matching the query from the index. Does NOT remove the index itself. The index and its settings/mappings remain intact.</div>
+              <div class="ann w"><strong>Segments not reclaimed immediately:</strong> Deleted docs are marked as deleted but disk space isn't freed until the next segment merge. Run _forcemerge after large deletions to reclaim disk space.</div>
+              <div class="ann i"><strong>Alternative to delete_by_query for all docs:</strong> DELETE /index (drops entire index) is faster if you want to remove everything. Use delete_by_query only when deleting a subset.</div>
+              <div class="ann g"><strong>EXAM NOTE:</strong> All three bulk operations (_reindex, _update_by_query, _delete_by_query) support: wait_for_completion=false for async, conflicts: "proceed" to skip version conflicts, and requests_per_second for throttling.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════
+     04.05 DRILLS
+══════════════════════════ -->
+<div class="section">
+  <div class="sec-hd">
+    <div class="sec-num">04.05</div>
+    <div class="sec-title-wrap">
+      <div class="sec-label">04.05</div>
+      <div class="sec-title">Exam Scenario Drills</div>
+    </div>
+  </div>
+  <div class="card">
+    <p>Performance-based tasks in ECE format. Build the full API solution before checking the answer.</p>
+
+    <div class="drills">
+
+      <div class="drill" onclick="toggleDrill(this,'d1')">
+        <div class="drill-hd">
+          <div class="drill-n">01</div>
+          <div class="drill-content">
+            <div class="drill-cat">Ingest Pipeline · grok · geoip · date · simulate</div>
+            <div class="drill-task">Create an ingest pipeline named <code>nginx_logs</code> that: (1) parses nginx access log format from <code>message</code> field using grok, extracting <code>client_ip</code>, <code>http_method</code>, <code>request_path</code>, <code>status_code</code> (as integer), and <code>response_bytes</code> (as integer), (2) enriches <code>client_ip</code> into <code>source.geo</code>, (3) parses the nginx timestamp into <code>@timestamp</code>, (4) removes the original <code>message</code> field. Include error handling and simulate with a test document.</div>
+          </div>
+        </div>
+        <div class="drill-body" id="d1">
+          <div class="drill-sol">
+            <div class="ds-lbl">// Solution</div>
+            <pre class="ds-code"><span class="cmt">// Step 1: Create the pipeline</span>
+<span class="cm">PUT</span> <span class="cp">/_ingest/pipeline/nginx_logs</span>
+{
+  <span class="ck">"description"</span>: <span class="cs">"Parse nginx access logs"</span>,
+  <span class="ck">"processors"</span>: [
+    {
+      <span class="ck">"grok"</span>: {
+        <span class="ck">"field"</span>: <span class="cs">"message"</span>,
+        <span class="ck">"patterns"</span>: [
+          <span class="cs">"%{IP:client_ip} - - \\[%{HTTPDATE:raw_timestamp}\\] \"%{WORD:http_method} %{URIPATH:request_path}[^\"]*\" %{NUMBER:status_code} %{NUMBER:response_bytes}"</span>
+        ],
+        <span class="ck">"on_failure"</span>: [
+          {
+            <span class="ck">"set"</span>: {
+              <span class="ck">"field"</span>: <span class="cs">"parse_failure"</span>,
+              <span class="ck">"value"</span>: <span class="cs">"{{_ingest.on_failure_message}}"</span>
+            }
+          }
+        ]
+      }
+    },
+    {
+      <span class="ck">"convert"</span>: {
+        <span class="ck">"field"</span>:          <span class="cs">"status_code"</span>,
+        <span class="ck">"type"</span>:           <span class="cs">"integer"</span>,
+        <span class="ck">"ignore_missing"</span>: <span class="cb">true</span>
+      }
+    },
+    {
+      <span class="ck">"convert"</span>: {
+        <span class="ck">"field"</span>:          <span class="cs">"response_bytes"</span>,
+        <span class="ck">"type"</span>:           <span class="cs">"integer"</span>,
+        <span class="ck">"ignore_missing"</span>: <span class="cb">true</span>
+      }
+    },
+    {
+      <span class="ck">"date"</span>: {
+        <span class="ck">"field"</span>:          <span class="cs">"raw_timestamp"</span>,
+        <span class="ck">"formats"</span>:        [<span class="cs">"dd/MMM/yyyy:HH:mm:ss Z"</span>],
+        <span class="ck">"target_field"</span>:   <span class="cs">"@timestamp"</span>,
+        <span class="ck">"ignore_missing"</span>: <span class="cb">true</span>
+      }
+    },
+    {
+      <span class="ck">"geoip"</span>: {
+        <span class="ck">"field"</span>:          <span class="cs">"client_ip"</span>,
+        <span class="ck">"target_field"</span>:   <span class="cs">"source.geo"</span>,
+        <span class="ck">"ignore_missing"</span>: <span class="cb">true</span>
+      }
+    },
+    {
+      <span class="ck">"remove"</span>: {
+        <span class="ck">"field"</span>:          [<span class="cs">"message"</span>, <span class="cs">"raw_timestamp"</span>],
+        <span class="ck">"ignore_missing"</span>: <span class="cb">true</span>
+      }
+    }
+  ]
+}
+
+<span class="cmt">// Step 2: Simulate with a test document</span>
+<span class="cm">POST</span> <span class="cp">/_ingest/pipeline/nginx_logs/_simulate</span>
+{
+  <span class="ck">"docs"</span>: [
+    {
+      <span class="ck">"_source"</span>: {
+        <span class="ck">"message"</span>: <span class="cs">"203.0.113.42 - - [15/Mar/2024:10:30:00 +0000] \"GET /api/users HTTP/1.1\" 200 1542"</span>
+      }
+    }
+  ]
+}
+
+<span class="cmt">// Step 3: Verify verbose output shows each processor's effect</span>
+<span class="cm">POST</span> <span class="cp">/_ingest/pipeline/nginx_logs/_simulate?verbose=true</span>
+{ <span class="ck">"docs"</span>: [{ <span class="ck">"_source"</span>: { <span class="ck">"message"</span>: <span class="cs">"203.0.113.42 - - [15/Mar/2024:10:30:00 +0000] \"GET /api/users HTTP/1.1\" 200 1542"</span> }}]}
+
+<span class="cmt">// Step 4: Apply to index</span>
+<span class="cm">PUT</span> <span class="cp">/nginx-access/_settings</span>
+{
+  <span class="ck">"index.default_pipeline"</span>: <span class="cs">"nginx_logs"</span>
+}</pre>
+            <div class="ds-note"><strong>Key decisions:</strong> grok uses standard HTTPDATE for the timestamp, extracted as raw_timestamp, then processed by the date processor into @timestamp. convert runs AFTER grok to change string values to integers. geoip targets source.geo for ECS compliance. remove cleans up both message AND the intermediate raw_timestamp. All processors use ignore_missing: true to prevent failures on malformed docs. The on_failure block captures grok parse errors.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="drill" onclick="toggleDrill(this,'d2')">
+        <div class="drill-hd">
+          <div class="drill-n">02</div>
+          <div class="drill-content">
+            <div class="drill-cat">Update By Query · Painless · Pipeline</div>
+            <div class="drill-task">The <code>products</code> index was ingested without a <code>price_tier</code> field. Add this field to all existing documents: "budget" if <code>price &lt; 50</code>, "mid" if <code>price &lt; 200</code>, "premium" otherwise. Then apply the existing <code>tagging_pipeline</code> to all documents in <code>logs-2024</code> that don't yet have a <code>processed: true</code> flag.</div>
+          </div>
+        </div>
+        <div class="drill-body" id="d2">
+          <div class="drill-sol">
+            <div class="ds-lbl">// Solution</div>
+            <pre class="ds-code"><span class="cmt">// Part 1: Add price_tier field via update_by_query</span>
+<span class="cm">POST</span> <span class="cp">/products/_update_by_query</span>
+{
+  <span class="ck">"script"</span>: {
+    <span class="ck">"source"</span>: <span class="cs">"""
+      if (ctx._source.price == null) {
+        return;
+      }
+      double price = ctx._source.price;
+      if (price < 50) {
+        ctx._source.price_tier = 'budget';
+      } else if (price < 200) {
+        ctx._source.price_tier = 'mid';
+      } else {
+        ctx._source.price_tier = 'premium';
+      }
+    """</span>
+  },
+  <span class="ck">"query"</span>: {
+    <span class="ck">"bool"</span>: {
+      <span class="ck">"must_not"</span>: [
+        { <span class="ck">"exists"</span>: { <span class="ck">"field"</span>: <span class="cs">"price_tier"</span> }}
+      ]
+    }
+  }
+}
+
+<span class="cmt">// Part 2: Re-apply pipeline to unprocessed logs</span>
+<span class="cm">POST</span> <span class="cp">/logs-2024/_update_by_query?pipeline=tagging_pipeline</span>
+{
+  <span class="ck">"query"</span>: {
+    <span class="ck">"bool"</span>: {
+      <span class="ck">"must_not"</span>: [
+        { <span class="ck">"term"</span>: { <span class="ck">"processed"</span>: <span class="cb">true</span> }}
+      ]
+    }
+  }
+}</pre>
+            <div class="ds-note"><strong>Key points:</strong> The query in Part 1 uses must_not + exists to target only docs without the field — idempotent re-runs won't double-process. The null check inside the script prevents errors on docs missing the price field. Part 2 uses the ?pipeline= URL parameter with _update_by_query — this re-runs the ingest pipeline on each matched document in place, updating it with the pipeline's output.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="drill" onclick="toggleDrill(this,'d3')">
+        <div class="drill-hd">
+          <div class="drill-n">03</div>
+          <div class="drill-content">
+            <div class="drill-cat">Reindex · Script Transform · Mapping</div>
+            <div class="drill-task">The <code>orders</code> index stores <code>amount</code> as a string (e.g. "29.99"). Create a new index <code>orders_v2</code> with <code>amount</code> mapped as <code>float</code>, then reindex from <code>orders</code> to <code>orders_v2</code> using a script that converts the string to a float. Only migrate orders from 2024 onward. Run the operation asynchronously.</div>
+          </div>
+        </div>
+        <div class="drill-body" id="d3">
+          <div class="drill-sol">
+            <div class="ds-lbl">// Solution</div>
+            <pre class="ds-code"><span class="cmt">// Step 1: Create destination with correct mapping</span>
+<span class="cm">PUT</span> <span class="cp">/orders_v2</span>
+{
+  <span class="ck">"settings"</span>: {
+    <span class="ck">"number_of_shards"</span>:   <span class="cn">1</span>,
+    <span class="ck">"number_of_replicas"</span>: <span class="cn">1</span>
+  },
+  <span class="ck">"mappings"</span>: {
+    <span class="ck">"properties"</span>: {
+      <span class="ck">"order_id"</span>:   { <span class="ck">"type"</span>: <span class="cs">"keyword"</span> },
+      <span class="ck">"amount"</span>:     { <span class="ck">"type"</span>: <span class="cs">"float"</span>   },
+      <span class="ck">"created_at"</span>: { <span class="ck">"type"</span>: <span class="cs">"date"</span>    },
+      <span class="ck">"customer"</span>:   { <span class="ck">"type"</span>: <span class="cs">"keyword"</span> }
+    }
+  }
+}
+
+<span class="cmt">// Step 2: Reindex asynchronously with script + filter</span>
+<span class="cm">POST</span> <span class="cp">/_reindex?wait_for_completion=false</span>
+{
+  <span class="ck">"source"</span>: {
+    <span class="ck">"index"</span>: <span class="cs">"orders"</span>,
+    <span class="ck">"query"</span>: {
+      <span class="ck">"range"</span>: {
+        <span class="ck">"created_at"</span>: { <span class="ck">"gte"</span>: <span class="cs">"2024-01-01"</span> }
+      }
+    }
+  },
+  <span class="ck">"dest"</span>: { <span class="ck">"index"</span>: <span class="cs">"orders_v2"</span> },
+  <span class="ck">"script"</span>: {
+    <span class="ck">"source"</span>: <span class="cs">"""
+      if (ctx._source.amount != null) {
+        ctx._source.amount =
+          Float.parseFloat(ctx._source.amount);
+      }
+    """</span>
+  }
+}
+<span class="cmt">// Response: { "task": "abc123:45678" }</span>
+
+<span class="cmt">// Step 3: Monitor progress</span>
+<span class="cm">GET</span> <span class="cp">/_tasks/abc123:45678</span>
+
+<span class="cmt">// Step 4: After completion, swap alias</span>
+<span class="cm">POST</span> <span class="cp">/_aliases</span>
+{
+  <span class="ck">"actions"</span>: [
+    { <span class="ck">"add"</span>:    { <span class="ck">"index"</span>: <span class="cs">"orders_v2"</span>, <span class="ck">"alias"</span>: <span class="cs">"orders_current"</span> }},
+    { <span class="ck">"remove"</span>: { <span class="ck">"index"</span>: <span class="cs">"orders"</span>,    <span class="ck">"alias"</span>: <span class="cs">"orders_current"</span> }}
+  ]
+}</pre>
+            <div class="ds-note"><strong>Key steps:</strong> Create destination index with correct mapping FIRST (reindex doesn't copy mappings). Add wait_for_completion=false for async. The script uses Float.parseFloat() to convert the string amount to a float value. The source query filters to 2024+ orders only. Monitor via GET /_tasks/{id}. The alias swap at the end is best practice — applications targeting orders_current switch transparently to the new index with no downtime.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- QUIZ -->
+<div class="quiz">
+  <div class="quiz-title">Assessment</div>
+  <div class="quiz-sub">7 questions · Data Processing domain · ECE exam style</div>
+
+  <!-- Q1 -->
+  <div class="qb" id="q1">
+    <div class="q-n">QUESTION 01</div>
+    <div class="q-t">A log format is <code>2024-03-15 ERROR user_service Connection timeout</code> — fields separated by spaces with predictable structure. Which processor is the most performant choice to extract these fields?</div>
+    <div class="opts">
+      <button class="opt" onclick="ans(this,'q1','A','C')"><span class="ol">A</span>grok with a custom regex pattern</button>
+      <button class="opt" onclick="ans(this,'q1','B','C')"><span class="ol">B</span>script processor with string split logic</button>
+      <button class="opt" onclick="ans(this,'q1','C','C')"><span class="ol">C</span>dissect with a pattern matching the fixed delimiter structure</button>
+      <button class="opt" onclick="ans(this,'q1','D','C')"><span class="ol">D</span>convert processor with type: auto</button>
+    </div>
+    <div class="exp" id="e-q1"><strong>Correct: dissect.</strong> When the log format has predictable, fixed delimiters, dissect is the correct choice. It uses token-based parsing with literal delimiters (no regex) and is 10–100x faster than grok. Pattern would be: "%{date} %{time} %{level} %{service} %{message}". Grok is more flexible but slower due to regex overhead. Script processor should be last resort when no native processor fits.</div>
+  </div>
+
+  <!-- Q2 -->
+  <div class="qb" id="q2">
+    <div class="q-n">QUESTION 02</div>
+    <div class="q-t">A pipeline processor fails at runtime. The pipeline has no <code>on_failure</code> defined at either the processor or pipeline level. What happens to the document?</div>
+    <div class="opts">
+      <button class="opt" onclick="ans(this,'q2','A','B')"><span class="ol">A</span>The document is indexed with a partial transform applied up to the failing processor</button>
+      <button class="opt" onclick="ans(this,'q2','B','B')"><span class="ol">B</span>The entire indexing request fails and the document is rejected</button>
+      <button class="opt" onclick="ans(this,'q2','C','B')"><span class="ol">C</span>The failing processor is skipped and the next processor runs</button>
+      <button class="opt" onclick="ans(this,'q2','D','B')"><span class="ol">D</span>The document is indexed to a dead-letter index automatically</button>
+    </div>
+    <div class="exp" id="e-q2"><strong>Correct: the document is rejected.</strong> When a processor fails and there is no on_failure handler (at processor or pipeline level), the entire indexing operation fails and the document is NOT indexed. To handle failures gracefully, add on_failure at the processor level (handles just that processor's failures) or at the pipeline level (catches any unhandled failures). Alternatively, set ignore_failure: true on a processor to skip it on failure and continue processing.</div>
+  </div>
+
+  <!-- Q3 -->
+  <div class="qb" id="q3">
+    <div class="q-n">QUESTION 03</div>
+    <div class="q-t">In a Painless script for an ingest pipeline, what variable gives you access to the current document's fields, and how do you access a field named <code>@timestamp</code>?</div>
+    <div class="opts">
+      <button class="opt" onclick="ans(this,'q3','A','C')"><span class="ol">A</span>doc['@timestamp'].value</button>
+      <button class="opt" onclick="ans(this,'q3','B','C')"><span class="ol">B</span>ctx._source['@timestamp']</button>
+      <button class="opt" onclick="ans(this,'q3','C','C')"><span class="ol">C</span>ctx['@timestamp']</button>
+      <button class="opt" onclick="ans(this,'q3','D','C')"><span class="ol">D</span>params._source.@timestamp</button>
+    </div>
+    <div class="exp" id="e-q3"><strong>Correct: ctx['@timestamp'].</strong> In ingest pipeline Painless scripts, the document is accessed via ctx (not ctx._source which is the update API context). For fields with special characters like @, use bracket notation: ctx['@timestamp']. ctx.normal_field also works for standard field names. doc[] is used in runtime field scripts and search context, not ingest context.</div>
+  </div>
+
+  <!-- Q4 -->
+  <div class="qb" id="q4">
+    <div class="q-n">QUESTION 04</div>
+    <div class="q-t">You want to add a new <code>region</code> field to 500,000 existing documents in the <code>customers</code> index based on the <code>country_code</code> field. The documents stay in the same index. Which API should you use?</div>
+    <div class="opts">
+      <button class="opt" onclick="ans(this,'q4','A','B')"><span class="ol">A</span>_reindex from customers to customers (same source and dest)</button>
+      <button class="opt" onclick="ans(this,'q4','B','B')"><span class="ol">B</span>_update_by_query with a Painless script</button>
+      <button class="opt" onclick="ans(this,'q4','C','B')"><span class="ol">C</span>_bulk API with individual update actions</button>
+      <button class="opt" onclick="ans(this,'q4','D','B')"><span class="ol">D</span>_reindex to a new index then delete the original</button>
+    </div>
+    <div class="exp" id="e-q4"><strong>Correct: _update_by_query.</strong> When you need to add/modify fields on existing documents IN THE SAME INDEX, _update_by_query is the right tool. It reads each matching document, applies the script, and writes the result back. _reindex is for copying to a NEW index (typically needed for mapping changes or shard count changes). _bulk with 500k individual update requests is possible but far less efficient than _update_by_query's optimized bulk processing.</div>
+  </div>
+
+  <!-- Q5 -->
+  <div class="qb" id="q5">
+    <div class="q-n">QUESTION 05</div>
+    <div class="q-t">You call <code>POST /_ingest/pipeline/my_pipeline/_simulate</code>. What does this operation do?</div>
+    <div class="opts">
+      <button class="opt" onclick="ans(this,'q5','A','C')"><span class="ol">A</span>Runs the pipeline against all documents in a specified index and stores the results temporarily</button>
+      <button class="opt" onclick="ans(this,'q5','B','C')"><span class="ol">B</span>Validates the pipeline JSON syntax without checking processor configurations</button>
+      <button class="opt" onclick="ans(this,'q5','C','C')"><span class="ol">C</span>Executes the pipeline against sample documents in the request body and returns the transformed output without actually indexing anything</button>
+      <button class="opt" onclick="ans(this,'q5','D','C')"><span class="ol">D</span>Creates a copy of the pipeline for testing in an isolated environment</button>
+    </div>
+    <div class="exp" id="e-q5"><strong>Correct: dry-run against sample documents.</strong> The _simulate API accepts test documents in the request body (under "docs") and runs them through the pipeline, returning the fully transformed document output. Nothing is indexed. This is the primary tool for developing and debugging pipelines. Add ?verbose=true to see the document state after each individual processor, making it easy to identify which step causes unexpected behavior.</div>
+  </div>
+
+  <!-- Q6 -->
+  <div class="qb" id="q6">
+    <div class="q-n">QUESTION 06</div>
+    <div class="q-t">During a reindex operation, a document in the source index has been updated by another process, causing a version conflict. You want the reindex to skip conflicting documents and continue. What parameter do you add?</div>
+    <div class="opts">
+      <button class="opt" onclick="ans(this,'q6','A','D')"><span class="ol">A</span>"version_type": "external" in the dest block</button>
+      <button class="opt" onclick="ans(this,'q6','B','D')"><span class="ol">B</span>"ignore_conflicts": true at the top level</button>
+      <button class="opt" onclick="ans(this,'q6','C','D')"><span class="ol">C</span>"op_type": "create" in the dest block</button>
+      <button class="opt" onclick="ans(this,'q6','D','D')"><span class="ol">D</span>"conflicts": "proceed" at the top level</button>
+    </div>
+    <div class="exp" id="e-q6"><strong>Correct: "conflicts": "proceed".</strong> Adding "conflicts": "proceed" at the top level of the _reindex request instructs the API to skip documents that cause version conflicts and continue with the remaining documents. The final response will include a "version_conflicts" count showing how many were skipped. By default ("conflicts": "abort"), any version conflict stops the entire operation. This parameter works identically in _update_by_query and _delete_by_query.</div>
+  </div>
+
+  <!-- Q7 -->
+  <div class="qb" id="q7">
+    <div class="q-n">QUESTION 07</div>
+    <div class="q-t">In a reindex script, you set <code>ctx.op = 'noop'</code> for a document. What is the effect?</div>
+    <div class="opts">
+      <button class="opt" onclick="ans(this,'q7','A','B')"><span class="ol">A</span>The document is indexed to the destination with no transformations applied</button>
+      <button class="opt" onclick="ans(this,'q7','B','B')"><span class="ol">B</span>The document is skipped — it is not indexed in the destination index</button>
+      <button class="opt" onclick="ans(this,'q7','C','B')"><span class="ol">C</span>The reindex operation pauses until manually resumed</button>
+      <button class="opt" onclick="ans(this,'q7','D','B')"><span class="ol">D</span>The document is deleted from the source index</button>
+    </div>
+    <div class="exp" id="e-q7"><strong>Correct: the document is skipped.</strong> Setting ctx.op = 'noop' in a reindex script tells Elasticsearch to skip that document — it will not be indexed to the destination. This is the standard pattern for conditional migration: only migrate documents that meet certain criteria. In update_by_query, ctx.op = 'noop' means "make no change to this document" (saves a write operation). ctx.op = 'delete' deletes the document from the source.</div>
+  </div>
+
+  <div class="scorebox" id="scorebox">
+    <div class="score-big" id="score-num">0/7</div>
+    <div class="score-sub">Data Processing · Assessment Complete</div>
+    <div class="score-msg" id="score-msg"></div>
+    <button class="btn-reset" onclick="resetQuiz()">↺ RETRY</button>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="ft">ECE · TOPIC 04 · DATA PROCESSING · ELASTIC CERTIFIED ENGINEER</div>
+  <div class="nav-btns">
+    <span class="nbtn">← Topic 3</span>
+    <button class="nbtn primary" onclick="alert('Topic 5: Cluster Management — coming next!')">Topic 5: Cluster Mgmt →</button>
+  </div>
+</footer>
+
+</div>
+
+<script>
+// ── Pipeline stage toggle ──
+let activePipe = null;
+function showPipe(stage, id) {
+  const det = document.getElementById(id);
+  document.querySelectorAll('.pipe-detail').forEach(d => d.classList.remove('show'));
+  document.querySelectorAll('.pipe-stage').forEach(s => s.classList.remove('active'));
+  if (activePipe === id) { activePipe = null; return; }
+  det.classList.add('show');
+  stage.classList.add('active');
+  activePipe = id;
+}
+
+// ── Processor gallery ──
+const procData = {
+  'pr-grok': {
+    label: '// grok — regex-based field extraction',
+    code: `<span class="ck">"grok"</span>: {
+  <span class="ck">"field"</span>:       <span class="cs">"message"</span>,
+  <span class="ck">"patterns"</span>: [
+    <span class="cs">"%{IP:client_ip} %{WORD:method} %{URIPATH:path} %{NUMBER:status:int}"</span>
+  ],
+  <span class="ck">"ignore_missing"</span>: <span class="cb">true</span>
+}
+<span class="cmt">// :type conversion: :int, :float, :long</span>
+<span class="cmt">// Custom patterns:</span>
+<span class="ck">"pattern_definitions"</span>: {
+  <span class="ck">"MY_PATTERN"</span>: <span class="cs">"[A-Z]+"</span>
+}`,
+    notes: `<div class="ann i"><strong>Built-in patterns:</strong> IP, NUMBER, WORD, NOTSPACE, DATA, GREEDYDATA, URIPATH, HTTPDATE, COMBINEDAPACHELOG (full nginx/apache log).</div>
+<div class="ann w"><strong>Type conversion:</strong> %{NUMBER:field:int} — converts captured string to integer. Supported: int, long, float, double.</div>
+<div class="ann g"><strong>Multiple patterns:</strong> Provide an array — tried in order, first match wins. Useful for handling different log format versions.</div>`
+  },
+  'pr-dissect': {
+    label: '// dissect — delimiter-based field extraction',
+    code: `<span class="ck">"dissect"</span>: {
+  <span class="ck">"field"</span>:   <span class="cs">"message"</span>,
+  <span class="ck">"pattern"</span>: <span class="cs">"%{date} %{time} %{level} %{service} %{msg}"</span>
+}
+<span class="cmt">// Special tokens:</span>
+<span class="cmt">// %{?name}  — skip field (don't capture)</span>
+<span class="cmt">// %{+name}  — append to existing field</span>
+<span class="cmt">// %{name->} — padding (greedy rightward)</span>
+<span class="cmt">// %{name/N} — ordinal key (for repeated patterns)</span>`,
+    notes: `<div class="ann g"><strong>Performance:</strong> Dissect is token-based with no regex overhead. 10-100x faster than grok. Always prefer dissect for structured, fixed-format logs.</div>
+<div class="ann i"><strong>Limitation:</strong> Cannot handle truly variable structure (e.g., optional fields). If format varies, use grok.</div>
+<div class="ann w"><strong>EXAM CHOICE:</strong> If log format is described as "structured", "delimited", or "fixed format" → dissect. If "unstructured" or "variable" → grok.</div>`
+  },
+  'pr-geoip': {
+    label: '// geoip — IP-to-location enrichment',
+    code: `<span class="ck">"geoip"</span>: {
+  <span class="ck">"field"</span>:          <span class="cs">"source.ip"</span>,
+  <span class="ck">"target_field"</span>:   <span class="cs">"source.geo"</span>,
+  <span class="ck">"ignore_missing"</span>: <span class="cb">true</span>,
+  <span class="ck">"properties"</span>: [
+    <span class="cs">"country_iso_code"</span>,
+    <span class="cs">"city_name"</span>,
+    <span class="cs">"location"</span>,
+    <span class="cs">"region_name"</span>
+  ]
+}
+<span class="cmt">// location → geo_point type</span>
+<span class="cmt">// Required for Kibana Maps visualizations</span>`,
+    notes: `<div class="ann i"><strong>Default target_field:</strong> geoip (writes to geoip.* by default). For ECS compliance use source.geo.</div>
+<div class="ann i"><strong>location field:</strong> Produces a geo_point with lat/lon. Required by Kibana Maps and geo_distance queries/sorts.</div>
+<div class="ann w"><strong>Private IPs:</strong> Geoip cannot enrich private/reserved IP ranges (192.168.x.x, 10.x.x.x, 127.x.x.x). Set ignore_missing: true and handle with conditional logic.</div>`
+  },
+  'pr-date': {
+    label: '// date — parse datetime strings',
+    code: `<span class="ck">"date"</span>: {
+  <span class="ck">"field"</span>:        <span class="cs">"timestamp_str"</span>,
+  <span class="ck">"target_field"</span>: <span class="cs">"@timestamp"</span>,
+  <span class="ck">"formats"</span>: [
+    <span class="cs">"dd/MMM/yyyy:HH:mm:ss Z"</span>,
+    <span class="cs">"ISO8601"</span>,
+    <span class="cs">"UNIX"</span>,
+    <span class="cs">"UNIX_MS"</span>
+  ],
+  <span class="ck">"timezone"</span>: <span class="cs">"America/New_York"</span>
+}
+<span class="cmt">// Named formats: ISO8601, UNIX, UNIX_MS, TAI64N</span>
+<span class="cmt">// Default target_field: @timestamp</span>`,
+    notes: `<div class="ann i"><strong>formats array:</strong> Tried in order, first match wins. Include multiple formats to handle different date representations in the same field.</div>
+<div class="ann i"><strong>timezone:</strong> When source date has no timezone info, use this to specify the source timezone. Result is always stored in UTC.</div>
+<div class="ann w"><strong>UNIX vs UNIX_MS:</strong> UNIX = seconds since epoch. UNIX_MS = milliseconds since epoch. Getting this wrong causes dates off by a factor of 1000.</div>`
+  },
+  'pr-set': {
+    label: '// set — add or overwrite a field',
+    code: `<span class="cmt">// Set literal value</span>
+<span class="ck">"set"</span>: {
+  <span class="ck">"field"</span>: <span class="cs">"event.type"</span>,
+  <span class="ck">"value"</span>: <span class="cs">"access"</span>
+}
+
+<span class="cmt">// Copy from another field</span>
+<span class="ck">"set"</span>: {
+  <span class="ck">"field"</span>:       <span class="cs">"host.name"</span>,
+  <span class="ck">"copy_from"</span>:   <span class="cs">"hostname"</span>
+}
+
+<span class="cmt">// Conditional set (only if field missing)</span>
+<span class="ck">"set"</span>: {
+  <span class="ck">"field"</span>:           <span class="cs">"environment"</span>,
+  <span class="ck">"value"</span>:           <span class="cs">"production"</span>,
+  <span class="ck">"override"</span>:        <span class="cb">false</span>
+}
+<span class="cmt">// override: false → only sets if field absent</span>`,
+    notes: `<div class="ann i"><strong>copy_from:</strong> Copies the value of one field to another. The source field remains unchanged.</div>
+<div class="ann i"><strong>override: false:</strong> Only sets the field if it doesn't already exist. Use for setting defaults without overwriting existing values.</div>
+<div class="ann g"><strong>Template values:</strong> Use {{field_name}} syntax in value to reference other fields: "value": "{{host}}-{{environment}}"</div>`
+  },
+  'pr-remove': {
+    label: '// remove — delete fields from document',
+    code: `<span class="cmt">// Remove single field</span>
+<span class="ck">"remove"</span>: {
+  <span class="ck">"field"</span>: <span class="cs">"message"</span>
+}
+
+<span class="cmt">// Remove multiple fields (array)</span>
+<span class="ck">"remove"</span>: {
+  <span class="ck">"field"</span>: [<span class="cs">"message"</span>, <span class="cs">"raw"</span>, <span class="cs">"_tmp"</span>],
+  <span class="ck">"ignore_missing"</span>: <span class="cb">true</span>
+}
+
+<span class="cmt">// Conditional remove</span>
+<span class="ck">"remove"</span>: {
+  <span class="ck">"field"</span>: <span class="cs">"password"</span>,
+  <span class="ck">"if"</span>: <span class="cs">"ctx.log_type == 'auth'"</span>
+}`,
+    notes: `<div class="ann g"><strong>Best practice:</strong> Always use ignore_missing: true when removing fields that may or may not be present. Otherwise, missing fields cause the processor (and potentially the pipeline) to fail.</div>
+<div class="ann i"><strong>Common use:</strong> Remove the original message field after parsing with grok/dissect. Remove temporary processing fields. Remove sensitive data (PII, passwords) before indexing.</div>`
+  },
+  'pr-convert': {
+    label: '// convert — change field data type',
+    code: `<span class="ck">"convert"</span>: {
+  <span class="ck">"field"</span>:          <span class="cs">"status_code"</span>,
+  <span class="ck">"type"</span>:           <span class="cs">"integer"</span>,
+  <span class="ck">"ignore_missing"</span>: <span class="cb">true</span>
+}
+
+<span class="cmt">// Available types:</span>
+<span class="cmt">// integer, long, float, double</span>
+<span class="cmt">// string, boolean, ip</span>
+<span class="cmt">// auto (detects type)</span>
+
+<span class="cmt">// Convert to different target field</span>
+<span class="ck">"convert"</span>: {
+  <span class="ck">"field"</span>:        <span class="cs">"price_str"</span>,
+  <span class="ck">"target_field"</span>: <span class="cs">"price"</span>,
+  <span class="ck">"type"</span>:         <span class="cs">"float"</span>
+}`,
+    notes: `<div class="ann i"><strong>auto type:</strong> Detects integer, float, boolean, or string automatically. Useful when you can't predict the value type.</div>
+<div class="ann w"><strong>Must run AFTER extraction:</strong> Grok/dissect always produce string fields. Convert runs afterward to change their type. Order matters in the processors array.</div>
+<div class="ann i"><strong>target_field:</strong> Optional — if provided, keeps the original field AND creates a new typed field. Without it, converts the field in-place.</div>`
+  },
+  'pr-script': {
+    label: '// script — arbitrary Painless execution',
+    code: `<span class="ck">"script"</span>: {
+  <span class="ck">"source"</span>: <span class="cs">"""
+    // ctx = the document
+    ctx.total = ctx.a + ctx.b;
+    ctx.label = ctx.total > 100
+      ? 'high' : 'low';
+  """</span>
+}
+
+<span class="cmt">// With params (for reuse/caching)</span>
+<span class="ck">"script"</span>: {
+  <span class="ck">"id"</span>:     <span class="cs">"stored_script_id"</span>,
+  <span class="ck">"params"</span>: { <span class="ck">"threshold"</span>: <span class="cn">100</span> }
+}`,
+    notes: `<div class="ann w"><strong>Use sparingly:</strong> Script processor is the most flexible but slowest option. Prefer native processors (geoip, date, convert, grok) over script when a native option exists.</div>
+<div class="ann i"><strong>ctx context:</strong> Document accessed directly via ctx.field. Different from update API (ctx._source) and runtime fields (doc[], emit()).</div>
+<div class="ann g"><strong>Stored scripts:</strong> Pre-compile with PUT /_scripts/id for reuse. Faster than inline scripts when the same logic is used in multiple pipelines.</div>`
+  },
+  'pr-rename': {
+    label: '// rename — rename a field',
+    code: `<span class="ck">"rename"</span>: {
+  <span class="ck">"field"</span>:          <span class="cs">"host"</span>,
+  <span class="ck">"target_field"</span>:   <span class="cs">"host.name"</span>,
+  <span class="ck">"ignore_missing"</span>: <span class="cb">true</span>
+}
+<span class="cmt">// Equivalent to: set (copy_from) + remove</span>
+<span class="cmt">// More concise than two separate processors</span>
+
+<span class="cmt">// Multiple renames need multiple processors:</span>
+{ <span class="ck">"rename"</span>: { <span class="ck">"field"</span>: <span class="cs">"src"</span>, <span class="ck">"target_field"</span>: <span class="cs">"dest1"</span> }},
+{ <span class="ck">"rename"</span>: { <span class="ck">"field"</span>: <span class="cs">"a"</span>,   <span class="ck">"target_field"</span>: <span class="cs">"b"</span>     }}`,
+    notes: `<div class="ann i"><strong>Atomic:</strong> rename is a single atomic operation that both moves and removes the field. More efficient than set + remove combination.</div>
+<div class="ann w"><strong>target_field must not exist:</strong> If target_field already exists, the rename fails. Use set (copy_from) + remove if the destination may already exist.</div>`
+  },
+  'pr-append': {
+    label: '// append — add to array field',
+    code: `<span class="ck">"append"</span>: {
+  <span class="ck">"field"</span>: <span class="cs">"tags"</span>,
+  <span class="ck">"value"</span>: <span class="cs">"processed"</span>
+}
+<span class="cmt">// Creates array if field doesn't exist</span>
+<span class="cmt">// Appends to existing array if it does</span>
+
+<span class="cmt">// Append multiple values</span>
+<span class="ck">"append"</span>: {
+  <span class="ck">"field"</span>:            <span class="cs">"related_ips"</span>,
+  <span class="ck">"value"</span>:            [<span class="cs">"10.0.0.1"</span>, <span class="cs">"10.0.0.2"</span>],
+  <span class="ck">"allow_duplicates"</span>: <span class="cb">false</span>
+}
+<span class="cmt">// allow_duplicates: false prevents duplicate values</span>`,
+    notes: `<div class="ann i"><strong>Auto-creates array:</strong> If the field doesn't exist, append creates it as a new array. If it's a scalar, converts it to an array and appends.</div>
+<div class="ann g"><strong>allow_duplicates: false:</strong> Checks existing values before appending. Useful for building tag sets without duplicates. Requires a search through the array — slightly slower.</div>`
+  },
+  'pr-foreach': {
+    label: '// foreach — iterate over array elements',
+    code: `<span class="ck">"foreach"</span>: {
+  <span class="ck">"field"</span>:     <span class="cs">"ip_list"</span>,
+  <span class="ck">"processor"</span>: {
+    <span class="ck">"lowercase"</span>: {
+      <span class="ck">"field"</span>: <span class="cs">"_ingest._value"</span>
+    }
+  }
+}
+<span class="cmt">// _ingest._value = current array element</span>
+<span class="cmt">// _ingest._index = current array index (0-based)</span>
+
+<span class="cmt">// Complex foreach example:</span>
+<span class="ck">"foreach"</span>: {
+  <span class="ck">"field"</span>: <span class="cs">"events"</span>,
+  <span class="ck">"processor"</span>: {
+    <span class="ck">"convert"</span>: {
+      <span class="ck">"field"</span>: <span class="cs">"_ingest._value.code"</span>,
+      <span class="ck">"type"</span>:  <span class="cs">"integer"</span>
+    }
+  }
+}`,
+    notes: `<div class="ann i"><strong>_ingest._value:</strong> References the current array element within the foreach processor. Use this to address the element and its sub-fields.</div>
+<div class="ann w"><strong>One processor per foreach:</strong> Can only specify one processor per foreach block. To apply multiple operations, nest a pipeline processor inside, or use a script processor.</div>`
+  },
+  'pr-pipeline': {
+    label: '// pipeline — call another pipeline',
+    code: `<span class="ck">"pipeline"</span>: {
+  <span class="ck">"name"</span>:           <span class="cs">"common_enrichment"</span>,
+  <span class="ck">"ignore_missing_pipeline"</span>: <span class="cb">false</span>
+}
+<span class="cmt">// Executes named pipeline as a step</span>
+<span class="cmt">// Useful for shared/reusable pipeline logic</span>
+
+<span class="cmt">// Pattern: compose pipelines</span>
+<span class="cmt">// main_pipeline:</span>
+<span class="cmt">//   → grok parsing pipeline</span>
+<span class="cmt">//   → geoip enrichment pipeline</span>
+<span class="cmt">//   → cleanup pipeline</span>`,
+    notes: `<div class="ann i"><strong>Composition pattern:</strong> Break complex pipelines into smaller, reusable units. A main pipeline calls sub-pipelines for parsing, enrichment, and cleanup. Easier to maintain and test each piece independently.</div>
+<div class="ann w"><strong>ignore_missing_pipeline:</strong> If true, silently continues if the named pipeline doesn't exist. If false (default), fails the document if the pipeline is missing.</div>`
+  }
+};
+
+let activeProc = null;
+function openProc(card, key) {
+  const detail = document.getElementById('proc-detail');
+  const label = document.getElementById('pd-label');
+  const code = document.getElementById('pd-code');
+  const notes = document.getElementById('pd-notes');
+  document.querySelectorAll('.proc-card').forEach(c => c.classList.remove('open'));
+  if (activeProc === key) {
+    detail.classList.remove('show');
+    activeProc = null; return;
+  }
+  const d = procData[key];
+  label.textContent = d.label;
+  code.innerHTML = `<div class="cex-sl">// Syntax</div><pre class="co">${d.code}</pre>`;
+  notes.innerHTML = `<div class="cex-sl">// Notes</div><div class="ann-list">${d.notes}</div>`;
+  detail.classList.add('show');
+  card.classList.add('open');
+  card.after(detail);
+  activeProc = key;
+}
+
+// ── Tab switcher ──
+function switchTab(group, id, btn) {
+  document.querySelectorAll(`[id^="${group}-"]`).forEach(p => p.classList.remove('active'));
+  document.getElementById(`${group}-${id.replace(group+'-','')}`).classList.add('active');
+  btn.closest('.cex-tabs').querySelectorAll('.cex-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ── Drills ──
+function toggleDrill(el, id) {
+  const body = document.getElementById(id);
+  const open = body.classList.contains('show');
+  document.querySelectorAll('.drill-body').forEach(b => b.classList.remove('show'));
+  document.querySelectorAll('.drill').forEach(d => d.classList.remove('open'));
+  if (!open) { body.classList.add('show'); el.classList.add('open'); }
+}
+
+// ── Quiz ──
+const correct = { q1:'C', q2:'B', q3:'C', q4:'B', q5:'C', q6:'D', q7:'B' };
+const answered = {};
+let score = 0;
+
+function ans(btn, qId, chosen) {
+  if (answered[qId]) return;
+  answered[qId] = true;
+  const isRight = chosen === correct[qId];
+  if (isRight) score++;
+  const opts = document.getElementById(qId).querySelectorAll('.opt');
+  const letters = ['A','B','C','D'];
+  opts.forEach((o, i) => {
+    o.classList.add('locked'); o.style.cursor = 'default';
+    if (letters[i] === correct[qId]) o.classList.add('revealc');
+  });
+  btn.classList.remove('revealc');
+  btn.classList.add(isRight ? 'correct' : 'wrong');
+  document.getElementById('e-' + qId).classList.add('show');
+  updateProgress();
+  if (Object.keys(answered).length === 7) setTimeout(showScore, 500);
+}
+
+function updateProgress() {
+  const n = Object.keys(answered).length;
+  document.getElementById('progFill').style.width = (n / 7 * 100) + '%';
+  document.getElementById('progTxt').textContent = n + ' / 7 answered';
+}
+
+function showScore() {
+  document.getElementById('score-num').textContent = score + '/7';
+  const p = score / 7 * 100;
+  document.getElementById('score-msg').textContent =
+    p === 100 ? 'Perfect. Pipeline architecture fully mastered.' :
+    p >= 85   ? 'Strong. Review Painless context differences before exam day.' :
+    p >= 57   ? 'Developing. Focus on grok vs dissect, update_by_query vs reindex, and on_failure handling.' :
+                'Keep studying. Priority: pipeline failure handling, Painless contexts, and reindex patterns.';
+  document.getElementById('scorebox').classList.add('show');
+}
+
+function resetQuiz() {
+  Object.keys(answered).forEach(k => delete answered[k]);
+  score = 0;
+  document.getElementById('scorebox').classList.remove('show');
+  document.querySelectorAll('.opt').forEach(o => { o.classList.remove('correct','wrong','revealc','locked'); o.style.cursor = ''; });
+  document.querySelectorAll('.exp').forEach(e => e.classList.remove('show'));
+  document.getElementById('progFill').style.width = '0%';
+  document.getElementById('progTxt').textContent = '0 / 7 answered';
+}
+</script>
+</body>
+</html>

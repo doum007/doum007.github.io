@@ -1,0 +1,1637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ECE Topic 3: Developing Search Applications</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,600;1,300&family=IBM+Plex+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --white:   #ffffff;
+    --off:     #f8f8f8;
+    --rule:    #e0e0e0;
+    --rule2:   #c8c8c8;
+    --ink:     #111111;
+    --mid:     #555555;
+    --dim:     #999999;
+    --ghost:   #dddddd;
+    --red:     #e81c1c;
+    --red2:    #c81010;
+    --redsoft: #fff0f0;
+    --redmid:  rgba(232,28,28,0.1);
+    --black:   #000000;
+    --mono:    'IBM Plex Mono', monospace;
+    --display: 'Bebas Neue', sans-serif;
+    --sans:    'IBM Plex Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--white);
+    color: var(--ink);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Bauhaus margin stripe */
+  body::before {
+    content: '';
+    position: fixed; top: 0; left: 0; bottom: 0; width: 6px;
+    background: var(--red);
+    pointer-events: none; z-index: 100;
+  }
+
+  .container { max-width: 1080px; margin: 0 auto; padding: 0 48px; }
+
+  /* ── HEADER ── */
+  header {
+    padding: 52px 0 0;
+    border-bottom: 3px solid var(--black);
+    margin-bottom: 56px;
+  }
+
+  .header-top {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 32px;
+    align-items: start;
+    margin-bottom: 36px;
+  }
+
+  .cert-tag {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 3px;
+    color: var(--red); text-transform: uppercase; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .cert-tag::before { content: ''; display: inline-block; width: 20px; height: 2px; background: var(--red); }
+
+  h1 {
+    font-family: var(--display);
+    font-size: clamp(4rem, 9vw, 8rem);
+    line-height: 0.88;
+    letter-spacing: 2px;
+    color: var(--black);
+    text-transform: uppercase;
+  }
+  h1 .red { color: var(--red); display: block; }
+  h1 .thin {
+    font-family: var(--sans); font-weight: 300;
+    font-size: 0.15em; color: var(--mid); display: block;
+    letter-spacing: 4px; margin-top: 14px; text-transform: uppercase;
+  }
+
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+  .stat-cell {
+    border: 1.5px solid var(--ink); border-right: none; border-bottom: none;
+    padding: 14px 18px; text-align: center;
+  }
+  .stat-grid .stat-cell:nth-child(2n) { border-right: 1.5px solid var(--ink); }
+  .stat-grid .stat-cell:nth-child(n+3) { border-bottom: 1.5px solid var(--ink); }
+  .stat-cell.red-cell { background: var(--red); border-color: var(--red); }
+  .stat-v { font-family: var(--display); font-size: 2.4rem; color: var(--black); line-height: 1; }
+  .stat-cell.red-cell .stat-v { color: var(--white); }
+  .stat-l { font-family: var(--mono); font-size: 9px; color: var(--dim); letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+  .stat-cell.red-cell .stat-l { color: rgba(255,255,255,0.7); }
+
+  /* Topic nav */
+  .topic-nav {
+    display: flex; border-top: 1.5px solid var(--rule2);
+    margin-top: 0; overflow-x: auto;
+  }
+  .topic-nav a {
+    font-family: var(--mono); font-size: 10px; padding: 13px 20px;
+    text-decoration: none; color: var(--dim); letter-spacing: 1px;
+    text-transform: uppercase; border-right: 1.5px solid var(--rule2);
+    white-space: nowrap; transition: all 0.12s;
+  }
+  .topic-nav a:first-child { border-left: none; }
+  .topic-nav a.active { background: var(--black); color: var(--white); }
+  .topic-nav a:hover:not(.active) { background: var(--off); color: var(--ink); }
+
+  /* Progress */
+  .prog-bar-wrap { display: flex; align-items: center; gap: 16px; margin: 24px 0 60px; }
+  .prog-track { flex: 1; height: 2px; background: var(--rule); }
+  .prog-fill { height: 100%; background: var(--red); width: 0%; transition: width 0.4s; }
+  .prog-label { font-family: var(--mono); font-size: 10px; color: var(--dim); letter-spacing: 1px; white-space: nowrap; }
+
+  /* ── SECTION ── */
+  .section { margin-bottom: 72px; }
+  .section:nth-child(1) { animation: rise 0.4s ease 0.05s both; }
+  .section:nth-child(2) { animation: rise 0.4s ease 0.10s both; }
+  .section:nth-child(3) { animation: rise 0.4s ease 0.15s both; }
+  .section:nth-child(4) { animation: rise 0.4s ease 0.20s both; }
+  .section:nth-child(5) { animation: rise 0.4s ease 0.25s both; }
+  @keyframes rise { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+  .sec-header {
+    display: flex; align-items: stretch; margin-bottom: 24px;
+    border-bottom: 1.5px solid var(--ink);
+    padding-bottom: 10px;
+  }
+  .sec-number {
+    font-family: var(--display); font-size: 3.2rem; line-height: 1;
+    color: var(--red); margin-right: 20px; letter-spacing: 1px;
+    border-right: 2px solid var(--red); padding-right: 20px;
+  }
+  .sec-meta { display: flex; flex-direction: column; justify-content: flex-end; }
+  .sec-code { font-family: var(--mono); font-size: 9px; color: var(--dim); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 4px; }
+  .sec-title { font-family: var(--display); font-size: 1.9rem; letter-spacing: 2px; color: var(--black); text-transform: uppercase; line-height: 1; }
+
+  /* Body text */
+  .body-text { font-family: var(--sans); font-size: 0.94rem; line-height: 1.9; color: var(--mid); margin-bottom: 18px; font-weight: 300; }
+  .body-text:last-child { margin-bottom: 0; }
+  strong { color: var(--ink); font-weight: 700; }
+  code { font-family: var(--mono); font-size: 11.5px; color: var(--red2); background: var(--redsoft); padding: 1px 5px; border: 1px solid rgba(232,28,28,0.15); }
+
+  /* ── CODE EXPLORER ── */
+  .cex { border: 1.5px solid var(--ink); overflow: hidden; margin: 22px 0; }
+  .cex-hd {
+    background: var(--ink); padding: 0;
+    display: flex; align-items: stretch; flex-wrap: wrap;
+  }
+  .cex-label { font-family: var(--mono); font-size: 10px; color: var(--red); letter-spacing: 2px; text-transform: uppercase; padding: 12px 18px; border-right: 1px solid #333; display: flex; align-items: center; }
+  .cex-tabs { display: flex; flex-wrap: wrap; }
+  .cex-tab {
+    font-family: var(--mono); font-size: 10px; padding: 12px 18px;
+    background: none; border: none; border-right: 1px solid #333; color: #777;
+    cursor: pointer; transition: all 0.12s; letter-spacing: 1px; text-transform: uppercase;
+  }
+  .cex-tab.active { background: var(--red); color: var(--white); }
+  .cex-tab:hover:not(.active) { background: #222; color: #ddd; }
+
+  .cex-panel { display: none; }
+  .cex-panel.active { display: block; }
+
+  .cex-body { display: grid; grid-template-columns: 1.1fr 0.9fr; }
+  @media(max-width:680px) { .cex-body { grid-template-columns: 1fr; } }
+
+  .cex-left { padding: 20px 24px; border-right: 1.5px solid var(--rule); background: var(--off); }
+  .cex-right { padding: 20px 24px; }
+  .cex-slabel { font-family: var(--mono); font-size: 9px; color: var(--dim); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 12px; border-bottom: 1px solid var(--rule); padding-bottom: 6px; }
+
+  pre.cc {
+    font-family: var(--mono); font-size: 11.5px; line-height: 1.9;
+    white-space: pre-wrap; word-break: break-word; overflow-x: auto;
+    background: #111; padding: 18px; color: #bbb;
+  }
+  .cm { color: #ff6666; font-weight: 600; }
+  .cp { color: #ffcc66; }
+  .ck { color: #66ccff; }
+  .cs { color: #99dd88; }
+  .cn { color: #ffaa44; }
+  .cb { color: #cc88ff; }
+  .cmt{ color: #666666; font-style: italic; }
+  .cw { color: #ff6666; }
+
+  .ann-list { display: flex; flex-direction: column; gap: 8px; }
+  .ann {
+    font-family: var(--mono); font-size: 11px; line-height: 1.7;
+    padding: 9px 12px; border-left: 3px solid;
+  }
+  .ann.info  { border-color: var(--ink); background: var(--off); color: var(--mid); }
+  .ann.info strong  { color: var(--ink); }
+  .ann.alert { border-color: var(--red); background: var(--redsoft); color: #aa3333; }
+  .ann.alert strong { color: var(--red2); }
+  .ann.ok    { border-color: #337733; background: #f0fff0; color: #447744; }
+  .ann.ok    strong { color: #336633; }
+
+  /* ── PAGINATION DIAGRAM ── */
+  .pg-methods { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; margin: 22px 0; border: 1.5px solid var(--ink); }
+  .pg-m { padding: 20px; border-right: 1.5px solid var(--rule2); cursor: pointer; transition: background 0.15s; }
+  .pg-m:last-child { border-right: none; }
+  .pg-m:hover { background: var(--off); }
+  .pg-m.active { background: var(--ink); }
+  .pg-m-name { font-family: var(--display); font-size: 1.4rem; letter-spacing: 1px; color: var(--ink); margin-bottom: 6px; }
+  .pg-m.active .pg-m-name { color: var(--white); }
+  .pg-m-tag { font-family: var(--mono); font-size: 9px; color: var(--dim); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; }
+  .pg-m.active .pg-m-tag { color: #aaa; }
+  .pg-m-row { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10px; color: var(--dim); padding: 3px 0; border-bottom: 1px dotted var(--rule); }
+  .pg-m.active .pg-m-row { border-bottom-color: #444; color: #888; }
+  .pg-m-row:last-child { border-bottom: none; }
+  .pg-m-row .pv { font-weight: 600; color: var(--ink); }
+  .pg-m.active .pg-m-row .pv { color: var(--white); }
+  .pg-m-row .pv.y { color: #337733; } .pg-m-row .pv.n { color: var(--red2); }
+  .pg-m.active .pg-m-row .pv.y { color: #66cc66; }
+  .pg-m.active .pg-m-row .pv.n { color: #ff8888; }
+
+  @media(max-width:640px) {
+    .pg-methods { grid-template-columns: 1fr; }
+    .pg-m { border-right: none; border-bottom: 1.5px solid var(--rule2); }
+    .pg-m:last-child { border-bottom: none; }
+  }
+
+  .pg-detail { border: 1.5px solid var(--ink); border-top: none; display: none; }
+  .pg-detail.show { display: block; }
+
+  /* ── TEMPLATE BUILDER ── */
+  .template-builder {
+    border: 1.5px solid var(--ink); margin: 22px 0; overflow: hidden;
+  }
+  .tb-hd { background: var(--ink); padding: 12px 20px; font-family: var(--mono); font-size: 10px; color: var(--red); letter-spacing: 2px; text-transform: uppercase; }
+  .tb-body { display: grid; grid-template-columns: 1fr 1fr; }
+  @media(max-width:680px) { .tb-body { grid-template-columns: 1fr; } }
+  .tb-controls { padding: 20px; border-right: 1.5px solid var(--rule); }
+  .tb-output { padding: 20px; background: var(--off); }
+
+  .tb-label { font-family: var(--mono); font-size: 9px; color: var(--dim); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 10px; border-bottom: 1px solid var(--rule); padding-bottom: 6px; }
+
+  .tb-row { margin-bottom: 14px; }
+  .tb-field { font-family: var(--mono); font-size: 11px; color: var(--ink); margin-bottom: 6px; font-weight: 600; }
+  .tb-input {
+    width: 100%; font-family: var(--mono); font-size: 12px; color: var(--ink);
+    border: 1.5px solid var(--rule2); padding: 8px 12px; background: var(--white);
+    outline: none; transition: border-color 0.12s;
+  }
+  .tb-input:focus { border-color: var(--red); }
+  .tb-select {
+    width: 100%; font-family: var(--mono); font-size: 12px; color: var(--ink);
+    border: 1.5px solid var(--rule2); padding: 8px 12px; background: var(--white);
+    outline: none; cursor: pointer; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23555'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 12px center;
+  }
+  .tb-select:focus { border-color: var(--red); }
+
+  pre.tb-code {
+    font-family: var(--mono); font-size: 11px; line-height: 1.9;
+    background: #111; color: #bbb; padding: 16px; white-space: pre-wrap;
+    overflow-x: auto; min-height: 280px;
+  }
+
+  /* Inline note */
+  .note {
+    border-left: 4px solid var(--red); background: var(--redsoft);
+    padding: 12px 18px; margin: 16px 0; font-family: var(--mono);
+    font-size: 11.5px; color: #883333; line-height: 1.75;
+  }
+  .note strong { color: var(--red2); font-weight: 700; }
+  .note.dark { border-color: var(--ink); background: var(--off); color: var(--mid); }
+  .note.dark strong { color: var(--ink); }
+  .note.green { border-color: #337733; background: #f0fff0; color: #447744; }
+  .note.green strong { color: #336633; }
+
+  /* ── SCENARIO DRILLS ── */
+  .drills { display: flex; flex-direction: column; gap: 0; margin: 22px 0; border: 1.5px solid var(--ink); }
+  .drill { border-bottom: 1.5px solid var(--rule2); overflow: hidden; cursor: pointer; transition: background 0.12s; }
+  .drill:last-child { border-bottom: none; }
+  .drill:hover { background: var(--off); }
+  .drill.open  { background: var(--white); }
+  .drill-hd { padding: 18px 22px; display: flex; align-items: flex-start; gap: 18px; }
+  .drill-n { font-family: var(--display); font-size: 2.6rem; color: var(--rule2); line-height: 1; min-width: 48px; transition: color 0.15s; }
+  .drill:hover .drill-n, .drill.open .drill-n { color: var(--red); }
+  .drill-content { flex: 1; padding-top: 4px; }
+  .drill-cat { font-family: var(--mono); font-size: 9px; color: var(--dim); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 5px; }
+  .drill-task { font-family: var(--sans); font-size: 0.92rem; color: var(--ink); line-height: 1.55; font-weight: 400; }
+  .drill-arrow { font-size: 1.2rem; color: var(--rule2); transition: all 0.2s; padding-top: 6px; }
+  .drill.open .drill-arrow { transform: rotate(90deg); color: var(--red); }
+
+  .drill-body { display: none; border-top: 1.5px solid var(--rule); }
+  .drill-body.show { display: block; }
+  .drill-sol { padding: 20px 22px; }
+  .ds-label { font-family: var(--mono); font-size: 9px; color: #337733; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 10px; }
+  pre.ds-code {
+    font-family: var(--mono); font-size: 11.5px; line-height: 1.85;
+    background: #111; color: #aaa; padding: 18px; overflow-x: auto; white-space: pre-wrap;
+    border-left: 4px solid var(--red);
+  }
+  .ds-note {
+    font-family: var(--mono); font-size: 11px; color: var(--mid); margin-top: 12px;
+    line-height: 1.75; padding: 12px 16px; background: var(--off); border: 1.5px solid var(--rule);
+  }
+  .ds-note strong { color: var(--ink); }
+
+  /* ── QUICK REF TABLE ── */
+  .ref-table { width: 100%; border-collapse: collapse; margin: 18px 0; font-family: var(--mono); font-size: 11px; border: 1.5px solid var(--ink); }
+  .ref-table th { background: var(--ink); color: var(--white); padding: 10px 14px; text-align: left; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; }
+  .ref-table td { padding: 10px 14px; border-bottom: 1px solid var(--rule); color: var(--mid); vertical-align: top; }
+  .ref-table tr:last-child td { border-bottom: none; }
+  .ref-table tr:hover td { background: var(--off); }
+  .ref-table td:first-child { color: var(--red2); font-weight: 600; }
+  .ref-table td:nth-child(3) { color: var(--ink); }
+  .badge { display: inline-block; font-size: 9px; padding: 1px 6px; border: 1px solid; margin: 1px; }
+  .badge.y { color: #337733; border-color: #99cc99; }
+  .badge.n { color: var(--red2); border-color: #ffaaaa; }
+  .badge.p { color: #776600; border-color: #ddcc66; }
+
+  /* ── QUIZ ── */
+  .quiz {
+    background: var(--black); color: var(--white);
+    padding: 52px 44px; margin-top: 72px; position: relative;
+    border-top: 6px solid var(--red);
+  }
+  .quiz-title { font-family: var(--display); font-size: 4rem; letter-spacing: 3px; color: var(--white); text-transform: uppercase; margin-bottom: 4px; }
+  .quiz-sub { font-family: var(--mono); font-size: 11px; color: #666; letter-spacing: 1px; margin-bottom: 44px; }
+
+  .qb { margin-bottom: 44px; padding-bottom: 44px; border-bottom: 1px solid #222; }
+  .qb:last-of-type { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .q-n { font-family: var(--mono); font-size: 9px; color: #444; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 8px; }
+  .q-t { font-family: var(--sans); font-weight: 300; font-size: 1rem; color: #ddd; line-height: 1.65; margin-bottom: 8px; }
+  pre.q-code {
+    font-family: var(--mono); font-size: 11.5px; line-height: 1.8;
+    background: #0a0a0a; border-left: 3px solid var(--red);
+    padding: 14px 18px; color: #777; margin: 12px 0; overflow-x: auto; white-space: pre;
+  }
+
+  .opts { display: flex; flex-direction: column; gap: 6px; margin-top: 14px; }
+  .opt {
+    display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px;
+    border: 1px solid #222; background: #0d0d0d; color: #666;
+    font-family: var(--mono); font-size: 11.5px; cursor: pointer; transition: all 0.12s;
+    text-align: left; width: 100%; line-height: 1.55;
+  }
+  .opt:hover:not(.locked) { border-color: var(--red); color: #ccc; background: #1a0505; }
+  .opt .ol { color: var(--red); font-weight: 700; min-width: 18px; }
+  .opt.correct { border-color: #336633; background: #0a1a0a; color: #66aa66; }
+  .opt.wrong   { border-color: var(--red2); background: #1a0505; color: #cc6666; }
+  .opt.revealc { border-color: #336633; background: #0a1a0a; color: #336633; opacity: 0.5; }
+
+  .exp {
+    display: none; margin-top: 10px; padding: 12px 16px;
+    background: #0a0a0a; border: 1px solid #333;
+    font-family: var(--mono); font-size: 11px; color: #666; line-height: 1.85;
+  }
+  .exp.show { display: block; }
+  .exp strong { color: var(--red); }
+
+  .scorebox { display: none; margin-top: 36px; padding: 36px; border: 1px solid #333; text-align: center; }
+  .scorebox.show { display: block; }
+  .score-big { font-family: var(--display); font-size: 6rem; letter-spacing: 4px; color: var(--red); line-height: 1; }
+  .score-sub { font-family: var(--mono); font-size: 10px; color: #555; letter-spacing: 3px; margin: 8px 0 14px; text-transform: uppercase; }
+  .score-msg { font-family: var(--sans); font-weight: 300; font-size: 0.95rem; color: #888; }
+  .btn-reset {
+    margin-top: 22px; background: none; border: 1px solid var(--red); color: var(--red);
+    font-family: var(--mono); font-size: 11px; padding: 11px 32px; cursor: pointer;
+    letter-spacing: 3px; text-transform: uppercase; transition: all 0.15s;
+  }
+  .btn-reset:hover { background: var(--red); color: var(--white); }
+
+  footer {
+    margin-top: 80px; padding: 28px 0;
+    border-top: 1.5px solid var(--ink);
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;
+  }
+  .ft { font-family: var(--mono); font-size: 10px; color: var(--dim); letter-spacing: 2px; }
+  .nav-btns { display: flex; gap: 0; }
+  .nbtn {
+    font-family: var(--mono); font-size: 11px; padding: 11px 22px;
+    border: 1.5px solid var(--ink); border-right: none; color: var(--mid);
+    background: var(--white); cursor: pointer; letter-spacing: 1px; text-decoration: none;
+    transition: all 0.12s; text-transform: uppercase;
+  }
+  .nbtn:last-child { border-right: 1.5px solid var(--ink); }
+  .nbtn:hover { background: var(--off); color: var(--ink); }
+  .nbtn.primary { background: var(--red); color: var(--white); border-color: var(--red); font-weight: 600; }
+  .nbtn.primary:hover { background: var(--red2); border-color: var(--red2); }
+
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: var(--off); }
+  ::-webkit-scrollbar-thumb { background: var(--rule2); }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- ── HEADER ── -->
+<header>
+  <div class="header-top">
+    <div>
+      <div class="cert-tag">Elastic Certified Engineer · Domain III</div>
+      <h1>SEARCH<span class="red">APPS</span><span class="thin">// highlighting · sorting · pagination · fuzzy · templates · aliases</span></h1>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-cell"><div class="stat-v">3</div><div class="stat-l">of 5</div></div>
+      <div class="stat-cell red-cell"><div class="stat-v">7</div><div class="stat-l">Quiz Qs</div></div>
+      <div class="stat-cell"><div class="stat-v">6</div><div class="stat-l">Subtopics</div></div>
+      <div class="stat-cell"><div class="stat-v">3</div><div class="stat-l">Drills</div></div>
+    </div>
+  </div>
+  <nav class="topic-nav">
+    <a href="#">01 · Data Mgmt</a>
+    <a href="#">02 · Searching</a>
+    <a href="#" class="active">03 · Search Apps</a>
+    <a href="#">04 · Data Processing</a>
+    <a href="#">05 · Cluster Mgmt</a>
+  </nav>
+</header>
+
+<div class="prog-bar-wrap">
+  <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+  <span class="prog-label" id="progTxt">0 / 7 answered</span>
+</div>
+
+<!-- ═══════════════
+     03.01 HIGHLIGHTING
+════════════════ -->
+<div class="section">
+  <div class="sec-header">
+    <div class="sec-number">01</div>
+    <div class="sec-meta">
+      <div class="sec-code">03.01</div>
+      <div class="sec-title">Highlighting</div>
+    </div>
+  </div>
+  <p class="body-text">Highlighting returns snippets of matched text with the search terms wrapped in HTML tags. The ECE exam tests your ability to configure the highlighter type, customize tags, control fragment size, and apply highlighting to specific fields.</p>
+
+  <div class="cex">
+    <div class="cex-hd">
+      <span class="cex-label">// Highlighting API</span>
+      <div class="cex-tabs">
+        <button class="cex-tab active" onclick="switchTab('hl','hl1',this)">Basic Setup</button>
+        <button class="cex-tab" onclick="switchTab('hl','hl2',this)">Highlighter Types</button>
+        <button class="cex-tab" onclick="switchTab('hl','hl3',this)">Advanced Options</button>
+      </div>
+    </div>
+
+    <div id="hl-hl1" class="cex-panel active">
+      <div class="cex-body">
+        <div class="cex-left">
+          <div class="cex-slabel">// Request</div>
+          <pre class="cc"><span class="cm">GET</span> <span class="cp">/articles/_search</span>
+{
+  <span class="ck">"query"</span>: {
+    <span class="ck">"match"</span>: { <span class="ck">"body"</span>: <span class="cs">"elasticsearch search"</span> }
+  },
+  <span class="ck">"highlight"</span>: {
+    <span class="ck">"pre_tags"</span>:       [<span class="cs">"&lt;em&gt;"</span>],
+    <span class="ck">"post_tags"</span>:      [<span class="cs">"&lt;/em&gt;"</span>],
+    <span class="ck">"number_of_fragments"</span>: <span class="cn">3</span>,
+    <span class="ck">"fragment_size"</span>:       <span class="cn">150</span>,
+    <span class="ck">"fields"</span>: {
+      <span class="ck">"body"</span>: {},
+      <span class="ck">"title"</span>: {
+        <span class="ck">"number_of_fragments"</span>: <span class="cn">0</span>
+      }
+    }
+  }
+}
+
+<span class="cmt">// Response: hit._highlight contains an object</span>
+<span class="cmt">// { "body": ["...&lt;em&gt;elasticsearch&lt;/em&gt; query..."],</span>
+<span class="cmt">//   "title": ["Learn &lt;em&gt;Elasticsearch&lt;/em&gt;"] }</span></pre>
+        </div>
+        <div class="cex-right">
+          <div class="cex-slabel">// Notes</div>
+          <div class="ann-list">
+            <div class="ann info"><strong>pre_tags / post_tags:</strong> Default is &lt;em&gt;&lt;/em&gt;. Can use any HTML. Exam may specify custom tags like &lt;mark&gt; or &lt;strong&gt;.</div>
+            <div class="ann info"><strong>number_of_fragments:</strong> How many snippets to return per field. Set to 0 to return the entire field with highlights (no fragmentation — useful for short title fields).</div>
+            <div class="ann info"><strong>fragment_size:</strong> Character length of each snippet. Default: 100. Larger = more context around the match.</div>
+            <div class="ann alert"><strong>EXAM PATTERN:</strong> "Return the title field as a complete highlighted string" → number_of_fragments: 0 on the title field.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="hl-hl2" class="cex-panel">
+      <div class="cex-body">
+        <div class="cex-left">
+          <div class="cex-slabel">// Highlighter type selection</div>
+          <pre class="cc"><span class="cmt">// unified (default) — uses BM25 for fragment scoring</span>
+<span class="ck">"highlight"</span>: {
+  <span class="ck">"type"</span>: <span class="cs">"unified"</span>,
+  <span class="ck">"fields"</span>: { <span class="ck">"body"</span>: {} }
+}
+
+<span class="cmt">// plain — uses Lucene's standard highlighter</span>
+<span class="cmt">// accurate but slower, requires term vectors or re-analysis</span>
+<span class="ck">"highlight"</span>: {
+  <span class="ck">"type"</span>: <span class="cs">"plain"</span>,
+  <span class="ck">"fields"</span>: { <span class="ck">"body"</span>: {} }
+}
+
+<span class="cmt">// fvh (fast vector highlighter) — fastest for large fields</span>
+<span class="cmt">// requires term_vector: "with_positions_offsets" in mapping</span>
+<span class="ck">"highlight"</span>: {
+  <span class="ck">"type"</span>: <span class="cs">"fvh"</span>,
+  <span class="ck">"fields"</span>: {
+    <span class="ck">"body"</span>: {
+      <span class="ck">"matched_fields"</span>: [<span class="cs">"body"</span>, <span class="cs">"body.english"</span>]
+    }
+  }
+}
+
+<span class="cmt">// Mapping for fvh:</span>
+<span class="ck">"body"</span>: {
+  <span class="ck">"type"</span>: <span class="cs">"text"</span>,
+  <span class="ck">"term_vector"</span>: <span class="cs">"with_positions_offsets"</span>
+}</pre>
+        </div>
+        <div class="cex-right">
+          <div class="cex-slabel">// Comparison</div>
+          <div class="ann-list">
+            <div class="ann info"><strong>unified (default):</strong> Works with all query types including phrase queries. Best general-purpose choice. Uses the Lucene Unified Highlighter. Recommended unless you have a specific reason for another type.</div>
+            <div class="ann info"><strong>plain:</strong> Most accurate — understands complex queries. Slowest because it re-analyzes text at highlight time. Use for complex span queries.</div>
+            <div class="ann alert"><strong>fvh (Fast Vector Highlighter):</strong> Fastest for large fields because it reads pre-stored term vectors instead of re-analyzing. Requires term_vector setting in mapping BEFORE indexing. Good for multi-field highlighting.</div>
+            <div class="ann ok"><strong>EXAM RULE:</strong> Unless specifically asked for fvh or plain, default to unified. If fvh is required, remember to update the mapping first (requires reindex).</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="hl-hl3" class="cex-panel">
+      <div class="cex-body">
+        <div class="cex-left">
+          <div class="cex-slabel">// Advanced options</div>
+          <pre class="cc"><span class="cm">GET</span> <span class="cp">/docs/_search</span>
+{
+  <span class="ck">"query"</span>: { <span class="ck">"match"</span>: { <span class="ck">"body"</span>: <span class="cs">"search engine"</span> }},
+  <span class="ck">"highlight"</span>: {
+    <span class="ck">"fields"</span>: {
+      <span class="ck">"body"</span>: {
+        <span class="ck">"highlight_query"</span>: {
+          <span class="ck">"bool"</span>: {
+            <span class="ck">"should"</span>: [
+              { <span class="ck">"match"</span>: { <span class="ck">"body"</span>: <span class="cs">"search"</span> }},
+              { <span class="ck">"match"</span>: { <span class="ck">"body"</span>: <span class="cs">"engine"</span> }},
+              { <span class="ck">"match"</span>: { <span class="ck">"body"</span>: <span class="cs">"indexing"</span> }} <span class="cmt">// extra term</span>
+            ]
+          }
+        },
+        <span class="ck">"order"</span>:               <span class="cs">"score"</span>,
+        <span class="ck">"no_match_size"</span>:       <span class="cn">150</span>,
+        <span class="ck">"phrase_limit"</span>:        <span class="cn">256</span>,
+        <span class="ck">"require_field_match"</span>: <span class="cb">false</span>
+      }
+    }
+  }
+}</pre>
+        </div>
+        <div class="cex-right">
+          <div class="cex-slabel">// Notes</div>
+          <div class="ann-list">
+            <div class="ann info"><strong>highlight_query:</strong> Override the query used for highlighting. Useful when your main query is different from what you want highlighted (e.g., rescoring).</div>
+            <div class="ann info"><strong>order: "score"</strong> — Return highest-scoring fragments first instead of in document order. Surfaces the most relevant snippets.</div>
+            <div class="ann info"><strong>no_match_size:</strong> If no highlight found, return this many characters from the start of the field. Prevents empty highlight results.</div>
+            <div class="ann alert"><strong>require_field_match: false</strong> — Highlight fields that weren't in the query. E.g., search on title but highlight body. Default is true (only highlight queried fields).</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════
+     03.02 SORTING
+════════════════ -->
+<div class="section">
+  <div class="sec-header">
+    <div class="sec-number">02</div>
+    <div class="sec-meta">
+      <div class="sec-code">03.02</div>
+      <div class="sec-title">Sorting</div>
+    </div>
+  </div>
+  <p class="body-text">Sorting controls the order of returned documents. By default, results are sorted by <code>_score</code> descending. The exam tests single/multi-field sorting, sort by geo distance, and sorting on nested fields.</p>
+
+  <div class="cex">
+    <div class="cex-hd">
+      <span class="cex-label">// Sort API</span>
+      <div class="cex-tabs">
+        <button class="cex-tab active" onclick="switchTab('sort','s1',this)">Multi-field Sort</button>
+        <button class="cex-tab" onclick="switchTab('sort','s2',this)">Geo Distance Sort</button>
+        <button class="cex-tab" onclick="switchTab('sort','s3',this)">Nested Sort</button>
+      </div>
+    </div>
+
+    <div id="sort-s1" class="cex-panel active">
+      <div class="cex-body">
+        <div class="cex-left">
+          <div class="cex-slabel">// Request</div>
+          <pre class="cc"><span class="cm">GET</span> <span class="cp">/products/_search</span>
+{
+  <span class="ck">"sort"</span>: [
+    { <span class="ck">"price"</span>:     { <span class="ck">"order"</span>: <span class="cs">"asc"</span>  }},
+    { <span class="ck">"rating"</span>:    { <span class="ck">"order"</span>: <span class="cs">"desc"</span> }},
+    { <span class="ck">"_score"</span>:    { <span class="ck">"order"</span>: <span class="cs">"desc"</span> }},
+    { <span class="ck">"_doc"</span>: { <span class="ck">"order"</span>: <span class="cs">"asc"</span>  }}
+  ],
+  <span class="ck">"query"</span>: { <span class="ck">"match_all"</span>: {} }
+}
+
+<span class="cmt">// Sort is evaluated left to right — use later fields</span>
+<span class="cmt">// as tiebreakers when earlier fields are equal.</span>
+
+<span class="cmt">// missing values — control with "missing" param</span>
+{ <span class="ck">"price"</span>: { <span class="ck">"order"</span>: <span class="cs">"asc"</span>, <span class="ck">"missing"</span>: <span class="cs">"_last"</span>  }}
+{ <span class="ck">"price"</span>: { <span class="ck">"order"</span>: <span class="cs">"asc"</span>, <span class="ck">"missing"</span>: <span class="cs">"_first"</span> }}
+{ <span class="ck">"price"</span>: { <span class="ck">"order"</span>: <span class="cs">"asc"</span>, <span class="ck">"missing"</span>: <span class="cn">0</span>       }}
+
+<span class="cmt">// Sort mode for multi-value fields</span>
+{ <span class="ck">"prices"</span>: { <span class="ck">"order"</span>: <span class="cs">"asc"</span>, <span class="ck">"mode"</span>: <span class="cs">"min"</span> }}
+<span class="cmt">// modes: min, max, sum, avg, median</span></pre>
+        </div>
+        <div class="cex-right">
+          <div class="cex-slabel">// Notes</div>
+          <div class="ann-list">
+            <div class="ann alert"><strong>text fields cannot be sorted.</strong> Must use keyword sub-field. "name" (text) → "name.keyword" for sorting. Sorting a text field causes an error.</div>
+            <div class="ann info"><strong>_score:</strong> Include _score explicitly in the sort array if you want relevance-based tiebreaking when other fields are equal.</div>
+            <div class="ann info"><strong>_doc:</strong> Sort by index order — fastest sort, no scoring. Use with scroll/pagination for performance.</div>
+            <div class="ann info"><strong>missing:</strong> Controls placement of docs where the sort field is absent. "_last" puts them at the end, "_first" at the start.</div>
+            <div class="ann ok"><strong>mode:</strong> When a field has multiple values per doc (array), mode controls which value to sort by. Default is min for asc, max for desc.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="sort-s2" class="cex-panel">
+      <div class="cex-body">
+        <div class="cex-left">
+          <div class="cex-slabel">// Geo distance sort</div>
+          <pre class="cc"><span class="cm">GET</span> <span class="cp">/restaurants/_search</span>
+{
+  <span class="ck">"sort"</span>: [
+    {
+      <span class="ck">"_geo_distance"</span>: {
+        <span class="ck">"location"</span>: {
+          <span class="ck">"lat"</span>: <span class="cn">51.5074</span>,
+          <span class="ck">"lon"</span>: <span class="cn">-0.1278</span>
+        },
+        <span class="ck">"order"</span>:         <span class="cs">"asc"</span>,
+        <span class="ck">"unit"</span>:          <span class="cs">"km"</span>,
+        <span class="ck">"distance_type"</span>: <span class="cs">"arc"</span>,
+        <span class="ck">"mode"</span>:          <span class="cs">"min"</span>
+      }
+    }
+  ],
+  <span class="ck">"query"</span>: { <span class="ck">"match_all"</span>: {} }
+}
+
+<span class="cmt">// location field must be mapped as geo_point</span>
+<span class="cmt">// "PUT /restaurants" { "mappings": {</span>
+<span class="cmt">//   "properties": {</span>
+<span class="cmt">//     "location": { "type": "geo_point" } }}}</span>
+
+<span class="cmt">// Also filter by geo distance:</span>
+<span class="ck">"filter"</span>: [{
+  <span class="ck">"geo_distance"</span>: {
+    <span class="ck">"distance"</span>: <span class="cs">"5km"</span>,
+    <span class="ck">"location"</span>: { <span class="ck">"lat"</span>: <span class="cn">51.5074</span>, <span class="ck">"lon"</span>: <span class="cn">-0.1278</span> }
+  }
+}]</pre>
+        </div>
+        <div class="cex-right">
+          <div class="cex-slabel">// Notes</div>
+          <div class="ann-list">
+            <div class="ann alert"><strong>REQUIRES geo_point mapping.</strong> The location field must be type: geo_point. Geo sort does not work on text/keyword fields.</div>
+            <div class="ann info"><strong>unit:</strong> m (meters), km, mi, yd, ft, in, cm, mm, nm. Default: m. Use "km" for most practical scenarios.</div>
+            <div class="ann info"><strong>distance_type:</strong> arc (default, accurate great-circle distance) or plane (faster, less accurate for large distances).</div>
+            <div class="ann info"><strong>Combining filter + sort:</strong> Use geo_distance filter in bool.filter to limit results to a radius, then _geo_distance sort to order by proximity within that radius.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="sort-s3" class="cex-panel">
+      <div class="cex-body">
+        <div class="cex-left">
+          <div class="cex-slabel">// Sorting on nested fields</div>
+          <pre class="cc"><span class="cmt">// Sort by min price within nested "offers" objects</span>
+<span class="cm">GET</span> <span class="cp">/products/_search</span>
+{
+  <span class="ck">"sort"</span>: [
+    {
+      <span class="ck">"offers.price"</span>: {
+        <span class="ck">"order"</span>: <span class="cs">"asc"</span>,
+        <span class="ck">"mode"</span>:  <span class="cs">"min"</span>,
+        <span class="ck">"nested"</span>: {
+          <span class="ck">"path"</span>: <span class="cs">"offers"</span>,
+          <span class="ck">"filter"</span>: {
+            <span class="ck">"term"</span>: {
+              <span class="ck">"offers.in_stock"</span>: <span class="cb">true</span>
+            }
+          }
+        }
+      }
+    }
+  ],
+  <span class="ck">"query"</span>: { <span class="ck">"match_all"</span>: {} }
+}
+
+<span class="cmt">// nested.path = the nested field name</span>
+<span class="cmt">// nested.filter = only consider nested docs matching this</span></pre>
+        </div>
+        <div class="cex-right">
+          <div class="cex-slabel">// Notes</div>
+          <div class="ann-list">
+            <div class="ann alert"><strong>nested.path is required</strong> when sorting on a field inside a nested type. Without it, ES cannot resolve the sort value correctly and will error.</div>
+            <div class="ann info"><strong>nested.filter:</strong> Only consider nested docs matching this filter when computing the sort value. E.g., sort by cheapest IN-STOCK offer, ignoring out-of-stock ones.</div>
+            <div class="ann info"><strong>mode: "min":</strong> When a product has multiple offers, sort by the minimum (cheapest) price among all its nested offer documents.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════
+     03.03 PAGINATION
+════════════════ -->
+<div class="section">
+  <div class="sec-header">
+    <div class="sec-number">03</div>
+    <div class="sec-meta">
+      <div class="sec-code">03.03</div>
+      <div class="sec-title">Pagination</div>
+    </div>
+  </div>
+  <p class="body-text">Elasticsearch offers three pagination mechanisms. Choosing the right one is critical — each has different tradeoffs between simplicity, consistency, and scalability. The ECE exam tests all three.</p>
+
+  <div class="pg-methods">
+    <div class="pg-m active" id="pgm-from" onclick="showPg(this,'pg-from')">
+      <div class="pg-m-name">FROM / SIZE</div>
+      <div class="pg-m-tag">Classic · Simple</div>
+      <div class="pg-m-row"><span>Consistent results</span><span class="pv n">✗ No</span></div>
+      <div class="pg-m-row"><span>Deep pagination</span><span class="pv n">✗ No</span></div>
+      <div class="pg-m-row"><span>Stateless</span><span class="pv y">✓ Yes</span></div>
+      <div class="pg-m-row"><span>Max offset default</span><span class="pv">10,000</span></div>
+    </div>
+    <div class="pg-m" id="pgm-sa" onclick="showPg(this,'pg-sa')">
+      <div class="pg-m-name">SEARCH_AFTER</div>
+      <div class="pg-m-tag">Cursor · Efficient</div>
+      <div class="pg-m-row"><span>Consistent results</span><span class="pv p">≈ PIT</span></div>
+      <div class="pg-m-row"><span>Deep pagination</span><span class="pv y">✓ Yes</span></div>
+      <div class="pg-m-row"><span>Stateless</span><span class="pv n">✗ No</span></div>
+      <div class="pg-m-row"><span>Max offset</span><span class="pv">Unlimited</span></div>
+    </div>
+    <div class="pg-m" id="pgm-scroll" onclick="showPg(this,'pg-scroll')">
+      <div class="pg-m-name">SCROLL</div>
+      <div class="pg-m-tag">Legacy · Export</div>
+      <div class="pg-m-row"><span>Consistent results</span><span class="pv y">✓ Yes</span></div>
+      <div class="pg-m-row"><span>Deep pagination</span><span class="pv y">✓ Yes</span></div>
+      <div class="pg-m-row"><span>Stateless</span><span class="pv n">✗ No</span></div>
+      <div class="pg-m-row"><span>Max offset</span><span class="pv">Unlimited</span></div>
+    </div>
+  </div>
+
+  <div class="pg-detail show" id="pg-from">
+    <div class="cex-body">
+      <div class="cex-left" style="background:var(--off)">
+        <div class="cex-slabel">// from / size pagination</div>
+        <pre class="cc"><span class="cmt">// Page 1: from=0, size=10</span>
+<span class="cm">GET</span> <span class="cp">/products/_search</span>
+{
+  <span class="ck">"from"</span>: <span class="cn">0</span>,
+  <span class="ck">"size"</span>: <span class="cn">10</span>,
+  <span class="ck">"query"</span>: { <span class="ck">"match_all"</span>: {} },
+  <span class="ck">"sort"</span>: [{ <span class="ck">"price"</span>: <span class="cs">"asc"</span> }]
+}
+
+<span class="cmt">// Page 2: from=10, size=10</span>
+<span class="cm">GET</span> <span class="cp">/products/_search</span>
+{ <span class="ck">"from"</span>: <span class="cn">10</span>, <span class="ck">"size"</span>: <span class="cn">10</span>, ... }
+
+<span class="cmt">// Page N: from = (N-1) * size</span>
+
+<span class="cmt">// Max: index.max_result_window (default 10,000)</span>
+<span class="cmt">// from + size must be ≤ 10,000</span>
+
+<span class="cmt">// Raise limit (not recommended for deep pagination):</span>
+<span class="cm">PUT</span> <span class="cp">/products/_settings</span>
+{
+  <span class="ck">"index.max_result_window"</span>: <span class="cn">50000</span>
+}</pre>
+      </div>
+      <div class="cex-right">
+        <div class="ann-list">
+          <div class="ann info"><strong>USE WHEN:</strong> Small to medium result sets, user-facing search with page numbers, total count needed (hits.total), first &lt;10k results only.</div>
+          <div class="ann alert"><strong>DEEP PAGINATION PROBLEM:</strong> from:9990 size:10 requires Elasticsearch to fetch and rank 10,000 docs from every shard, then discard 9,990. Extremely expensive at scale. Never for deep data export.</div>
+          <div class="ann alert"><strong>from + size &gt; 10,000</strong> returns an error by default. Raising max_result_window increases memory pressure — not a real fix for deep pagination needs.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pg-detail" id="pg-sa">
+    <div class="cex-body">
+      <div class="cex-left" style="background:var(--off)">
+        <div class="cex-slabel">// search_after with PIT</div>
+        <pre class="cc"><span class="cmt">// Step 1: Open a Point in Time (PIT) for consistency</span>
+<span class="cm">POST</span> <span class="cp">/products/_pit?keep_alive=1m</span>
+<span class="cmt">// Response: { "id": "46ToAwMDaWdv..." }</span>
+
+<span class="cmt">// Step 2: First page (no search_after yet)</span>
+<span class="cm">GET</span> <span class="cp">/_search</span>
+{
+  <span class="ck">"pit"</span>: {
+    <span class="ck">"id"</span>:         <span class="cs">"46ToAwMDaWdv..."</span>,
+    <span class="ck">"keep_alive"</span>: <span class="cs">"1m"</span>
+  },
+  <span class="ck">"sort"</span>: [
+    { <span class="ck">"price"</span>:  <span class="cs">"asc"</span>  },
+    { <span class="ck">"_shard_doc"</span>: <span class="cs">"asc"</span> }  <span class="cmt">// tie-breaker (unique)</span>
+  ],
+  <span class="ck">"size"</span>: <span class="cn">10</span>
+}
+<span class="cmt">// Save last hit's sort values: e.g. [29.99, 1234]</span>
+
+<span class="cmt">// Step 3: Next page using search_after</span>
+<span class="cm">GET</span> <span class="cp">/_search</span>
+{
+  <span class="ck">"pit"</span>: { <span class="ck">"id"</span>: <span class="cs">"46ToAwMDaWdv..."</span>, <span class="ck">"keep_alive"</span>: <span class="cs">"1m"</span> },
+  <span class="ck">"sort"</span>: [{ <span class="ck">"price"</span>: <span class="cs">"asc"</span> }, { <span class="ck">"_shard_doc"</span>: <span class="cs">"asc"</span> }],
+  <span class="ck">"search_after"</span>: [<span class="cn">29.99</span>, <span class="cn">1234</span>],
+  <span class="ck">"size"</span>: <span class="cn">10</span>
+}
+
+<span class="cmt">// Step 4: Close PIT when done</span>
+<span class="cm">DELETE</span> <span class="cp">/_pit</span>
+{ <span class="ck">"id"</span>: <span class="cs">"46ToAwMDaWdv..."</span> }</pre>
+      </div>
+      <div class="cex-right">
+        <div class="ann-list">
+          <div class="ann info"><strong>USE WHEN:</strong> Deep pagination, infinite scroll, exporting large datasets page by page where you need consistent results.</div>
+          <div class="ann info"><strong>PIT (Point in Time):</strong> Freezes a view of the index at the moment of creation. Results are consistent even if new docs are indexed or old ones deleted between pages.</div>
+          <div class="ann alert"><strong>TIEBREAKER REQUIRED:</strong> Sort must include a unique tiebreaker as the last field. Use _shard_doc (with PIT) or _id (without PIT). Without a unique tiebreaker, results may be inconsistent.</div>
+          <div class="ann info"><strong>search_after value:</strong> Taken from the last hit's sort array in the previous response. Copy the entire sort array value from the last document.</div>
+          <div class="ann ok"><strong>PREFERRED over scroll</strong> for new applications. More efficient, doesn't hold open a search context on every shard.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pg-detail" id="pg-scroll">
+    <div class="cex-body">
+      <div class="cex-left" style="background:var(--off)">
+        <div class="cex-slabel">// Scroll API (legacy)</div>
+        <pre class="cc"><span class="cmt">// Step 1: Initialize scroll</span>
+<span class="cm">POST</span> <span class="cp">/logs-*/_search?scroll=1m</span>
+{
+  <span class="ck">"size"</span>: <span class="cn">1000</span>,
+  <span class="ck">"query"</span>: { <span class="ck">"match_all"</span>: {} },
+  <span class="ck">"sort"</span>: [<span class="cs">"_doc"</span>]  <span class="cmt">// fastest sort for scroll</span>
+}
+<span class="cmt">// Response: { "_scroll_id": "DXF1ZXJ5Q...", hits: [...] }</span>
+
+<span class="cmt">// Step 2: Fetch next batch (repeat until hits empty)</span>
+<span class="cm">POST</span> <span class="cp">/_search/scroll</span>
+{
+  <span class="ck">"scroll"</span>:    <span class="cs">"1m"</span>,
+  <span class="ck">"scroll_id"</span>: <span class="cs">"DXF1ZXJ5Q..."</span>
+}
+<span class="cmt">// Repeat until hits.hits is empty []</span>
+
+<span class="cmt">// Step 3: Clear scroll context</span>
+<span class="cm">DELETE</span> <span class="cp">/_search/scroll</span>
+{ <span class="ck">"scroll_id"</span>: [<span class="cs">"DXF1ZXJ5Q..."</span>] }</pre>
+      </div>
+      <div class="cex-right">
+        <div class="ann-list">
+          <div class="ann alert"><strong>DEPRECATED for new use.</strong> Scroll API is legacy — use search_after + PIT for new applications. Scroll is still tested on ECE for knowledge of existing systems.</div>
+          <div class="ann info"><strong>USE WHEN:</strong> Bulk data export, migrating all documents from an index. Good for one-pass sequential reads of all documents.</div>
+          <div class="ann alert"><strong>RESOURCE INTENSIVE:</strong> Holds a consistent search context open on ALL shards for the scroll duration. With thousands of concurrent scrolls, this causes significant heap memory pressure.</div>
+          <div class="ann info"><strong>scroll TTL:</strong> The ?scroll=1m parameter sets how long the scroll context stays alive between requests (not total), refreshed on each call. Always DELETE when done.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════
+     03.04 FUZZY + TEMPLATES
+════════════════ -->
+<div class="section">
+  <div class="sec-header">
+    <div class="sec-number">04</div>
+    <div class="sec-meta">
+      <div class="sec-code">03.04</div>
+      <div class="sec-title">Fuzzy Matching & Search Templates</div>
+    </div>
+  </div>
+  <p class="body-text">Fuzzy queries handle typos and spelling variations. Search templates let you define parameterized queries that can be stored and reused — critical for applications where queries are constructed at runtime.</p>
+
+  <div class="cex">
+    <div class="cex-hd">
+      <span class="cex-label">// Fuzzy & Templates</span>
+      <div class="cex-tabs">
+        <button class="cex-tab active" onclick="switchTab('ft2','f1',this)">Fuzzy Matching</button>
+        <button class="cex-tab" onclick="switchTab('ft2','f2',this)">Search Templates</button>
+        <button class="cex-tab" onclick="switchTab('ft2','f3',this)">Index Aliases</button>
+      </div>
+    </div>
+
+    <div id="ft2-f1" class="cex-panel active">
+      <div class="cex-body">
+        <div class="cex-left">
+          <div class="cex-slabel">// Fuzzy query options</div>
+          <pre class="cc"><span class="cmt">// Standalone fuzzy query</span>
+<span class="cm">GET</span> <span class="cp">/products/_search</span>
+{
+  <span class="ck">"query"</span>: {
+    <span class="ck">"fuzzy"</span>: {
+      <span class="ck">"title"</span>: {
+        <span class="ck">"value"</span>:          <span class="cs">"laptoop"</span>,
+        <span class="ck">"fuzziness"</span>:      <span class="cs">"AUTO"</span>,
+        <span class="ck">"prefix_length"</span>:  <span class="cn">2</span>,
+        <span class="ck">"max_expansions"</span>: <span class="cn">50</span>,
+        <span class="ck">"transpositions"</span>: <span class="cb">true</span>
+      }
+    }
+  }
+}
+
+<span class="cmt">// Fuzzy in match query (most common in practice)</span>
+<span class="cm">GET</span> <span class="cp">/products/_search</span>
+{
+  <span class="ck">"query"</span>: {
+    <span class="ck">"match"</span>: {
+      <span class="ck">"title"</span>: {
+        <span class="ck">"query"</span>:     <span class="cs">"laptoop gaming"</span>,
+        <span class="ck">"fuzziness"</span>: <span class="cs">"AUTO"</span>
+      }
+    }
+  }
+}
+
+<span class="cmt">// fuzziness values:</span>
+<span class="cmt">// AUTO   → 0 edits for 1-2 chars</span>
+<span class="cmt">//          1 edit  for 3-5 chars</span>
+<span class="cmt">//          2 edits for 6+ chars</span>
+<span class="cmt">// 0, 1, 2 → explicit edit distance</span></pre>
+        </div>
+        <div class="cex-right">
+          <div class="cex-slabel">// Notes</div>
+          <div class="ann-list">
+            <div class="ann info"><strong>Levenshtein distance:</strong> Number of single-character edits (insertions, deletions, substitutions) needed to transform one string into another. "laptoop" → "laptop" = 1 substitution.</div>
+            <div class="ann info"><strong>transpositions: true</strong> — Counts adjacent character swaps as one edit (Damerau-Levenshtein). "laptpo" → "laptop" = 1 transposition. Default: true.</div>
+            <div class="ann info"><strong>prefix_length:</strong> Number of characters at the start that must match exactly (not fuzzy). prefix_length: 2 means "la..." must be correct, reducing false positives. Performance boost for large indices.</div>
+            <div class="ann alert"><strong>max_expansions:</strong> Max number of fuzzy term variations to consider. Higher = more recall, more CPU. Default: 50.</div>
+            <div class="ann ok"><strong>EXAM RECOMMENDATION:</strong> Add fuzziness: "AUTO" to match queries rather than using standalone fuzzy query. Match + fuzziness handles multi-term inputs more naturally.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="ft2-f2" class="cex-panel">
+      <div class="cex-body">
+        <div class="cex-left">
+          <div class="cex-slabel">// Search templates</div>
+          <pre class="cc"><span class="cmt">// Step 1: Store a search template</span>
+<span class="cm">PUT</span> <span class="cp">/_scripts/product_search</span>
+{
+  <span class="ck">"script"</span>: {
+    <span class="ck">"lang"</span>:   <span class="cs">"mustache"</span>,
+    <span class="ck">"source"</span>: {
+      <span class="ck">"query"</span>: {
+        <span class="ck">"bool"</span>: {
+          <span class="ck">"must"</span>: [
+            {
+              <span class="ck">"match"</span>: {
+                <span class="ck">"title"</span>: <span class="cs">"{{query_string}}"</span>
+              }
+            }
+          ],
+          <span class="ck">"filter"</span>: [
+            {{#category}}
+            { <span class="ck">"term"</span>: { <span class="ck">"category"</span>: <span class="cs">"{{category}}"</span> }},
+            {{/category}}
+            { <span class="ck">"range"</span>: {
+              <span class="ck">"price"</span>: {
+                <span class="ck">"gte"</span>: <span class="cs">"{{min_price}}"</span>,
+                <span class="ck">"lte"</span>: <span class="cs">"{{max_price}}"</span>
+              }
+            }}
+          ]
+        }
+      },
+      <span class="ck">"size"</span>: <span class="cs">"{{size}}"</span>,
+      <span class="ck">"from"</span>: <span class="cs">"{{from}}"</span>
+    }
+  }
+}
+
+<span class="cmt">// Step 2: Execute with parameters</span>
+<span class="cm">GET</span> <span class="cp">/products/_search/template</span>
+{
+  <span class="ck">"id"</span>: <span class="cs">"product_search"</span>,
+  <span class="ck">"params"</span>: {
+    <span class="ck">"query_string"</span>: <span class="cs">"gaming laptop"</span>,
+    <span class="ck">"category"</span>:     <span class="cs">"electronics"</span>,
+    <span class="ck">"min_price"</span>:    <span class="cn">500</span>,
+    <span class="ck">"max_price"</span>:    <span class="cn">2000</span>,
+    <span class="ck">"size"</span>:         <span class="cn">10</span>,
+    <span class="ck">"from"</span>:         <span class="cn">0</span>
+  }
+}
+
+<span class="cmt">// Render without executing (debug)</span>
+<span class="cm">GET</span> <span class="cp">/_render/template</span>
+{
+  <span class="ck">"id"</span>:     <span class="cs">"product_search"</span>,
+  <span class="ck">"params"</span>: { <span class="ck">"query_string"</span>: <span class="cs">"test"</span>, ... }
+}</pre>
+        </div>
+        <div class="cex-right">
+          <div class="cex-slabel">// Notes</div>
+          <div class="ann-list">
+            <div class="ann info"><strong>Mustache syntax:</strong> {{variable}} — simple substitution. {{#variable}}...{{/variable}} — conditional block (renders only if variable is truthy/non-empty). {{^variable}}...{{/variable}} — inverted condition.</div>
+            <div class="ann info"><strong>lang: "mustache"</strong> — always required for search templates. Templates are stored as scripts in the cluster state.</div>
+            <div class="ann info"><strong>_render/template:</strong> Returns the rendered query JSON without executing it. Essential for debugging parameter substitution before running against real data.</div>
+            <div class="ann alert"><strong>EXAM SCENARIO:</strong> "Create a parameterized query template for product search with optional category filter" → PUT /_scripts/name with mustache, use conditional {{#category}}block{{/category}}.</div>
+            <div class="ann ok"><strong>msearch/template:</strong> Run multiple templates in one request using POST /_msearch/template.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="ft2-f3" class="cex-panel">
+      <div class="cex-body">
+        <div class="cex-left">
+          <div class="cex-slabel">// Index aliases for search</div>
+          <pre class="cc"><span class="cmt">// Filtered alias — virtual view of an index</span>
+<span class="cm">POST</span> <span class="cp">/_aliases</span>
+{
+  <span class="ck">"actions"</span>: [{
+    <span class="ck">"add"</span>: {
+      <span class="ck">"index"</span>:  <span class="cs">"logs-2024"</span>,
+      <span class="ck">"alias"</span>:  <span class="cs">"error_logs"</span>,
+      <span class="ck">"filter"</span>: {
+        <span class="ck">"term"</span>: { <span class="ck">"level"</span>: <span class="cs">"ERROR"</span> }
+      }
+    }
+  }]
+}
+
+<span class="cmt">// Now: GET /error_logs/_search returns ONLY error docs</span>
+<span class="cmt">// even though the underlying index has all log levels.</span>
+
+<span class="cmt">// Multi-index alias — search across multiple indices</span>
+<span class="cm">POST</span> <span class="cp">/_aliases</span>
+{
+  <span class="ck">"actions"</span>: [
+    { <span class="ck">"add"</span>: { <span class="ck">"index"</span>: <span class="cs">"logs-2022"</span>, <span class="ck">"alias"</span>: <span class="cs">"all_logs"</span> }},
+    { <span class="ck">"add"</span>: { <span class="ck">"index"</span>: <span class="cs">"logs-2023"</span>, <span class="ck">"alias"</span>: <span class="cs">"all_logs"</span> }},
+    { <span class="ck">"add"</span>: { <span class="ck">"index"</span>: <span class="cs">"logs-2024"</span>, <span class="ck">"alias"</span>: <span class="cs">"all_logs"</span> }}
+  ]
+}
+<span class="cmt">// GET /all_logs/_search queries all three indices</span>
+
+<span class="cmt">// Routing alias — improve query performance</span>
+<span class="cm">POST</span> <span class="cp">/_aliases</span>
+{
+  <span class="ck">"actions"</span>: [{
+    <span class="ck">"add"</span>: {
+      <span class="ck">"index"</span>:          <span class="cs">"users"</span>,
+      <span class="ck">"alias"</span>:          <span class="cs">"users_eu"</span>,
+      <span class="ck">"filter"</span>:         { <span class="ck">"term"</span>: { <span class="ck">"region"</span>: <span class="cs">"eu"</span> }},
+      <span class="ck">"search_routing"</span>: <span class="cs">"eu"</span>
+    }
+  }]
+}</pre>
+        </div>
+        <div class="cex-right">
+          <div class="cex-slabel">// Notes</div>
+          <div class="ann-list">
+            <div class="ann info"><strong>Filtered aliases:</strong> Apply a query filter that automatically restricts all searches through that alias. Users cannot see documents outside the filter — useful for multi-tenancy.</div>
+            <div class="ann info"><strong>Multi-index alias:</strong> One alias pointing to multiple indices. Searches span all of them transparently. Cannot use for writes unless is_write_index is set on exactly one.</div>
+            <div class="ann alert"><strong>Filtered alias + write:</strong> Can index through a filtered alias, but the filter doesn't prevent indexing non-matching documents — it only filters reads. The filter is purely a query-time restriction.</div>
+            <div class="ann ok"><strong>search_routing:</strong> Routes queries to specific shards based on the routing value. With custom shard routing, this can dramatically reduce the shards queried.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search template builder -->
+  <div class="template-builder">
+    <div class="tb-hd">// Interactive Search Template Builder</div>
+    <div class="tb-body">
+      <div class="tb-controls">
+        <div class="tb-label">// Parameters</div>
+        <div class="tb-row">
+          <div class="tb-field">Template Name</div>
+          <input class="tb-input" id="tmpl-name" value="my_search" oninput="renderTemplate()">
+        </div>
+        <div class="tb-row">
+          <div class="tb-field">Query Field</div>
+          <input class="tb-input" id="tmpl-field" value="title" oninput="renderTemplate()">
+        </div>
+        <div class="tb-row">
+          <div class="tb-field">Filter Field (optional)</div>
+          <input class="tb-input" id="tmpl-filter" value="category" oninput="renderTemplate()">
+        </div>
+        <div class="tb-row">
+          <div class="tb-field">Fuzziness</div>
+          <select class="tb-select" id="tmpl-fuzzy" onchange="renderTemplate()">
+            <option value="0">0 (exact)</option>
+            <option value='"AUTO"' selected>AUTO</option>
+            <option value="1">1 edit</option>
+            <option value="2">2 edits</option>
+          </select>
+        </div>
+        <div class="tb-row">
+          <div class="tb-field">Include Range Filter</div>
+          <select class="tb-select" id="tmpl-range" onchange="renderTemplate()">
+            <option value="yes" selected>Yes</option>
+            <option value="no">No</option>
+          </select>
+        </div>
+      </div>
+      <div class="tb-output">
+        <div class="tb-label">// Generated Template</div>
+        <pre class="tb-code" id="tmpl-output"></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════
+     03.05 QUICK REFERENCE
+════════════════ -->
+<div class="section">
+  <div class="sec-header">
+    <div class="sec-number">05</div>
+    <div class="sec-meta">
+      <div class="sec-code">03.05</div>
+      <div class="sec-title">Quick Reference</div>
+    </div>
+  </div>
+
+  <table class="ref-table">
+    <thead>
+      <tr><th>Feature</th><th>Key Parameter</th><th>Exam-Critical Detail</th><th>Sortable?</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Highlighting</td><td>number_of_fragments: 0</td><td>Returns entire field; needed for short fields like title</td><td>—</td></tr>
+      <tr><td>Highlight tags</td><td>pre_tags / post_tags</td><td>Default &lt;em&gt;&lt;/em&gt;; can specify any HTML</td><td>—</td></tr>
+      <tr><td>fvh highlighter</td><td>term_vector: "with_positions_offsets"</td><td>Must be set in mapping BEFORE indexing — requires reindex to add</td><td>—</td></tr>
+      <tr><td>Sorting text field</td><td>field.keyword</td><td>text fields CANNOT be sorted — use keyword sub-field</td><td><span class="badge n">ERROR</span></td></tr>
+      <tr><td>Geo sort</td><td>_geo_distance</td><td>Requires geo_point mapping on the field</td><td><span class="badge y">YES</span></td></tr>
+      <tr><td>from/size</td><td>max_result_window: 10000</td><td>from + size must be ≤ 10,000 by default</td><td>—</td></tr>
+      <tr><td>search_after</td><td>PIT + _shard_doc tiebreaker</td><td>Sort must have unique tiebreaker; search_after = last hit's sort array</td><td>—</td></tr>
+      <tr><td>Scroll</td><td>?scroll=1m on initial, then /_search/scroll</td><td>Legacy — prefer search_after for new apps. DELETE context when done.</td><td>—</td></tr>
+      <tr><td>Fuzzy AUTO</td><td>0/1/2 edits by term length</td><td>1-2 chars: 0, 3-5 chars: 1, 6+ chars: 2</td><td>—</td></tr>
+      <tr><td>Search template</td><td>lang: "mustache"</td><td>Stored via PUT /_scripts/name; executed via POST /index/_search/template</td><td>—</td></tr>
+      <tr><td>Filtered alias</td><td>filter inside add action</td><td>Filter applies to reads only; does NOT prevent writing non-matching docs</td><td>—</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ═══════════════
+     03.06 DRILLS
+════════════════ -->
+<div class="section">
+  <div class="sec-header">
+    <div class="sec-number">06</div>
+    <div class="sec-meta">
+      <div class="sec-code">03.06</div>
+      <div class="sec-title">Exam Scenario Drills</div>
+    </div>
+  </div>
+  <p class="body-text">Hands-on tasks in ECE exam format. Attempt each before expanding the solution.</p>
+
+  <div class="drills">
+    <div class="drill" onclick="toggleDrill(this,'dr1')">
+      <div class="drill-hd">
+        <div class="drill-n">01</div>
+        <div class="drill-content">
+          <div class="drill-cat">Highlighting · Sorting · Pagination</div>
+          <div class="drill-task">Write a search on the <code>articles</code> index that: (a) searches for "machine learning" in <code>body</code> with fuzzy matching, (b) highlights matches in <code>body</code> (max 2 fragments of 200 chars) and returns the full <code>title</code> highlighted, (c) sorts by <code>published_at</code> descending then <code>_score</code>, (d) returns page 2 of results (10 per page).</div>
+        </div>
+        <div class="drill-arrow">›</div>
+      </div>
+      <div class="drill-body" id="dr1">
+        <div class="drill-sol">
+          <div class="ds-label">// Solution</div>
+          <pre class="ds-code"><span class="cm">GET</span> <span class="cp">/articles/_search</span>
+{
+  <span class="ck">"from"</span>: <span class="cn">10</span>,
+  <span class="ck">"size"</span>: <span class="cn">10</span>,
+  <span class="ck">"query"</span>: {
+    <span class="ck">"match"</span>: {
+      <span class="ck">"body"</span>: {
+        <span class="ck">"query"</span>:     <span class="cs">"machine learning"</span>,
+        <span class="ck">"fuzziness"</span>: <span class="cs">"AUTO"</span>
+      }
+    }
+  },
+  <span class="ck">"highlight"</span>: {
+    <span class="ck">"fields"</span>: {
+      <span class="ck">"body"</span>: {
+        <span class="ck">"number_of_fragments"</span>: <span class="cn">2</span>,
+        <span class="ck">"fragment_size"</span>:       <span class="cn">200</span>
+      },
+      <span class="ck">"title"</span>: {
+        <span class="ck">"number_of_fragments"</span>: <span class="cn">0</span>
+      }
+    }
+  },
+  <span class="ck">"sort"</span>: [
+    { <span class="ck">"published_at"</span>: { <span class="ck">"order"</span>: <span class="cs">"desc"</span> }},
+    { <span class="ck">"_score"</span>:        { <span class="ck">"order"</span>: <span class="cs">"desc"</span> }}
+  ]
+}</pre>
+          <div class="ds-note"><strong>Key decisions:</strong> from: 10 = page 2 (0-indexed). fuzziness in the match query (not standalone fuzzy). number_of_fragments: 0 on title returns the complete title with highlights. Two sort fields: primary is date, secondary is relevance as tiebreaker. Highlight fields block has per-field configuration.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="drill" onclick="toggleDrill(this,'dr2')">
+      <div class="drill-hd">
+        <div class="drill-n">02</div>
+        <div class="drill-content">
+          <div class="drill-cat">search_after · PIT · Deep Pagination</div>
+          <div class="drill-task">Implement deep pagination over the <code>events</code> index using search_after and a Point in Time. Show: opening the PIT, the first-page request with proper sort tiebreaker, and the second-page request using the sort values from the last hit of page 1 (assume values were <code>[1709856000000, "evt_4829"]</code>).</div>
+        </div>
+        <div class="drill-arrow">›</div>
+      </div>
+      <div class="drill-body" id="dr2">
+        <div class="drill-sol">
+          <div class="ds-label">// Solution</div>
+          <pre class="ds-code"><span class="cmt">// Step 1: Open PIT with 2-minute keep_alive</span>
+<span class="cm">POST</span> <span class="cp">/events/_pit?keep_alive=2m</span>
+<span class="cmt">// Response: { "id": "46ToAwMDaWdv..." }</span>
+
+<span class="cmt">// Step 2: First page (no search_after)</span>
+<span class="cm">GET</span> <span class="cp">/_search</span>
+{
+  <span class="ck">"pit"</span>: {
+    <span class="ck">"id"</span>:         <span class="cs">"46ToAwMDaWdv..."</span>,
+    <span class="ck">"keep_alive"</span>: <span class="cs">"2m"</span>
+  },
+  <span class="ck">"sort"</span>: [
+    { <span class="ck">"@timestamp"</span>: { <span class="ck">"order"</span>: <span class="cs">"desc"</span> }},
+    { <span class="ck">"_shard_doc"</span>: { <span class="ck">"order"</span>: <span class="cs">"asc"</span>  }}
+  ],
+  <span class="ck">"size"</span>: <span class="cn">20</span>,
+  <span class="ck">"query"</span>: { <span class="ck">"match_all"</span>: {} }
+}
+<span class="cmt">// Save last hit: sort = [1709856000000, "evt_4829"]</span>
+
+<span class="cmt">// Step 3: Second page using search_after</span>
+<span class="cm">GET</span> <span class="cp">/_search</span>
+{
+  <span class="ck">"pit"</span>: {
+    <span class="ck">"id"</span>:         <span class="cs">"46ToAwMDaWdv..."</span>,
+    <span class="ck">"keep_alive"</span>: <span class="cs">"2m"</span>
+  },
+  <span class="ck">"sort"</span>: [
+    { <span class="ck">"@timestamp"</span>: { <span class="ck">"order"</span>: <span class="cs">"desc"</span>  }},
+    { <span class="ck">"_shard_doc"</span>: { <span class="ck">"order"</span>: <span class="cs">"asc"</span>   }}
+  ],
+  <span class="ck">"search_after"</span>: [<span class="cn">1709856000000</span>, <span class="cs">"evt_4829"</span>],
+  <span class="ck">"size"</span>: <span class="cn">20</span>,
+  <span class="ck">"query"</span>: { <span class="ck">"match_all"</span>: {} }
+}
+
+<span class="cmt">// Step 4: Close PIT when finished</span>
+<span class="cm">DELETE</span> <span class="cp">/_pit</span>
+{ <span class="ck">"id"</span>: <span class="cs">"46ToAwMDaWdv..."</span> }</pre>
+          <div class="ds-note"><strong>Key points:</strong> POST /index/_pit (not GET) to open. When using PIT, send requests to /_search (not /index/_search) since the index is encoded in the PIT. _shard_doc is the preferred unique tiebreaker when using PIT. Refresh keep_alive on each GET request to prevent expiry. search_after array must exactly match the sort fields in order and type.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="drill" onclick="toggleDrill(this,'dr3')">
+      <div class="drill-hd">
+        <div class="drill-n">03</div>
+        <div class="drill-content">
+          <div class="drill-cat">Search Templates · Filtered Alias</div>
+          <div class="drill-task">Create a search template named <code>product_search</code> that accepts <code>query_string</code> (required), optional <code>max_price</code>, and <code>size</code> (default 10). Then create a filtered alias <code>in_stock_products</code> on the <code>products</code> index that only exposes documents where <code>in_stock: true</code>. Finally, execute the template against the alias.</div>
+        </div>
+        <div class="drill-arrow">›</div>
+      </div>
+      <div class="drill-body" id="dr3">
+        <div class="drill-sol">
+          <div class="ds-label">// Solution</div>
+          <pre class="ds-code"><span class="cmt">// Step 1: Create the search template</span>
+<span class="cm">PUT</span> <span class="cp">/_scripts/product_search</span>
+{
+  <span class="ck">"script"</span>: {
+    <span class="ck">"lang"</span>:   <span class="cs">"mustache"</span>,
+    <span class="ck">"source"</span>: {
+      <span class="ck">"query"</span>: {
+        <span class="ck">"bool"</span>: {
+          <span class="ck">"must"</span>: [
+            {
+              <span class="ck">"match"</span>: {
+                <span class="ck">"title"</span>: <span class="cs">"{{query_string}}"</span>
+              }
+            }
+          ],
+          <span class="ck">"filter"</span>: [
+            {{#max_price}}
+            {
+              <span class="ck">"range"</span>: {
+                <span class="ck">"price"</span>: { <span class="ck">"lte"</span>: <span class="cs">"{{max_price}}"</span> }
+              }
+            }
+            {{/max_price}}
+          ]
+        }
+      },
+      <span class="ck">"size"</span>: <span class="cs">"{{size}}"</span>
+    }
+  },
+  <span class="ck">"params"</span>: {
+    <span class="ck">"size"</span>: <span class="cn">10</span>
+  }
+}
+
+<span class="cmt">// Step 2: Create filtered alias</span>
+<span class="cm">POST</span> <span class="cp">/_aliases</span>
+{
+  <span class="ck">"actions"</span>: [{
+    <span class="ck">"add"</span>: {
+      <span class="ck">"index"</span>:  <span class="cs">"products"</span>,
+      <span class="ck">"alias"</span>:  <span class="cs">"in_stock_products"</span>,
+      <span class="ck">"filter"</span>: {
+        <span class="ck">"term"</span>: { <span class="ck">"in_stock"</span>: <span class="cb">true</span> }
+      }
+    }
+  }]
+}
+
+<span class="cmt">// Step 3: Execute template against alias</span>
+<span class="cm">POST</span> <span class="cp">/in_stock_products/_search/template</span>
+{
+  <span class="ck">"id"</span>: <span class="cs">"product_search"</span>,
+  <span class="ck">"params"</span>: {
+    <span class="ck">"query_string"</span>: <span class="cs">"laptop"</span>,
+    <span class="ck">"max_price"</span>:    <span class="cn">1500</span>
+  }
+}
+
+<span class="cmt">// Verify template renders correctly (debug):</span>
+<span class="cm">GET</span> <span class="cp">/_render/template</span>
+{
+  <span class="ck">"id"</span>:     <span class="cs">"product_search"</span>,
+  <span class="ck">"params"</span>: { <span class="ck">"query_string"</span>: <span class="cs">"laptop"</span>, <span class="ck">"max_price"</span>: <span class="cn">1500</span> }
+}</pre>
+          <div class="ds-note"><strong>Key points:</strong> {{#max_price}}...{{/max_price}} renders the range filter ONLY when max_price is provided. Default params in the script definition provide the fallback value for size. POST /index/_search/template (not GET). The filtered alias transparently restricts results to in_stock: true documents — the template doesn't need to know about this. Always verify with _render/template before using in production.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════
+     QUIZ
+════════════════ -->
+<div class="quiz">
+  <div class="quiz-title">Assessment</div>
+  <div class="quiz-sub">7 questions · Developing Search Applications · ECE exam style</div>
+
+  <!-- Q1 -->
+  <div class="qb" id="q1">
+    <div class="q-n">QUESTION 01</div>
+    <div class="q-t">You want the <code>title</code> field to be returned as a complete highlighted string (not fragmented into snippets). Which configuration achieves this?</div>
+    <div class="opts">
+      <button class="opt" onclick="ans(this,'q1','A','B')"><span class="ol">A</span>"title": { "fragment_size": 10000 }</button>
+      <button class="opt" onclick="ans(this,'q1','B','B')"><span class="ol">B</span>"title": { "number_of_fragments": 0 }</button>
+      <button class="opt" onclick="ans(this,'q1','C','B')"><span class="ol">C</span>"title": { "type": "plain", "number_of_fragments": 1 }</button>
+      <button class="opt" onclick="ans(this,'q1','D','B')"><span class="ol">D</span>"title": { "highlight_query": { "match_all": {} } }</button>
+    </div>
+    <div class="exp" id="e-q1"><strong>Correct: number_of_fragments: 0.</strong> Setting number_of_fragments to 0 tells Elasticsearch to return the entire field content as one highlighted string instead of fragmenting it. This is the canonical pattern for short fields like titles. A large fragment_size doesn't prevent fragmentation — it just makes fragments longer. Setting fragments: 1 returns only one fragment, not the whole field.</div>
+  </div>
+
+  <!-- Q2 -->
+  <div class="qb" id="q2">
+    <div class="q-n">QUESTION 02</div>
+    <div class="q-t">A search request sorts by <code>name</code> (a <code>text</code> field) in ascending order. What happens?</div>
+    <div class="opts">
+      <button class="opt" onclick="ans(this,'q2','A','C')"><span class="ol">A</span>Results are sorted alphabetically using the analyzed token values</button>
+      <button class="opt" onclick="ans(this,'q2','B','C')"><span class="ol">B</span>Results are sorted by the first character of the name field</button>
+      <button class="opt" onclick="ans(this,'q2','C','C')"><span class="ol">C</span>Elasticsearch throws an error — text fields cannot be used for sorting</button>
+      <button class="opt" onclick="ans(this,'q2','D','C')"><span class="ol">D</span>Results are returned in index order since sorting is ignored on text fields</button>
+    </div>
+    <div class="exp" id="e-q2"><strong>Correct: error.</strong> Sorting on a text field causes an error in Elasticsearch. Text fields are analyzed (tokenized) and their values are not stored in a format suitable for sorting. To sort on a name field, you must use a keyword sub-field: "name.keyword". If no keyword sub-field exists, you must update the mapping and reindex.</div>
+  </div>
+
+  <!-- Q3 -->
+  <div class="qb" id="q3">
+    <div class="q-n">QUESTION 03</div>
+    <div class="q-t">Which pagination method should be used for an application that needs to export all 5 million documents from an index as efficiently as possible, with consistent results?</div>
+    <div class="opts">
+      <button class="opt" onclick="ans(this,'q3','A','D')"><span class="ol">A</span>from/size with a very high max_result_window</button>
+      <button class="opt" onclick="ans(this,'q3','B','D')"><span class="ol">B</span>from/size with size: 10000 to fetch in large batches</button>
+      <button class="opt" onclick="ans(this,'q3','C','D')"><span class="ol">C</span>search_after with a Point in Time, using _shard_doc as tiebreaker</button>
+      <button class="opt" onclick="ans(this,'q3','D','D')"><span class="ol">D</span>Scroll API with sort: ["_doc"] for sequential document order</button>
+    </div>
+    <div class="exp" id="e-q3"><strong>Correct: Scroll API with sort: ["_doc"].</strong> For bulk export of all documents in a sequential, single-pass operation, the Scroll API is the appropriate choice. sort: ["_doc"] uses internal index order — fastest possible sort, no scoring overhead. search_after with PIT (C) is also valid for deep pagination but is better suited for interactive use or when you need to page back and forth. The scroll API, while deprecated for new UIs, remains the standard for bulk data export. from/size is limited to 10,000 records.</div>
+  </div>
+
+  <!-- Q4 -->
+  <div class="qb" id="q4">
+    <div class="q-n">QUESTION 04</div>
+    <div class="q-t">When using <code>search_after</code> with a PIT, what value should you use as the sort tiebreaker to guarantee unique, stable ordering?</div>
+    <div class="opts">
+      <button class="opt" onclick="ans(this,'q4','A','C')"><span class="ol">A</span>_id</button>
+      <button class="opt" onclick="ans(this,'q4','B','C')"><span class="ol">B</span>_seq_no</button>
+      <button class="opt" onclick="ans(this,'q4','C','C')"><span class="ol">C</span>_shard_doc</button>
+      <button class="opt" onclick="ans(this,'q4','D','C')"><span class="ol">D</span>_index</button>
+    </div>
+    <div class="exp" id="e-q4"><strong>Correct: _shard_doc.</strong> When using search_after with a PIT, _shard_doc is the recommended tiebreaker. It is unique within each shard and provides deterministic ordering. _id can be used without PIT but may not be unique across shards in all cases. _seq_no is document-level versioning, not a sort field. _index doesn't guarantee uniqueness within an index.</div>
+  </div>
+
+  <!-- Q5 -->
+  <div class="qb" id="q5">
+    <div class="q-n">QUESTION 05</div>
+    <div class="q-t">What is the effect of <code>fuzziness: "AUTO"</code> on a search term that is 4 characters long?</div>
+    <div class="opts">
+      <button class="opt" onclick="ans(this,'q5','A','B')"><span class="ol">A</span>0 edits allowed (exact match only)</button>
+      <button class="opt" onclick="ans(this,'q5','B','B')"><span class="ol">B</span>1 edit allowed (1 insertion, deletion, substitution, or transposition)</button>
+      <button class="opt" onclick="ans(this,'q5','C','B')"><span class="ol">C</span>2 edits allowed</button>
+      <button class="opt" onclick="ans(this,'q5','D','B')"><span class="ol">D</span>AUTO selects the edit distance based on query frequency, not length</button>
+    </div>
+    <div class="exp" id="e-q5"><strong>Correct: 1 edit.</strong> AUTO fuzziness follows these rules based on term length: 0 edits for 1-2 character terms, 1 edit for 3-5 character terms, 2 edits for terms 6+ characters. A 4-character term falls in the 3-5 range, so AUTO allows 1 Levenshtein edit (insertion, deletion, substitution, or transposition if transpositions: true).</div>
+  </div>
+
+  <!-- Q6 -->
+  <div class="qb" id="q6">
+    <div class="q-n">QUESTION 06</div>
+    <div class="q-t">You create a filtered alias <code>eu_users</code> on the <code>users</code> index with filter <code>{"term": {"region": "eu"}}</code>. A document with <code>region: "us"</code> is indexed through the <code>eu_users</code> alias. What happens?</div>
+    <div class="opts">
+      <button class="opt" onclick="ans(this,'q6','A','C')"><span class="ol">A</span>The document is rejected because it doesn't match the alias filter</button>
+      <button class="opt" onclick="ans(this,'q6','B','C')"><span class="ol">B</span>The document is indexed with region automatically changed to "eu"</button>
+      <button class="opt" onclick="ans(this,'q6','C','C')"><span class="ol">C</span>The document is indexed successfully in the users index, but won't be visible when searching through the eu_users alias</button>
+      <button class="opt" onclick="ans(this,'q6','D','C')"><span class="ol">D</span>The alias filter prevents all writes — filtered aliases are read-only</button>
+    </div>
+    <div class="exp" id="e-q6"><strong>Correct: indexed but invisible through the alias.</strong> Filtered aliases apply their filter only at query time — they do NOT filter writes. Indexing a us-region document through eu_users succeeds and the document lands in the users index. However, when you search through eu_users, the filter restricts results to region: "eu" docs, so the us document won't appear. Filtered aliases provide read-level isolation, not write protection.</div>
+  </div>
+
+  <!-- Q7 -->
+  <div class="qb" id="q7">
+    <div class="q-n">QUESTION 07</div>
+    <div class="q-t">In a Mustache search template, what syntax makes a filter block appear conditionally only when the <code>min_price</code> parameter is provided?</div>
+    <div class="opts">
+      <button class="opt" onclick="ans(this,'q7','A','B')"><span class="ol">A</span>{% if min_price %} ... {% endif %}</button>
+      <button class="opt" onclick="ans(this,'q7','B','B')"><span class="ol">B</span>{{#min_price}} ... {{/min_price}}</button>
+      <button class="opt" onclick="ans(this,'q7','C','B')"><span class="ol">C</span>{{?min_price}} ... {{/min_price}}</button>
+      <button class="opt" onclick="ans(this,'q7','D','B')"><span class="ol">D</span>{{min_price ? ... : ""}}</button>
+    </div>
+    <div class="exp" id="e-q7"><strong>Correct: {{#min_price}} ... {{/min_price}}.</strong> Mustache uses the section syntax {{#variable}}...{{/variable}} for conditional rendering. The block renders if the variable is truthy (non-null, non-empty, non-false). The inverted form {{^variable}}...{{/variable}} renders when the variable is falsy. Jinja2 ({% if %}) and ternary operators are not valid Mustache syntax.</div>
+  </div>
+
+  <div class="scorebox" id="scorebox">
+    <div class="score-big" id="score-num">0/7</div>
+    <div class="score-sub">Search Applications · Assessment Complete</div>
+    <div class="score-msg" id="score-msg"></div>
+    <button class="btn-reset" onclick="resetQuiz()">↺ RETRY</button>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="ft">ECE · TOPIC 03 · SEARCH APPLICATIONS · ELASTIC CERTIFIED ENGINEER</div>
+  <div class="nav-btns">
+    <span class="nbtn">← Topic 2</span>
+    <button class="nbtn primary" onclick="alert('Topic 4: Data Processing — coming next!')">Topic 4: Data Processing →</button>
+  </div>
+</footer>
+
+</div>
+
+<script>
+// ── Tab switcher ──
+function switchTab(group, id, btn) {
+  document.querySelectorAll(`[id^="${group}-"]`).forEach(p => p.classList.remove('active'));
+  document.getElementById(`${group}-${id.replace(group+'-','')}`).classList.add('active');
+  btn.closest('.cex-tabs').querySelectorAll('.cex-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ── Pagination method selector ──
+function showPg(el, id) {
+  document.querySelectorAll('.pg-m').forEach(m => m.classList.remove('active'));
+  document.querySelectorAll('.pg-detail').forEach(d => d.classList.remove('show'));
+  el.classList.add('active');
+  document.getElementById(id).classList.add('show');
+}
+
+// ── Drills ──
+function toggleDrill(el, id) {
+  const body = document.getElementById(id);
+  const open = body.classList.contains('show');
+  document.querySelectorAll('.drill-body').forEach(b => b.classList.remove('show'));
+  document.querySelectorAll('.drill').forEach(d => d.classList.remove('open'));
+  if (!open) { body.classList.add('show'); el.classList.add('open'); }
+}
+
+// ── Template builder ──
+function renderTemplate() {
+  const name       = document.getElementById('tmpl-name').value  || 'my_search';
+  const field      = document.getElementById('tmpl-field').value || 'title';
+  const filter     = document.getElementById('tmpl-filter').value;
+  const fuzzy      = document.getElementById('tmpl-fuzzy').value;
+  const hasRange   = document.getElementById('tmpl-range').value === 'yes';
+  const fuzzStr    = fuzzy === '"AUTO"' ? '"AUTO"' : fuzzy;
+
+  const filterBlock = filter ? `
+          ${hasRange ? `{{#${filter}}}
+          { "term": { "${filter}": "{{${filter}}}" }},
+          {{/${filter}}}` : `{{#${filter}}}
+          { "term": { "${filter}": "{{${filter}}}" }}
+          {{/${filter}}}`}` : '';
+
+  const rangeBlock = hasRange ? `
+          {{#max_price}}
+          { "range": { "price": { "lte": "{{max_price}}" }}}
+          {{/max_price}}` : '';
+
+  const filterComma = filter && hasRange ? ',' : '';
+
+  let output = `<span class="cm">PUT</span> <span class="cp">/_scripts/${name}</span>
+{
+  <span class="ck">"script"</span>: {
+    <span class="ck">"lang"</span>:   <span class="cs">"mustache"</span>,
+    <span class="ck">"source"</span>: {
+      <span class="ck">"query"</span>: {
+        <span class="ck">"bool"</span>: {
+          <span class="ck">"must"</span>: [{
+            <span class="ck">"match"</span>: {
+              <span class="ck">"${field}"</span>: {
+                <span class="ck">"query"</span>:     <span class="cs">"{{query_string}}"</span>,
+                <span class="ck">"fuzziness"</span>: ${fuzzStr === '"AUTO"' ? `<span class="cs">"AUTO"</span>` : `<span class="cn">${fuzzStr}</span>`}
+              }
+            }
+          }]`;
+
+  if (filter || hasRange) {
+    output += `,
+          <span class="ck">"filter"</span>: [`;
+    if (filter) {
+      output += `
+            {{#${filter}}}
+            { <span class="ck">"term"</span>: { <span class="ck">"${filter}"</span>: <span class="cs">"{{${filter}}}"</span> }}${hasRange ? ',' : ''}
+            {{/${filter}}}`;
+    }
+    if (hasRange) {
+      output += `
+            {{#max_price}}
+            { <span class="ck">"range"</span>: { <span class="ck">"price"</span>: { <span class="ck">"lte"</span>: <span class="cs">"{{max_price}}"</span> }}}
+            {{/max_price}}`;
+    }
+    output += `
+          ]`;
+  }
+
+  output += `
+        }
+      },
+      <span class="ck">"size"</span>: <span class="cs">"{{size}}"</span>,
+      <span class="ck">"from"</span>: <span class="cs">"{{from}}"</span>
+    }
+  },
+  <span class="ck">"params"</span>: {
+    <span class="ck">"size"</span>: <span class="cn">10</span>,
+    <span class="ck">"from"</span>: <span class="cn">0</span>
+  }
+}`;
+  document.getElementById('tmpl-output').innerHTML = output;
+}
+renderTemplate();
+
+// ── Quiz ──
+const correct = { q1:'B', q2:'C', q3:'D', q4:'C', q5:'B', q6:'C', q7:'B' };
+const answered = {};
+let score = 0;
+
+function ans(btn, qId, chosen) {
+  if (answered[qId]) return;
+  answered[qId] = true;
+  const isRight = chosen === correct[qId];
+  if (isRight) score++;
+  const opts = document.getElementById(qId).querySelectorAll('.opt');
+  const letters = ['A','B','C','D'];
+  opts.forEach((o, i) => {
+    o.classList.add('locked'); o.style.cursor = 'default';
+    if (letters[i] === correct[qId]) o.classList.add('revealc');
+  });
+  btn.classList.remove('revealc');
+  btn.classList.add(isRight ? 'correct' : 'wrong');
+  document.getElementById('e-' + qId).classList.add('show');
+  updateProgress();
+  if (Object.keys(answered).length === 7) setTimeout(showScore, 500);
+}
+
+function updateProgress() {
+  const n = Object.keys(answered).length;
+  document.getElementById('progFill').style.width = (n / 7 * 100) + '%';
+  document.getElementById('progTxt').textContent = n + ' / 7 answered';
+}
+
+function showScore() {
+  document.getElementById('score-num').textContent = score + '/7';
+  const p = score / 7 * 100;
+  document.getElementById('score-msg').textContent =
+    p === 100 ? 'Perfect. All search application objectives mastered.' :
+    p >= 85   ? 'Strong. Review pagination method tradeoffs before exam day.' :
+    p >= 57   ? 'Developing. Focus on search_after vs scroll, filtered aliases, and template syntax.' :
+                'Keep studying. Priority: pagination methods, highlighting config, and mustache syntax.';
+  document.getElementById('scorebox').classList.add('show');
+}
+
+function resetQuiz() {
+  Object.keys(answered).forEach(k => delete answered[k]);
+  score = 0;
+  document.getElementById('scorebox').classList.remove('show');
+  document.querySelectorAll('.opt').forEach(o => { o.classList.remove('correct','wrong','revealc','locked'); o.style.cursor = ''; });
+  document.querySelectorAll('.exp').forEach(e => e.classList.remove('show'));
+  document.getElementById('progFill').style.width = '0%';
+  document.getElementById('progTxt').textContent = '0 / 7 answered';
+}
+</script>
+</body>
+</html>

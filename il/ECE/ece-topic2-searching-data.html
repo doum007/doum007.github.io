@@ -1,0 +1,1775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ECE Topic 2: Searching Data</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400;1,700&family=Source+Code+Pro:wght@300;400;600&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:      #1a1612;
+    --bg2:     #201c18;
+    --s1:      #28231e;
+    --s2:      #302a24;
+    --s3:      #38312a;
+    --border:  #3e3530;
+    --bord2:   #5a4e44;
+    --amber:   #d4891a;
+    --amber2:  #e8a030;
+    --amber3:  #f5b840;
+    --amber4:  #ffd080;
+    --green:   #5aaa6a;
+    --green2:  #78c888;
+    --red:     #c85050;
+    --red2:    #e06060;
+    --blue:    #5888c8;
+    --blue2:   #78aaee;
+    --rose:    #c86888;
+    --text:    #e8ddd0;
+    --dim:     #8a7a6a;
+    --muted:   #4a3f38;
+    --mono:    'Source Code Pro', monospace;
+    --display: 'Playfair Display', serif;
+    --body:    'Crimson Pro', serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--body);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Subtle paper grain texture */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 0; opacity: 0.6;
+  }
+
+  /* Top corner decoration */
+  body::after {
+    content: '';
+    position: fixed; top: 0; right: 0;
+    width: 400px; height: 400px;
+    background: radial-gradient(ellipse at top right, rgba(212,137,26,0.06) 0%, transparent 65%);
+    pointer-events: none; z-index: 0;
+  }
+
+  .container { max-width: 1120px; margin: 0 auto; padding: 0 36px; position: relative; z-index: 1; }
+
+  /* ── HEADER ── */
+  header { padding: 52px 0 0; margin-bottom: 44px; }
+
+  .header-rule {
+    height: 3px; margin-bottom: 28px;
+    background: repeating-linear-gradient(90deg,
+      var(--amber) 0px, var(--amber) 60px,
+      var(--bg2) 60px, var(--bg2) 64px,
+      var(--amber3) 64px, var(--amber3) 68px,
+      var(--bg2) 68px, var(--bg2) 72px
+    );
+  }
+
+  .header-meta {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    flex-wrap: wrap; gap: 20px; margin-bottom: 20px;
+  }
+
+  .cert-tag {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 3px;
+    color: var(--amber); text-transform: uppercase;
+    border-bottom: 1px solid var(--amber); padding-bottom: 4px;
+  }
+
+  .meta-nums { display: flex; gap: 28px; }
+  .mn { text-align: right; }
+  .mn-v { font-family: var(--display); font-size: 2rem; font-weight: 900; color: var(--amber); line-height: 1; }
+  .mn-l { font-family: var(--mono); font-size: 9px; color: var(--dim); letter-spacing: 2px; text-transform: uppercase; }
+
+  h1 {
+    font-family: var(--display);
+    font-size: clamp(3rem, 8vw, 6.5rem);
+    font-weight: 900; line-height: 0.88;
+    color: var(--text); letter-spacing: -1px;
+  }
+  h1 em { font-style: italic; color: var(--amber); }
+  h1 .byline {
+    display: block; font-family: var(--body); font-size: 0.26em;
+    font-weight: 300; font-style: italic; color: var(--dim);
+    letter-spacing: 3px; margin-top: 12px; text-transform: none;
+  }
+
+  .header-rule-bottom {
+    height: 1px; background: var(--bord2); margin: 24px 0 0;
+  }
+
+  /* Topic nav */
+  .topic-nav {
+    display: flex; flex-wrap: wrap; gap: 0;
+    margin: 0 0 0; border-bottom: 1px solid var(--border);
+  }
+  .topic-nav a {
+    font-family: var(--mono); font-size: 9px; padding: 10px 16px;
+    text-decoration: none; transition: all 0.15s;
+    color: var(--dim); letter-spacing: 2px; text-transform: uppercase;
+    border-right: 1px solid var(--border);
+  }
+  .topic-nav a.done { color: var(--green); }
+  .topic-nav a.done::before { content: '✓ '; }
+  .topic-nav a.active { background: var(--amber); color: var(--bg); font-weight: 600; }
+  .topic-nav a:hover:not(.active) { color: var(--amber2); background: rgba(212,137,26,0.06); }
+
+  /* Progress */
+  .prog-row { display: flex; align-items: center; gap: 14px; margin: 18px 0 52px; }
+  .prog-track { flex: 1; height: 2px; background: var(--border); overflow: hidden; }
+  .prog-fill { height: 100%; background: linear-gradient(90deg, var(--amber), var(--amber3)); width: 0%; transition: width 0.5s; }
+  .prog-txt { font-family: var(--mono); font-size: 10px; color: var(--dim); white-space: nowrap; }
+
+  /* ── SECTIONS ── */
+  .section { margin-bottom: 64px; animation: pageIn 0.4s ease both; }
+  @keyframes pageIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+  .section:nth-child(1){animation-delay:.05s} .section:nth-child(2){animation-delay:.10s}
+  .section:nth-child(3){animation-delay:.15s} .section:nth-child(4){animation-delay:.20s}
+  .section:nth-child(5){animation-delay:.25s} .section:nth-child(6){animation-delay:.30s}
+
+  .sec-hd { margin-bottom: 22px; padding-bottom: 12px; border-bottom: 2px solid var(--bord2); display: flex; align-items: baseline; gap: 16px; }
+  .sec-num { font-family: var(--mono); font-size: 11px; color: var(--amber); letter-spacing: 3px; }
+  .sec-title { font-family: var(--display); font-size: 1.8rem; font-weight: 700; color: var(--text); }
+
+  .card {
+    background: var(--bg2); border: 1px solid var(--border);
+    padding: 28px 32px; position: relative;
+  }
+  .card p { font-size: 1.05rem; line-height: 1.9; color: var(--dim); margin-bottom: 14px; font-weight: 300; }
+  .card p:last-child { margin-bottom: 0; }
+  strong { color: var(--text); font-weight: 600; }
+  code { font-family: var(--mono); font-size: 12px; color: var(--amber2); background: rgba(212,137,26,0.1); padding: 2px 6px; border: 1px solid rgba(212,137,26,0.2); }
+
+  /* ── QUERY DSL EXPLORER ── */
+  .qexplorer { background: var(--s1); border: 1px solid var(--border); overflow: hidden; margin: 22px 0; }
+
+  .qe-tabs {
+    display: flex; flex-wrap: wrap; background: var(--s2);
+    border-bottom: 1px solid var(--border);
+  }
+  .qe-tab {
+    font-family: var(--mono); font-size: 10px; padding: 11px 18px;
+    color: var(--dim); cursor: pointer; transition: all 0.15s; letter-spacing: 1px;
+    border-right: 1px solid var(--border); border-bottom: 2px solid transparent;
+    background: none; text-transform: uppercase;
+  }
+  .qe-tab.active { color: var(--amber); border-bottom-color: var(--amber); background: rgba(212,137,26,0.06); }
+  .qe-tab:hover:not(.active) { color: var(--amber2); background: rgba(212,137,26,0.04); }
+
+  .qe-panel { display: none; }
+  .qe-panel.active { display: grid; grid-template-columns: 1fr 1fr; }
+  @media(max-width:720px){ .qe-panel.active { grid-template-columns: 1fr; } }
+
+  .qe-left { padding: 20px 22px; border-right: 1px solid var(--border); }
+  .qe-right { padding: 20px 22px; background: rgba(0,0,0,0.15); }
+
+  .pane-label {
+    font-family: var(--mono); font-size: 9px; color: var(--dim);
+    letter-spacing: 3px; text-transform: uppercase; margin-bottom: 12px;
+    padding-bottom: 6px; border-bottom: 1px solid var(--border);
+  }
+
+  pre.code {
+    font-family: var(--mono); font-size: 12px; line-height: 1.9;
+    white-space: pre-wrap; word-break: break-word; color: var(--dim);
+  }
+  .m  { color: var(--green2); font-weight: 600; }   /* method */
+  .p  { color: var(--amber2); }                      /* path */
+  .k  { color: var(--amber3); }                      /* key */
+  .s  { color: #a8d8a0; }                            /* string value */
+  .n  { color: #f0c080; }                            /* number */
+  .b  { color: var(--blue2); }                       /* bool/keyword */
+  .c  { color: var(--muted); font-style: italic; }   /* comment */
+  .hi { color: var(--rose); }                        /* highlight */
+
+  .note-panel { font-family: var(--body); font-size: 0.95rem; line-height: 1.85; color: var(--dim); }
+  .np-item {
+    padding: 9px 12px; margin-bottom: 8px;
+    border-left: 2px solid var(--amber); background: rgba(212,137,26,0.04);
+    font-size: 0.9rem;
+  }
+  .np-item.green { border-left-color: var(--green); background: rgba(90,170,106,0.04); }
+  .np-item.red   { border-left-color: var(--red);   background: rgba(200,80,80,0.04); }
+  .np-item.blue  { border-left-color: var(--blue);  background: rgba(88,136,200,0.04); }
+  .np-item strong { color: var(--amber2); font-weight: 600; font-family: var(--mono); font-size: 11px; }
+  .np-item.green strong { color: var(--green2); }
+  .np-item.red   strong { color: var(--red2); }
+  .np-item.blue  strong { color: var(--blue2); }
+
+  /* ── BOOL QUERY BUILDER ── */
+  .bool-builder { margin: 22px 0; background: var(--s1); border: 1px solid var(--border); overflow: hidden; }
+  .bb-header { background: var(--s2); padding: 12px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .bb-title { font-family: var(--mono); font-size: 10px; color: var(--amber); letter-spacing: 2px; text-transform: uppercase; }
+
+  .bb-clauses { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); }
+  @media(max-width:700px){ .bb-clauses { grid-template-columns: 1fr 1fr; } }
+
+  .bb-clause { background: var(--s1); padding: 18px 16px; cursor: pointer; transition: background 0.15s; }
+  .bb-clause:hover { background: var(--s2); }
+  .bb-clause.selected { background: var(--s2); }
+  .bc-name { font-family: var(--display); font-size: 1.2rem; font-weight: 700; margin-bottom: 5px; }
+  .bb-clause:nth-child(1) .bc-name { color: var(--green); }
+  .bb-clause:nth-child(2) .bc-name { color: var(--amber); }
+  .bb-clause:nth-child(3) .bc-name { color: var(--red); }
+  .bb-clause:nth-child(4) .bc-name { color: var(--blue); }
+  .bc-tag { font-family: var(--mono); font-size: 9px; letter-spacing: 1px; color: var(--dim); text-transform: uppercase; margin-bottom: 6px; }
+  .bc-desc { font-family: var(--body); font-size: 0.875rem; color: var(--dim); line-height: 1.55; }
+
+  .bb-detail { display: none; padding: 20px 22px; border-top: 1px solid var(--border); background: rgba(0,0,0,0.2); }
+  .bb-detail.show { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media(max-width:600px){ .bb-detail.show { grid-template-columns: 1fr; } }
+  .bbd-label { font-family: var(--mono); font-size: 9px; color: var(--dim); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+
+  /* ── AGG EXPLORER ── */
+  .agg-tabs-row { display: flex; gap: 0; flex-wrap: wrap; margin-bottom: 0; }
+  .agg-type-btn {
+    font-family: var(--mono); font-size: 9px; padding: 9px 16px; border: 1px solid var(--border);
+    border-right: none; color: var(--dim); background: var(--s1); cursor: pointer;
+    letter-spacing: 2px; transition: all 0.15s; text-transform: uppercase;
+  }
+  .agg-type-btn:last-child { border-right: 1px solid var(--border); }
+  .agg-type-btn.active { background: var(--amber); color: var(--bg); border-color: var(--amber); font-weight: 600; }
+  .agg-type-btn:hover:not(.active) { border-color: var(--amber2); color: var(--amber2); }
+
+  .agg-panel { display: none; }
+  .agg-panel.active { display: grid; grid-template-columns: 1fr 1fr; gap: 0; background: var(--s1); border: 1px solid var(--border); border-top: none; }
+  @media(max-width:700px){ .agg-panel.active { grid-template-columns: 1fr; } }
+  .agg-left { padding: 20px 22px; border-right: 1px solid var(--border); }
+  .agg-right { padding: 20px 22px; }
+
+  /* ── SCENARIO DRILLS ── */
+  .drill-grid { display: flex; flex-direction: column; gap: 8px; margin: 22px 0; }
+
+  .drill {
+    border: 1px solid var(--border); overflow: hidden;
+    background: var(--bg2); cursor: pointer; transition: border-color 0.2s;
+  }
+  .drill:hover { border-color: var(--bord2); }
+  .drill.open  { border-color: var(--amber); }
+
+  .drill-head {
+    padding: 16px 20px; display: flex; align-items: flex-start; gap: 16px;
+  }
+  .drill-n {
+    font-family: var(--display); font-size: 2rem; font-weight: 900; font-style: italic;
+    color: var(--muted); min-width: 48px; line-height: 1; transition: color 0.2s; padding-top: 2px;
+  }
+  .drill:hover .drill-n, .drill.open .drill-n { color: var(--amber); }
+  .drill-info { flex: 1; }
+  .drill-tag { font-family: var(--mono); font-size: 9px; color: var(--amber); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 5px; }
+  .drill-q { font-family: var(--body); font-size: 1rem; font-weight: 600; color: var(--text); line-height: 1.5; }
+  .drill-hint { font-family: var(--body); font-size: 0.875rem; font-style: italic; color: var(--dim); margin-top: 3px; }
+
+  .drill-ans { display: none; border-top: 2px solid var(--amber); }
+  .drill-ans.show { display: block; }
+  .da-inner { padding: 18px 22px; }
+  .da-label { font-family: var(--mono); font-size: 9px; color: var(--green2); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 10px; }
+  pre.da-code {
+    font-family: var(--mono); font-size: 12px; line-height: 1.9; color: var(--dim);
+    white-space: pre-wrap; background: rgba(0,0,0,0.35); padding: 18px 20px;
+    border-left: 3px solid var(--green); overflow-x: auto;
+  }
+  .da-note {
+    margin-top: 12px; padding: 10px 16px; font-family: var(--body); font-size: 0.9rem;
+    line-height: 1.7; color: var(--dim);
+    background: rgba(212,137,26,0.05); border: 1px solid rgba(212,137,26,0.15);
+  }
+  .da-note strong { color: var(--amber2); }
+
+  /* Two-col */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 18px 0; }
+  @media(max-width:600px){ .two-col { grid-template-columns: 1fr; } }
+  .mini { background: var(--s1); border: 1px solid var(--border); padding: 18px 20px; }
+  .ml { font-family: var(--mono); font-size: 9px; color: var(--dim); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+  .mv { font-family: var(--mono); font-size: 11px; line-height: 1.9; }
+  .mv .a { color: var(--amber2); } .mv .g { color: var(--green2); }
+  .mv .r { color: var(--red2); }   .mv .b { color: var(--blue2); }
+  .mv .d { color: var(--dim); }
+
+  /* Note callouts */
+  .note {
+    border-left: 3px solid var(--amber); background: rgba(212,137,26,0.04);
+    padding: 12px 18px; margin: 14px 0; font-family: var(--body);
+    font-size: 0.95rem; line-height: 1.75; color: var(--dim);
+  }
+  .note.green  { border-left-color: var(--green); background: rgba(90,170,106,0.04); }
+  .note.red    { border-left-color: var(--red);   background: rgba(200,80,80,0.04); }
+  .note strong { color: var(--amber2); }
+  .note.green strong { color: var(--green2); }
+  .note.red   strong { color: var(--red2); }
+
+  /* ── QUIZ ── */
+  .quiz {
+    background: var(--bg2); border: 1px solid var(--border);
+    padding: 44px 36px; margin-top: 64px; position: relative; overflow: hidden;
+  }
+  .quiz::before {
+    content: 'ASSESSMENT';
+    position: absolute; top: 22px; right: 28px;
+    font-family: var(--display); font-size: 5rem; font-weight: 900; font-style: italic;
+    color: rgba(212,137,26,0.05); letter-spacing: -2px; line-height: 1;
+    pointer-events: none;
+  }
+  .quiz-header { margin-bottom: 36px; }
+  .quiz-title { font-family: var(--display); font-size: 2.2rem; font-weight: 900; font-style: italic; color: var(--amber); }
+  .quiz-sub { font-family: var(--mono); font-size: 10px; color: var(--dim); letter-spacing: 2px; margin-top: 4px; }
+  .quiz-rule { height: 1px; background: var(--bord2); margin: 16px 0 0; }
+
+  .qb { margin-bottom: 36px; padding-bottom: 36px; border-bottom: 1px solid var(--border); }
+  .qb:last-of-type { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .q-n { font-family: var(--mono); font-size: 10px; color: var(--amber); letter-spacing: 3px; margin-bottom: 8px; }
+  .q-t { font-family: var(--body); font-size: 1.05rem; font-weight: 600; color: var(--text); margin-bottom: 4px; line-height: 1.6; }
+
+  pre.q-code {
+    font-family: var(--mono); font-size: 11.5px; line-height: 1.8;
+    background: rgba(0,0,0,0.35); border: 1px solid var(--border);
+    border-left: 3px solid var(--amber2);
+    padding: 14px 18px; color: var(--dim); margin: 10px 0;
+    overflow-x: auto; white-space: pre;
+  }
+
+  .opts { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+  .opt {
+    display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px;
+    border: 1px solid var(--border); background: var(--s1); color: var(--dim);
+    font-family: var(--mono); font-size: 12px; cursor: pointer; transition: all 0.15s;
+    text-align: left; width: 100%; line-height: 1.6;
+  }
+  .opt:hover:not(.locked) { border-color: var(--amber); color: var(--text); background: rgba(212,137,26,0.06); }
+  .opt .ol { color: var(--amber); font-weight: 700; min-width: 20px; }
+  .opt.correct { border-color: var(--green); background: rgba(90,170,106,0.08); color: #a8e8b0; }
+  .opt.wrong   { border-color: var(--red);   background: rgba(200,80,80,0.08);  color: #f0a0a0; }
+  .opt.revealc { border-color: var(--green); background: rgba(90,170,106,0.03); color: var(--green); opacity: 0.55; }
+
+  .exp {
+    display: none; margin-top: 11px; padding: 13px 18px;
+    background: rgba(212,137,26,0.04); border: 1px solid rgba(212,137,26,0.2);
+    font-family: var(--body); font-size: 0.92rem; color: var(--dim); line-height: 1.8;
+  }
+  .exp.show { display: block; }
+  .exp strong { color: var(--amber2); }
+  .exp code { font-family: var(--mono); font-size: 11px; color: var(--amber2); background: rgba(212,137,26,0.1); padding: 1px 5px; }
+
+  .scorebox { display: none; margin-top: 32px; padding: 32px; background: var(--s1); border: 1px solid var(--border); text-align: center; }
+  .scorebox.show { display: block; }
+  .score-big { font-family: var(--display); font-size: 6rem; font-weight: 900; font-style: italic; color: var(--amber); line-height: 1; }
+  .score-sub { font-family: var(--mono); font-size: 10px; color: var(--dim); letter-spacing: 3px; margin: 6px 0 14px; text-transform: uppercase; }
+  .score-msg { font-family: var(--body); font-size: 1rem; color: var(--dim); font-style: italic; }
+  .btn-reset {
+    margin-top: 18px; background: none; border: 1px solid var(--amber); color: var(--amber);
+    font-family: var(--mono); font-size: 11px; padding: 11px 30px; cursor: pointer;
+    letter-spacing: 3px; text-transform: uppercase; transition: all 0.2s;
+  }
+  .btn-reset:hover { background: var(--amber); color: var(--bg); }
+
+  footer {
+    margin-top: 80px; padding: 30px 0;
+    border-top: 2px solid var(--bord2);
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;
+  }
+  .ft { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 2px; }
+  .nav-btns { display: flex; gap: 8px; }
+  .nbtn {
+    font-family: var(--mono); font-size: 11px; padding: 11px 22px;
+    border: 1px solid var(--border); color: var(--dim);
+    background: none; cursor: pointer; letter-spacing: 2px; text-decoration: none;
+    transition: all 0.15s; text-transform: uppercase;
+  }
+  .nbtn:hover { border-color: var(--amber); color: var(--amber2); background: rgba(212,137,26,0.05); }
+  .nbtn.primary { background: var(--amber); color: var(--bg); border-color: var(--amber); font-weight: 700; }
+  .nbtn.primary:hover { background: var(--amber2); border-color: var(--amber2); }
+
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--bord2); border-radius: 2px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- ── HEADER ── -->
+  <header>
+    <div class="header-rule"></div>
+    <div class="header-meta">
+      <div>
+        <div class="cert-tag">Elastic Certified Engineer · ECE · Topic 02 of 05</div>
+      </div>
+      <div class="meta-nums">
+        <div class="mn"><div class="mn-v">8</div><div class="mn-l">Query Types</div></div>
+        <div class="mn"><div class="mn-v">4</div><div class="mn-l">Agg Families</div></div>
+        <div class="mn"><div class="mn-v">8</div><div class="mn-l">Quiz Qs</div></div>
+      </div>
+    </div>
+    <h1>Searching<br><em>Data</em><span class="byline">Query DSL · Bool Queries · Aggregations · Async · Cross-Cluster · Runtime Fields</span></h1>
+    <div class="header-rule-bottom"></div>
+    <nav class="topic-nav">
+      <a href="#" class="done">01 · Data Management</a>
+      <a href="#" class="active">02 · Searching Data</a>
+      <a href="#">03 · Search Applications</a>
+      <a href="#">04 · Data Processing</a>
+      <a href="#">05 · Cluster Management</a>
+    </nav>
+  </header>
+
+  <div class="prog-row">
+    <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+    <span class="prog-txt" id="progTxt">0 / 8 answered</span>
+  </div>
+
+  <!-- ═══════════════════════════════════
+       02.01  FULL-TEXT & TERM QUERIES
+  ════════════════════════════════════ -->
+  <div class="section">
+    <div class="sec-hd"><span class="sec-num">02.01</span><span class="sec-title">Full-Text &amp; Term-Level Queries</span></div>
+    <div class="card">
+      <p>The ECE exam distinguishes sharply between <strong>full-text queries</strong> (which analyze the search string) and <strong>term-level queries</strong> (which do not). Choosing the wrong type is one of the most common exam errors.</p>
+
+      <div class="two-col" style="margin-bottom:22px">
+        <div class="mini">
+          <div class="ml">Full-Text Queries — use on text fields</div>
+          <div class="mv">
+            <span class="a">match</span>         <span class="d">— standard full-text on one field</span><br>
+            <span class="a">match_phrase</span>   <span class="d">— all terms in order (slop=0 default)</span><br>
+            <span class="a">match_phrase_prefix</span> <span class="d">— last term is prefix</span><br>
+            <span class="a">multi_match</span>    <span class="d">— match across multiple fields</span><br>
+            <span class="a">query_string</span>   <span class="d">— Lucene syntax (AND/OR/wildcards)</span><br>
+            <span class="a">simple_query_string</span> <span class="d">— lenient version of above</span><br><br>
+            <span class="d">→ Search term IS analyzed before matching</span><br>
+            <span class="d">→ Use on fields of type: text</span>
+          </div>
+        </div>
+        <div class="mini">
+          <div class="ml">Term-Level Queries — use on keyword/numeric/date</div>
+          <div class="mv">
+            <span class="g">term</span>           <span class="d">— exact single value match</span><br>
+            <span class="g">terms</span>          <span class="d">— exact match any of a list</span><br>
+            <span class="g">range</span>          <span class="d">— gte/gt/lte/lt on numbers or dates</span><br>
+            <span class="g">exists</span>         <span class="d">— field has a non-null value</span><br>
+            <span class="g">prefix</span>         <span class="d">— keyword starts with string</span><br>
+            <span class="g">wildcard</span>       <span class="d">— ? (one char) * (any chars)</span><br>
+            <span class="g">regexp</span>         <span class="d">— Lucene regex pattern</span><br><br>
+            <span class="d">→ Search term is NOT analyzed</span><br>
+            <span class="d">→ Use on keyword, numeric, date, ip fields</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="qexplorer">
+        <div class="qe-tabs">
+          <button class="qe-tab active" onclick="switchQE('qe','q1',this)">match</button>
+          <button class="qe-tab" onclick="switchQE('qe','q2',this)">match_phrase</button>
+          <button class="qe-tab" onclick="switchQE('qe','q3',this)">multi_match</button>
+          <button class="qe-tab" onclick="switchQE('qe','q4',this)">term / terms</button>
+          <button class="qe-tab" onclick="switchQE('qe','q5',this)">range</button>
+          <button class="qe-tab" onclick="switchQE('qe','q6',this)">exists / wildcard</button>
+        </div>
+
+        <!-- match -->
+        <div id="qe-q1" class="qe-panel active">
+          <div class="qe-left">
+            <div class="pane-label">// match query</div>
+            <pre class="code"><span class="m">GET</span> <span class="p">/products/_search</span>
+{
+  <span class="k">"query"</span>: {
+    <span class="k">"match"</span>: {
+      <span class="k">"description"</span>: {
+        <span class="k">"query"</span>:    <span class="s">"quick brown fox"</span>,
+        <span class="k">"operator"</span>: <span class="s">"and"</span>,     <span class="c">// default: or</span>
+        <span class="k">"fuzziness"</span>: <span class="s">"AUTO"</span>    <span class="c">// typo tolerance</span>
+      }
+    }
+  }
+}
+
+<span class="c">// operator: "or"  → any term matches (default)</span>
+<span class="c">// operator: "and" → all terms must match</span>
+<span class="c">// fuzziness: AUTO → 0 edits ≤2 chars,</span>
+<span class="c">//                   1 edit 3-5 chars,</span>
+<span class="c">//                   2 edits ≥6 chars</span>
+
+<span class="c">// Shorthand (just string, operator=or, no fuzz):</span>
+<span class="k">"match"</span>: { <span class="k">"description"</span>: <span class="s">"quick brown fox"</span> }</pre>
+          </div>
+          <div class="qe-right">
+            <div class="pane-label">// Notes</div>
+            <div class="note-panel">
+              <div class="np-item"><strong>ANALYZED:</strong> The query string "quick brown fox" is analyzed with the same analyzer as the field before matching. With english analyzer: ["quick","brown","fox"] → ["quick","brown","fox"] (stems, stops etc. applied).</div>
+              <div class="np-item red"><strong>TRAP:</strong> Never use match on a keyword field. "Status: Active" won't match "active" with match — keyword fields need term queries. Use match only on text fields.</div>
+              <div class="np-item green"><strong>operator: "and"</strong> — all three words must appear in the field. Best for precision. operator: "or" (default) — any word matches. Best for recall.</div>
+              <div class="np-item"><strong>minimum_should_match:</strong> Alternative to operator — specify minimum number or percentage of terms that must match: "minimum_should_match": "75%"</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- match_phrase -->
+        <div id="qe-q2" class="qe-panel">
+          <div class="qe-left">
+            <div class="pane-label">// match_phrase query</div>
+            <pre class="code"><span class="m">GET</span> <span class="p">/logs/_search</span>
+{
+  <span class="k">"query"</span>: {
+    <span class="k">"match_phrase"</span>: {
+      <span class="k">"message"</span>: {
+        <span class="k">"query"</span>: <span class="s">"out of memory"</span>,
+        <span class="k">"slop"</span>:  <span class="n">1</span>     <span class="c">// allow 1 intervening word</span>
+      }
+    }
+  }
+}
+
+<span class="c">// slop: 0 (default) — terms must be adjacent</span>
+<span class="c">// slop: 1 — one word can appear between terms</span>
+<span class="c">// slop: 2 — two words can appear between, etc.</span>
+
+<span class="c">// match_phrase_prefix — last term is a prefix</span>
+<span class="m">GET</span> <span class="p">/logs/_search</span>
+{
+  <span class="k">"query"</span>: {
+    <span class="k">"match_phrase_prefix"</span>: {
+      <span class="k">"message"</span>: <span class="s">"out of mem"</span>
+    }
+  }
+}
+<span class="c">// Matches: "out of memory", "out of memcached"</span>
+<span class="c">// Use for search-as-you-type completion</span></pre>
+          </div>
+          <div class="qe-right">
+            <div class="pane-label">// Notes</div>
+            <div class="note-panel">
+              <div class="np-item"><strong>PHRASE MATCH:</strong> All terms must appear in the exact order (with slop: 0). Terms are also analyzed first. "Out of memory" → ["out","of","memory"] — all three must appear consecutively.</div>
+              <div class="np-item red"><strong>EXPENSIVE:</strong> Phrase queries require position information. They are slower than simple match queries. Avoid on very large indices without filters to narrow the search first.</div>
+              <div class="np-item green"><strong>SLOP:</strong> Slop of 1 means "out of memory" also matches "out heap of memory" (one intervening word). Each transposition also costs 1 slop.</div>
+              <div class="np-item"><strong>match_phrase_prefix:</strong> The LAST term only is treated as a prefix. "quick br" matches "quick brown" and "quick bright" but NOT "qui brown".</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- multi_match -->
+        <div id="qe-q3" class="qe-panel">
+          <div class="qe-left">
+            <div class="pane-label">// multi_match query</div>
+            <pre class="code"><span class="m">GET</span> <span class="p">/articles/_search</span>
+{
+  <span class="k">"query"</span>: {
+    <span class="k">"multi_match"</span>: {
+      <span class="k">"query"</span>:  <span class="s">"elasticsearch tutorial"</span>,
+      <span class="k">"fields"</span>: [<span class="s">"title^3"</span>, <span class="s">"body"</span>, <span class="s">"tags"</span>],
+      <span class="k">"type"</span>:   <span class="s">"best_fields"</span>
+    }
+  }
+}
+
+<span class="c">// ^3 = boost title matches 3x in scoring</span>
+
+<span class="c">// TYPES:</span>
+<span class="c">// best_fields   — highest single-field score wins</span>
+<span class="c">//                (default, good for: find best matching field)</span>
+<span class="c">// most_fields   — sum scores from all matching fields</span>
+<span class="c">//                (good for: multiple analyzed versions)</span>
+<span class="c">// cross_fields  — treat all fields as one big field</span>
+<span class="c">//                (good for: first/last name split across fields)</span>
+<span class="c">// phrase        — like match_phrase across fields</span>
+<span class="c">// phrase_prefix — like match_phrase_prefix across fields</span>
+
+<span class="c">// tie_breaker: 0.3 — partial credit for other fields</span>
+<span class="k">"tie_breaker"</span>: <span class="n">0.3</span>  <span class="c">// added to best_fields</span></pre>
+          </div>
+          <div class="qe-right">
+            <div class="pane-label">// Notes</div>
+            <div class="note-panel">
+              <div class="np-item"><strong>best_fields (default):</strong> Uses the score of the best-matching field as the score. tie_breaker adds a fraction of other fields' scores. Good for: "find docs where any field matches best".</div>
+              <div class="np-item"><strong>cross_fields:</strong> Treats all fields as one document. Requires all terms to be present across fields combined. Good for: searching "John Smith" across first_name + last_name fields where each field holds one part.</div>
+              <div class="np-item green"><strong>BOOSTING:</strong> ^3 on title means title matches score 3x higher than body matches. Documents where the title matches the query rank above body-only matches.</div>
+              <div class="np-item red"><strong>EXAM TIP:</strong> "Search a query across the title, body, and tags fields, prioritising title" → multi_match with fields: ["title^N", "body", "tags"]</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- term/terms -->
+        <div id="qe-q4" class="qe-panel">
+          <div class="qe-left">
+            <div class="pane-label">// term and terms queries</div>
+            <pre class="code"><span class="c">// term — exact single value (NOT analyzed)</span>
+<span class="m">GET</span> <span class="p">/orders/_search</span>
+{
+  <span class="k">"query"</span>: {
+    <span class="k">"term"</span>: {
+      <span class="k">"status"</span>: {
+        <span class="k">"value"</span>: <span class="s">"pending"</span>
+      }
+    }
+  }
+}
+<span class="c">// Shorthand: "term": { "status": "pending" }</span>
+
+<span class="c">// terms — match any of a list of values</span>
+<span class="m">GET</span> <span class="p">/orders/_search</span>
+{
+  <span class="k">"query"</span>: {
+    <span class="k">"terms"</span>: {
+      <span class="k">"status"</span>: [<span class="s">"pending"</span>, <span class="s">"processing"</span>, <span class="s">"shipped"</span>]
+    }
+  }
+}
+
+<span class="c">// terms lookup — fetch values from another doc</span>
+<span class="k">"terms"</span>: {
+  <span class="k">"user_id"</span>: {
+    <span class="k">"index"</span>: <span class="s">"follows"</span>,
+    <span class="k">"id"</span>:    <span class="s">"user123"</span>,
+    <span class="k">"path"</span>:  <span class="s">"following"</span>
+  }
+}</pre>
+          </div>
+          <div class="qe-right">
+            <div class="pane-label">// Notes</div>
+            <div class="note-panel">
+              <div class="np-item red"><strong>CRITICAL TRAP:</strong> term queries are NOT analyzed. Searching term: {"title": "Quick"} on a text field (analyzed to lowercase) will NOT match because text fields don't store the original token "Quick". Always use term on keyword fields.</div>
+              <div class="np-item"><strong>keyword vs text:</strong> If you indexed "Quick Brown Fox" into a keyword field, it stores exactly "Quick Brown Fox" — a term query for "quick brown fox" (lowercase) WON'T match. Case must match exactly for keyword fields.</div>
+              <div class="np-item green"><strong>terms lookup:</strong> Fetches the list of values from a document in another index. Useful for "show me posts by users I follow" where the following list lives in a separate users index.</div>
+              <div class="np-item"><strong>SCORING:</strong> term queries run in filter context by default inside bool/filter — no scoring overhead. In query context they contribute to relevance score.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- range -->
+        <div id="qe-q5" class="qe-panel">
+          <div class="qe-left">
+            <div class="pane-label">// range query</div>
+            <pre class="code"><span class="c">// Numeric range</span>
+<span class="m">GET</span> <span class="p">/products/_search</span>
+{
+  <span class="k">"query"</span>: {
+    <span class="k">"range"</span>: {
+      <span class="k">"price"</span>: {
+        <span class="k">"gte"</span>: <span class="n">10</span>,
+        <span class="k">"lte"</span>: <span class="n">100</span>
+      }
+    }
+  }
+}
+
+<span class="c">// Date range</span>
+<span class="k">"range"</span>: {
+  <span class="k">"@timestamp"</span>: {
+    <span class="k">"gte"</span>: <span class="s">"now-7d/d"</span>,  <span class="c">// 7 days ago, rounded to day</span>
+    <span class="k">"lt"</span>:  <span class="s">"now/d"</span>,     <span class="c">// start of today</span>
+    <span class="k">"time_zone"</span>: <span class="s">"America/New_York"</span>
+  }
+}
+
+<span class="c">// Date math operators:</span>
+<span class="c">// now-1h     = 1 hour ago</span>
+<span class="c">// now-7d/d   = 7 days ago, rounded down to day</span>
+<span class="c">// now+1M/M   = 1 month ahead, rounded to month</span>
+<span class="c">// 2024-01-01||+1M = specific date + 1 month</span></pre>
+          </div>
+          <div class="qe-right">
+            <div class="pane-label">// Notes</div>
+            <div class="note-panel">
+              <div class="np-item"><strong>OPERATORS:</strong> gte (≥), gt (&gt;), lte (≤), lt (&lt;). Mix and match: gte + lt for half-open ranges (inclusive start, exclusive end).</div>
+              <div class="np-item green"><strong>DATE MATH:</strong> now is always the current time in UTC. The rounding operator / rounds to the nearest unit boundary. now-7d/d rounds to the start of the day 7 days ago — consistent for caching.</div>
+              <div class="np-item"><strong>FORMAT:</strong> If your date field uses a non-standard format, specify it: "format": "yyyy/MM/dd" to match the stored format.</div>
+              <div class="np-item red"><strong>FILTER CONTEXT:</strong> Range queries inside bool/filter don't score and are cacheable. This is the correct placement for date/numeric filters to maximise performance.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- exists / wildcard -->
+        <div id="qe-q6" class="qe-panel">
+          <div class="qe-left">
+            <div class="pane-label">// exists and wildcard</div>
+            <pre class="code"><span class="c">// exists — field is present and non-null</span>
+<span class="m">GET</span> <span class="p">/users/_search</span>
+{
+  <span class="k">"query"</span>: {
+    <span class="k">"exists"</span>: { <span class="k">"field"</span>: <span class="s">"email"</span> }
+  }
+}
+
+<span class="c">// NOT exists — use bool/must_not</span>
+<span class="k">"bool"</span>: {
+  <span class="k">"must_not"</span>: [
+    { <span class="k">"exists"</span>: { <span class="k">"field"</span>: <span class="s">"deleted_at"</span> }}
+  ]
+}
+
+<span class="c">// wildcard — glob patterns on keyword fields</span>
+<span class="k">"wildcard"</span>: {
+  <span class="k">"email"</span>: {
+    <span class="k">"value"</span>:         <span class="s">"*@elastic.co"</span>,
+    <span class="k">"case_insensitive"</span>: <span class="b">true</span>
+  }
+}
+<span class="c">// ? = one char, * = zero or more chars</span>
+
+<span class="c">// prefix — keyword starts with</span>
+<span class="k">"prefix"</span>: {
+  <span class="k">"username"</span>: { <span class="k">"value"</span>: <span class="s">"john"</span> }
+}
+
+<span class="c">// ids — find documents by _id</span>
+<span class="k">"ids"</span>: { <span class="k">"values"</span>: [<span class="s">"1"</span>, <span class="s">"2"</span>, <span class="s">"3"</span>] }</pre>
+          </div>
+          <div class="qe-right">
+            <div class="pane-label">// Notes</div>
+            <div class="note-panel">
+              <div class="np-item"><strong>exists vs missing:</strong> There is no "missing" query type. Use bool/must_not + exists to find documents where a field is absent or null.</div>
+              <div class="np-item red"><strong>WILDCARD PERFORMANCE:</strong> Leading wildcards (*@elastic.co) are very expensive — they require scanning all terms in the index. Avoid leading wildcards on large indices. prefix queries are much faster (they use the term index).</div>
+              <div class="np-item green"><strong>case_insensitive: true</strong> added in ES 7.10 — allows wildcard queries to be case-insensitive without a separate lowercase normalizer on the keyword field.</div>
+              <div class="np-item"><strong>EXAM TIP:</strong> "Find all documents where the user has not confirmed their email" → bool/must_not + exists: {field: "confirmed_at"}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════
+       02.02  BOOL QUERY
+  ════════════════════════════════════ -->
+  <div class="section">
+    <div class="sec-hd"><span class="sec-num">02.02</span><span class="sec-title">Boolean Query — The Core Compound Query</span></div>
+    <div class="card">
+      <p>The <strong>bool query</strong> is the most important compound query in Elasticsearch. Nearly every real-world search combines multiple conditions using bool. Understanding the scoring behaviour of each clause is a key exam differentiator.</p>
+
+      <div class="bool-builder">
+        <div class="bb-header">
+          <span class="bb-title">// Bool Query Clause Explorer — click each clause</span>
+        </div>
+        <div class="bb-clauses">
+          <div class="bb-clause" onclick="showBoolClause(this,'bc-must')">
+            <div class="bc-tag">Scoring</div>
+            <div class="bc-name">must</div>
+            <div class="bc-desc">Clause MUST match. Contributes to relevance score. Equivalent to logical AND.</div>
+          </div>
+          <div class="bb-clause" onclick="showBoolClause(this,'bc-filter')">
+            <div class="bc-tag">No Score — Cached</div>
+            <div class="bc-name">filter</div>
+            <div class="bc-desc">Clause MUST match. Does NOT score. Results are cached. Ideal for ranges, terms, dates.</div>
+          </div>
+          <div class="bb-clause" onclick="showBoolClause(this,'bc-should')">
+            <div class="bc-tag">Optional / Boost</div>
+            <div class="bc-name">should</div>
+            <div class="bc-desc">Clause SHOULD match. Boosts score if it does. Becomes required if no must/filter clauses.</div>
+          </div>
+          <div class="bb-clause" onclick="showBoolClause(this,'bc-mustnot')">
+            <div class="bc-tag">Exclude — Cached</div>
+            <div class="bc-name">must_not</div>
+            <div class="bc-desc">Clause must NOT match. Does NOT score. Excludes matching documents. Cached.</div>
+          </div>
+        </div>
+        <div class="bb-detail" id="bb-detail">
+          <div>
+            <div class="bbd-label">// Example</div>
+            <pre class="code" id="bb-code" style="font-size:12px;line-height:1.85;background:rgba(0,0,0,0.3);padding:14px 16px;"></pre>
+          </div>
+          <div>
+            <div class="bbd-label">// Key Points</div>
+            <div class="note-panel" id="bb-notes"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="note" style="margin-top:20px">
+        <strong>The canonical bool query pattern for ECE:</strong> Use <code>filter</code> for all non-scoring conditions (date ranges, status terms, numeric ranges). Use <code>must</code> only for full-text queries where relevance scoring matters. Use <code>must_not</code> to exclude. Use <code>should</code> to boost relevance without requiring a match. This pattern maximises performance through filter caching.
+      </div>
+
+      <div class="qexplorer" style="margin-top:20px">
+        <div class="qe-tabs">
+          <button class="qe-tab active" onclick="switchQE('bool','b1',this)">Full Example</button>
+          <button class="qe-tab" onclick="switchQE('bool','b2',this)">Nested Bool</button>
+          <button class="qe-tab" onclick="switchQE('bool','b3',this)">minimum_should_match</button>
+        </div>
+        <div id="bool-b1" class="qe-panel active">
+          <div class="qe-left">
+            <div class="pane-label">// Production bool query pattern</div>
+            <pre class="code"><span class="m">GET</span> <span class="p">/products/_search</span>
+{
+  <span class="k">"query"</span>: {
+    <span class="k">"bool"</span>: {
+      <span class="c">// MUST: scored, affects relevance</span>
+      <span class="k">"must"</span>: [
+        { <span class="k">"match"</span>: { <span class="k">"description"</span>: <span class="s">"wireless headphones"</span> }}
+      ],
+      <span class="c">// FILTER: unscored, cached, fast</span>
+      <span class="k">"filter"</span>: [
+        { <span class="k">"term"</span>:  { <span class="k">"status"</span>: <span class="s">"available"</span> }},
+        { <span class="k">"range"</span>: { <span class="k">"price"</span>: { <span class="k">"lte"</span>: <span class="n">200</span> }}},
+        { <span class="k">"term"</span>:  { <span class="k">"category"</span>: <span class="s">"electronics"</span> }}
+      ],
+      <span class="c">// SHOULD: optional, boosts relevance if match</span>
+      <span class="k">"should"</span>: [
+        { <span class="k">"term"</span>: { <span class="k">"brand"</span>: <span class="s">"sony"</span> }},
+        { <span class="k">"term"</span>: { <span class="k">"features"</span>: <span class="s">"noise_cancelling"</span> }}
+      ],
+      <span class="c">// MUST_NOT: excludes, unscored, cached</span>
+      <span class="k">"must_not"</span>: [
+        { <span class="k">"term"</span>: { <span class="k">"discontinued"</span>: <span class="b">true</span> }}
+      ]
+    }
+  }
+}</pre>
+          </div>
+          <div class="qe-right">
+            <div class="pane-label">// Scoring Behaviour</div>
+            <div class="note-panel">
+              <div class="np-item green"><strong>SCORING RULE:</strong> Only must and should contribute to _score. filter and must_not clauses do not affect score — they only include/exclude documents.</div>
+              <div class="np-item"><strong>should without must/filter:</strong> When a bool has ONLY should clauses (no must/filter), at least one should clause must match. minimum_should_match defaults to 1.</div>
+              <div class="np-item"><strong>should with must/filter:</strong> When must or filter is also present, should clauses become optional — they boost score but are not required. minimum_should_match defaults to 0.</div>
+              <div class="np-item red"><strong>PERFORMANCE:</strong> filter context results are cached in the filter cache. Repeated bool queries with the same filter clause get a free cache hit. Never put frequently-repeated conditions in must — put them in filter.</div>
+            </div>
+          </div>
+        </div>
+        <div id="bool-b2" class="qe-panel">
+          <div class="qe-left">
+            <div class="pane-label">// Nested bool (complex logic)</div>
+            <pre class="code"><span class="c">// Find: (shirt OR trousers) AND (red OR blue)</span>
+<span class="m">GET</span> <span class="p">/fashion/_search</span>
+{
+  <span class="k">"query"</span>: {
+    <span class="k">"bool"</span>: {
+      <span class="k">"must"</span>: [
+        {
+          <span class="k">"bool"</span>: {
+            <span class="k">"should"</span>: [
+              { <span class="k">"term"</span>: { <span class="k">"type"</span>: <span class="s">"shirt"</span>    }},
+              { <span class="k">"term"</span>: { <span class="k">"type"</span>: <span class="s">"trousers"</span> }}
+            ]
+          }
+        },
+        {
+          <span class="k">"bool"</span>: {
+            <span class="k">"should"</span>: [
+              { <span class="k">"term"</span>: { <span class="k">"color"</span>: <span class="s">"red"</span>  }},
+              { <span class="k">"term"</span>: { <span class="k">"color"</span>: <span class="s">"blue"</span> }}
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
+
+<span class="c">// The inner bool/should groups act as OR blocks.</span>
+<span class="c">// Wrapping them in outer bool/must enforces AND.</span></pre>
+          </div>
+          <div class="qe-right">
+            <div class="pane-label">// Notes</div>
+            <div class="note-panel">
+              <div class="np-item"><strong>NESTING PATTERN:</strong> Bool queries can be nested to any depth. Inner bools create logical groupings. The pattern of wrapping should clauses in a must-level bool is the standard way to express (A OR B) AND (C OR D).</div>
+              <div class="np-item green"><strong>EXAM PATTERN:</strong> "Find products that are either shirts or trousers AND are either red or blue" — requires nested bool. Two inner bools, each with should (OR logic), both wrapped in an outer bool/must (AND logic).</div>
+              <div class="np-item"><strong>CONSTANT SCORE:</strong> For must/filter combinations where you want no scoring at all, use constant_score query to wrap a filter and assign a fixed boost value.</div>
+            </div>
+          </div>
+        </div>
+        <div id="bool-b3" class="qe-panel">
+          <div class="qe-left">
+            <div class="pane-label">// minimum_should_match</div>
+            <pre class="code"><span class="c">// Require at least 2 of 4 should clauses</span>
+<span class="m">GET</span> <span class="p">/articles/_search</span>
+{
+  <span class="k">"query"</span>: {
+    <span class="k">"bool"</span>: {
+      <span class="k">"should"</span>: [
+        { <span class="k">"term"</span>: { <span class="k">"tags"</span>: <span class="s">"elasticsearch"</span> }},
+        { <span class="k">"term"</span>: { <span class="k">"tags"</span>: <span class="s">"search"</span>         }},
+        { <span class="k">"term"</span>: { <span class="k">"tags"</span>: <span class="s">"database"</span>      }},
+        { <span class="k">"term"</span>: { <span class="k">"tags"</span>: <span class="s">"indexing"</span>      }}
+      ],
+      <span class="k">"minimum_should_match"</span>: <span class="n">2</span>  <span class="c">// 2 of 4 must match</span>
+    }
+  }
+}
+
+<span class="c">// Other formats:</span>
+<span class="k">"minimum_should_match"</span>: <span class="s">"75%"</span>   <span class="c">// percentage</span>
+<span class="k">"minimum_should_match"</span>: <span class="s">"-1"</span>    <span class="c">// all - 1</span>
+<span class="k">"minimum_should_match"</span>: <span class="s">"2&lt;50%"</span> <span class="c">// conditional</span>
+
+<span class="c">// Also applies in match query:</span>
+<span class="k">"match"</span>: {
+  <span class="k">"title"</span>: {
+    <span class="k">"query"</span>:                <span class="s">"quick brown fox"</span>,
+    <span class="k">"minimum_should_match"</span>: <span class="s">"2"</span>
+  }
+}</span></pre>
+          </div>
+          <div class="qe-right">
+            <div class="pane-label">// Notes</div>
+            <div class="note-panel">
+              <div class="np-item"><strong>CONTROL PRECISION:</strong> minimum_should_match balances precision vs recall. Requiring more terms = higher precision, lower recall. Requiring fewer = lower precision, higher recall.</div>
+              <div class="np-item green"><strong>IN MATCH QUERY:</strong> When using operator: or (default), each term is a should clause. minimum_should_match on a match query controls how many of the analyzed terms must be found.</div>
+              <div class="np-item"><strong>CONDITIONAL SYNTAX "2&lt;50%"</strong> means: if 2 or fewer clauses, all must match; if more than 2, at least 50% must match. This handles variable-length input well.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════
+       02.03  AGGREGATIONS
+  ════════════════════════════════════ -->
+  <div class="section">
+    <div class="sec-hd"><span class="sec-num">02.03</span><span class="sec-title">Aggregations — Metric, Bucket &amp; Sub-Aggregations</span></div>
+    <div class="card">
+      <p>Aggregations turn raw documents into analytics. The ECE exam tests <strong>metric aggregations</strong> (compute values: avg, min, max, sum, cardinality), <strong>bucket aggregations</strong> (group documents: terms, date_histogram, range, histogram), and <strong>sub-aggregations</strong> (nest aggs inside buckets for multi-level analytics).</p>
+
+      <div class="note green">
+        <strong>Key pattern:</strong> Always set <code>"size": 0</code> when you only want aggregation results and not matching documents — this avoids the overhead of fetching and ranking documents, and the exam commonly asks for agg-only queries.
+      </div>
+
+      <div class="agg-tabs-row">
+        <button class="agg-type-btn active" onclick="switchAgg('agg','a1',this)">Metric Aggs</button>
+        <button class="agg-type-btn" onclick="switchAgg('agg','a2',this)">Bucket Aggs</button>
+        <button class="agg-type-btn" onclick="switchAgg('agg','a3',this)">Sub-Aggregations</button>
+        <button class="agg-type-btn" onclick="switchAgg('agg','a4',this)">Pipeline Aggs</button>
+      </div>
+
+      <!-- Metric -->
+      <div id="agg-a1" class="agg-panel active">
+        <div class="agg-left">
+          <div class="pane-label">// Metric aggregations</div>
+          <pre class="code"><span class="m">GET</span> <span class="p">/flights/_search</span>
+{
+  <span class="k">"size"</span>: <span class="n">0</span>,
+  <span class="k">"aggs"</span>: {
+    <span class="k">"avg_price"</span>: {
+      <span class="k">"avg"</span>: { <span class="k">"field"</span>: <span class="s">"AvgTicketPrice"</span> }
+    },
+    <span class="k">"min_price"</span>: {
+      <span class="k">"min"</span>: { <span class="k">"field"</span>: <span class="s">"AvgTicketPrice"</span> }
+    },
+    <span class="k">"max_price"</span>: {
+      <span class="k">"max"</span>: { <span class="k">"field"</span>: <span class="s">"AvgTicketPrice"</span> }
+    },
+    <span class="k">"total_revenue"</span>: {
+      <span class="k">"sum"</span>: { <span class="k">"field"</span>: <span class="s">"AvgTicketPrice"</span> }
+    },
+    <span class="k">"unique_carriers"</span>: {
+      <span class="k">"cardinality"</span>: { <span class="k">"field"</span>: <span class="s">"Carrier"</span> }
+    },
+    <span class="k">"price_stats"</span>: {
+      <span class="k">"stats"</span>: { <span class="k">"field"</span>: <span class="s">"AvgTicketPrice"</span> }
+      <span class="c">// returns: count, min, max, avg, sum</span>
+    },
+    <span class="k">"price_percentiles"</span>: {
+      <span class="k">"percentiles"</span>: {
+        <span class="k">"field"</span>:    <span class="s">"AvgTicketPrice"</span>,
+        <span class="k">"percents"</span>: [<span class="n">50</span>, <span class="n">95</span>, <span class="n">99</span>]
+      }
+    }
+  }
+}</pre>
+        </div>
+        <div class="agg-right">
+          <div class="pane-label">// Metric Agg Reference</div>
+          <div class="note-panel">
+            <div class="np-item"><strong>avg, min, max, sum:</strong> Basic statistics on numeric fields. All work on keyword fields too if the field has doc_values enabled.</div>
+            <div class="np-item"><strong>cardinality:</strong> Approximate count of distinct values (HyperLogLog++ algorithm). precision_threshold: 40000 for higher accuracy (uses more memory).</div>
+            <div class="np-item green"><strong>stats:</strong> Single agg returning count + min + max + avg + sum. Use extended_stats for variance and std deviation too.</div>
+            <div class="np-item"><strong>value_count:</strong> Count of values (not distinct). top_hits: Returns top matching documents within a bucket — useful for "show me one representative document per group".</div>
+            <div class="np-item red"><strong>FIELD TYPES:</strong> Metric aggs require numeric (integer, float, etc.) or date fields. They do not work on text fields. Always aggregate on keyword or numeric.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bucket -->
+      <div id="agg-a2" class="agg-panel">
+        <div class="agg-left">
+          <div class="pane-label">// Bucket aggregations</div>
+          <pre class="code"><span class="c">// TERMS — group by distinct values</span>
+<span class="k">"by_carrier"</span>: {
+  <span class="k">"terms"</span>: {
+    <span class="k">"field"</span>: <span class="s">"Carrier"</span>,
+    <span class="k">"size"</span>:  <span class="n">10</span>,       <span class="c">// top 10</span>
+    <span class="k">"order"</span>: { <span class="k">"_count"</span>: <span class="s">"desc"</span> }
+  }
+}
+
+<span class="c">// DATE_HISTOGRAM — group by time intervals</span>
+<span class="k">"per_day"</span>: {
+  <span class="k">"date_histogram"</span>: {
+    <span class="k">"field"</span>:             <span class="s">"timestamp"</span>,
+    <span class="k">"calendar_interval"</span>: <span class="s">"1d"</span>,  <span class="c">// day/week/month/year</span>
+    <span class="k">"min_doc_count"</span>:     <span class="n">0</span>,    <span class="c">// include empty buckets</span>
+    <span class="k">"time_zone"</span>:         <span class="s">"Europe/London"</span>
+  }
+}
+
+<span class="c">// RANGE — custom numeric buckets</span>
+<span class="k">"price_ranges"</span>: {
+  <span class="k">"range"</span>: {
+    <span class="k">"field"</span>: <span class="s">"price"</span>,
+    <span class="k">"ranges"</span>: [
+      { <span class="k">"to"</span>: <span class="n">50</span>                    },
+      { <span class="k">"from"</span>: <span class="n">50</span>,  <span class="k">"to"</span>: <span class="n">200</span>    },
+      { <span class="k">"from"</span>: <span class="n">200</span>                  }
+    ]
+  }
+}
+
+<span class="c">// HISTOGRAM — fixed-width numeric buckets</span>
+<span class="k">"price_hist"</span>: {
+  <span class="k">"histogram"</span>: {
+    <span class="k">"field"</span>:    <span class="s">"price"</span>,
+    <span class="k">"interval"</span>: <span class="n">50</span>
+  }
+}</pre>
+        </div>
+        <div class="agg-right">
+          <div class="pane-label">// Bucket Agg Notes</div>
+          <div class="note-panel">
+            <div class="np-item"><strong>terms agg:</strong> Groups by top N distinct values. size controls how many buckets are returned. Default order is by doc count descending. You can order by a sub-aggregation metric: "order": {"avg_price": "desc"}.</div>
+            <div class="np-item red"><strong>terms accuracy:</strong> Terms agg is an approximation for distributed indices. Increase shard_size (default: size * 1.5 + 10) for higher accuracy at cost of more data transferred from shards.</div>
+            <div class="np-item green"><strong>calendar_interval vs fixed_interval:</strong> Use calendar_interval for human-readable buckets (1d, 1w, 1M, 1q, 1y). Use fixed_interval for precise durations (60m, 24h) that don't align to calendar boundaries.</div>
+            <div class="np-item"><strong>missing:</strong> All bucket aggs support a missing parameter — documents where the field doesn't exist go into a "missing" bucket: "missing": "N/A".</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sub-aggs -->
+      <div id="agg-a3" class="agg-panel">
+        <div class="agg-left">
+          <div class="pane-label">// Sub-aggregations</div>
+          <pre class="code"><span class="c">// Average price per carrier, sorted by avg</span>
+<span class="m">GET</span> <span class="p">/flights/_search</span>
+{
+  <span class="k">"size"</span>: <span class="n">0</span>,
+  <span class="k">"aggs"</span>: {
+    <span class="k">"by_carrier"</span>: {
+      <span class="k">"terms"</span>: {
+        <span class="k">"field"</span>: <span class="s">"Carrier"</span>,
+        <span class="k">"size"</span>:  <span class="n">10</span>,
+        <span class="k">"order"</span>: { <span class="k">"avg_price"</span>: <span class="s">"desc"</span> }
+      },
+      <span class="k">"aggs"</span>: {               <span class="c">// sub-agg runs per bucket</span>
+        <span class="k">"avg_price"</span>: {
+          <span class="k">"avg"</span>: { <span class="k">"field"</span>: <span class="s">"AvgTicketPrice"</span> }
+        },
+        <span class="k">"dest_breakdown"</span>: {
+          <span class="k">"terms"</span>: {           <span class="c">// nested bucket agg!</span>
+            <span class="k">"field"</span>: <span class="s">"DestCountry"</span>,
+            <span class="k">"size"</span>:  <span class="n">5</span>
+          },
+          <span class="k">"aggs"</span>: {
+            <span class="k">"flight_count"</span>: {  <span class="c">// 3 levels deep</span>
+              <span class="k">"value_count"</span>: { <span class="k">"field"</span>: <span class="s">"FlightNum"</span> }
+            }
+          }
+        }
+      }
+    }
+  }
+}</pre>
+        </div>
+        <div class="agg-right">
+          <div class="pane-label">// Sub-Agg Notes</div>
+          <div class="note-panel">
+            <div class="np-item"><strong>NESTING:</strong> Sub-aggs are defined inside a parent bucket agg using the aggs key at the same level as the bucket type. They execute once per bucket produced by the parent.</div>
+            <div class="np-item green"><strong>ORDER BY METRIC:</strong> You can sort a terms bucket by a sub-agg metric value. "order": {"avg_price": "desc"} sorts buckets by the value of the avg_price sub-agg rather than by doc count.</div>
+            <div class="np-item"><strong>SCOPE:</strong> Each sub-agg only sees documents in its parent bucket. A date_histogram bucket for "January" only aggregates January documents in its sub-aggs.</div>
+            <div class="np-item red"><strong>PERFORMANCE:</strong> Deep nesting (3+ levels) on high-cardinality fields can be expensive. Limit terms agg sizes at each level. Consider whether the full nesting is truly needed.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pipeline -->
+      <div id="agg-a4" class="agg-panel">
+        <div class="agg-left">
+          <div class="pane-label">// Pipeline aggregations</div>
+          <pre class="code"><span class="c">// avg_bucket — average across buckets</span>
+<span class="m">GET</span> <span class="p">/flights/_search</span>
+{
+  <span class="k">"size"</span>: <span class="n">0</span>,
+  <span class="k">"aggs"</span>: {
+    <span class="k">"monthly"</span>: {
+      <span class="k">"date_histogram"</span>: {
+        <span class="k">"field"</span>:             <span class="s">"timestamp"</span>,
+        <span class="k">"calendar_interval"</span>: <span class="s">"month"</span>
+      },
+      <span class="k">"aggs"</span>: {
+        <span class="k">"total_rev"</span>: {
+          <span class="k">"sum"</span>: { <span class="k">"field"</span>: <span class="s">"AvgTicketPrice"</span> }
+        }
+      }
+    },
+    <span class="c">// Pipeline agg — references sibling bucket</span>
+    <span class="k">"avg_monthly_rev"</span>: {
+      <span class="k">"avg_bucket"</span>: {
+        <span class="k">"buckets_path"</span>: <span class="s">"monthly>total_rev"</span>
+      }
+    },
+    <span class="k">"max_monthly_rev"</span>: {
+      <span class="k">"max_bucket"</span>: {
+        <span class="k">"buckets_path"</span>: <span class="s">"monthly>total_rev"</span>
+      }
+    },
+    <span class="k">"cumulative_rev"</span>: {
+      <span class="k">"cumulative_sum"</span>: {
+        <span class="k">"buckets_path"</span>: <span class="s">"monthly>total_rev"</span>
+      }
+    }
+  }
+}</pre>
+        </div>
+        <div class="agg-right">
+          <div class="pane-label">// Pipeline Agg Notes</div>
+          <div class="note-panel">
+            <div class="np-item"><strong>PIPELINE AGGS:</strong> Operate on the output of other aggregations (not on documents directly). They take a buckets_path pointing to a sibling or parent agg's output.</div>
+            <div class="np-item green"><strong>buckets_path syntax:</strong> Use &gt; to navigate levels. "monthly&gt;total_rev" = the total_rev agg inside the monthly bucket. Parent pipeline aggs use "_count" or "_key" to reference bucket metadata.</div>
+            <div class="np-item"><strong>COMMON PIPELINE AGGS:</strong> avg_bucket, max_bucket, min_bucket, sum_bucket (across buckets), cumulative_sum (running total), derivative (rate of change between buckets), moving_avg (smoothing).</div>
+            <div class="np-item red"><strong>SCOPE:</strong> Pipeline aggs are at the same level as the bucket they reference — they are siblings, not sub-aggs. They cannot go inside a bucket; they reference sibling bucket output.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════
+       02.04  ASYNC / CROSS-CLUSTER / RUNTIME
+  ════════════════════════════════════ -->
+  <div class="section">
+    <div class="sec-hd"><span class="sec-num">02.04</span><span class="sec-title">Async Search · Cross-Cluster · Runtime Fields</span></div>
+    <div class="card">
+      <div class="qexplorer">
+        <div class="qe-tabs">
+          <button class="qe-tab active" onclick="switchQE('adv','v1',this)">Async Search</button>
+          <button class="qe-tab" onclick="switchQE('adv','v2',this)">Cross-Cluster Search</button>
+          <button class="qe-tab" onclick="switchQE('adv','v3',this)">Runtime Fields in Search</button>
+        </div>
+
+        <!-- Async -->
+        <div id="adv-v1" class="qe-panel active">
+          <div class="qe-left">
+            <div class="pane-label">// Asynchronous search</div>
+            <pre class="code"><span class="c">// Submit async search</span>
+<span class="m">POST</span> <span class="p">/large_index/_async_search</span>
+{
+  <span class="k">"wait_for_completion_timeout"</span>: <span class="s">"1s"</span>,
+  <span class="k">"keep_on_completion"</span>: <span class="b">true</span>,
+  <span class="k">"keep_alive"</span>:          <span class="s">"5d"</span>,
+  <span class="k">"query"</span>: {
+    <span class="k">"match"</span>: { <span class="k">"message"</span>: <span class="s">"error"</span> }
+  },
+  <span class="k">"aggs"</span>: {
+    <span class="k">"daily_errors"</span>: {
+      <span class="k">"date_histogram"</span>: {
+        <span class="k">"field"</span>:             <span class="s">"@timestamp"</span>,
+        <span class="k">"calendar_interval"</span>: <span class="s">"day"</span>
+      }
+    }
+  }
+}
+<span class="c">// Returns immediately with id + partial results</span>
+<span class="c">// { "id": "FmRldE8...", "is_running": true, ... }</span>
+
+<span class="c">// Poll for results</span>
+<span class="m">GET</span> <span class="p">/_async_search/FmRldE8...</span>
+
+<span class="c">// Delete when done (free resources)</span>
+<span class="m">DELETE</span> <span class="p">/_async_search/FmRldE8...</span>
+
+<span class="c">// Check status without fetching results</span>
+<span class="m">GET</span> <span class="p">/_async_search/status/FmRldE8...</span></pre>
+          </div>
+          <div class="qe-right">
+            <div class="pane-label">// Notes</div>
+            <div class="note-panel">
+              <div class="np-item"><strong>USE CASE:</strong> Long-running aggregation or search on large indices. Submit with wait_for_completion_timeout: 0 to return immediately, then poll until is_running: false.</div>
+              <div class="np-item green"><strong>PARTIAL RESULTS:</strong> While running, GET on the async ID returns partial results as they accumulate. response.is_partial: true means data is incomplete. is_running: false + is_partial: false = complete results.</div>
+              <div class="np-item"><strong>keep_alive:</strong> How long to retain results after completion (default 5d). Set keep_on_completion: false to auto-delete after retrieval.</div>
+              <div class="np-item red"><strong>EXAM TASK:</strong> "Create and execute an asynchronous search with wait_for_completion_timeout: 0, then fetch the results using the returned ID" — two separate API calls: POST _async_search, then GET /_async_search/{id}.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cross-cluster -->
+        <div id="adv-v2" class="qe-panel">
+          <div class="qe-left">
+            <div class="pane-label">// Cross-cluster search (CCS)</div>
+            <pre class="code"><span class="c">// Prerequisites: configure remote cluster</span>
+<span class="m">PUT</span> <span class="p">/_cluster/settings</span>
+{
+  <span class="k">"persistent"</span>: {
+    <span class="k">"cluster"</span>: {
+      <span class="k">"remote"</span>: {
+        <span class="k">"cluster_two"</span>: {
+          <span class="k">"seeds"</span>: [<span class="s">"10.0.1.105:9300"</span>],
+          <span class="k">"skip_unavailable"</span>: <span class="b">true</span>
+        }
+      }
+    }
+  }
+}
+
+<span class="c">// Search across clusters: cluster:index syntax</span>
+<span class="m">GET</span> <span class="p">/local_index,cluster_two:remote_index/_search</span>
+{
+  <span class="k">"query"</span>: {
+    <span class="k">"match"</span>: { <span class="k">"message"</span>: <span class="s">"error"</span> }
+  }
+}
+
+<span class="c">// Search all indices on both clusters</span>
+<span class="m">GET</span> <span class="p">/logs-*,cluster_two:logs-*/_search</span>
+{ <span class="k">"query"</span>: { <span class="k">"match_all"</span>: {} } }
+
+<span class="c">// Wildcard: all remote clusters</span>
+<span class="m">GET</span> <span class="p">/*:logs-*/_search</span>
+{ <span class="k">"query"</span>: { <span class="k">"match_all"</span>: {} } }</pre>
+          </div>
+          <div class="qe-right">
+            <div class="pane-label">// Notes</div>
+            <div class="note-panel">
+              <div class="np-item"><strong>SYNTAX:</strong> remote_cluster_name:index_name — the colon separates cluster from index. Multiple indices from multiple clusters comma-separated in the URL.</div>
+              <div class="np-item green"><strong>skip_unavailable: true</strong> — if the remote cluster is down, the search still runs against local indices (returns partial results). With false (default), search fails if remote is unavailable.</div>
+              <div class="np-item"><strong>TRANSPORT PORT:</strong> CCS uses the transport port (9300 default), not the HTTP port (9200). Remote seeds must use host:9300 format.</div>
+              <div class="np-item red"><strong>VERIFY:</strong> GET /_remote/info — shows all configured remote clusters and their connection status. Always verify after configuring before attempting a CCS query.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Runtime fields in search -->
+        <div id="adv-v3" class="qe-panel">
+          <div class="qe-left">
+            <div class="pane-label">// Runtime fields in search</div>
+            <pre class="code"><span class="c">// Define runtime field and use in query + aggs</span>
+<span class="m">GET</span> <span class="p">/logs/_search</span>
+{
+  <span class="k">"runtime_mappings"</span>: {
+    <span class="k">"is_error"</span>: {
+      <span class="k">"type"</span>: <span class="s">"boolean"</span>,
+      <span class="k">"script"</span>: <span class="s">"""
+        emit(doc['status_code'].value >= 500)
+      """</span>
+    },
+    <span class="k">"duration_seconds"</span>: {
+      <span class="k">"type"</span>: <span class="s">"double"</span>,
+      <span class="k">"script"</span>: <span class="s">"""
+        emit(doc['duration_ms'].value / 1000.0)
+      """</span>
+    }
+  },
+  <span class="k">"query"</span>: {
+    <span class="k">"bool"</span>: {
+      <span class="k">"filter"</span>: [
+        { <span class="k">"term"</span>: { <span class="k">"is_error"</span>: <span class="b">true</span> }}
+      ]
+    }
+  },
+  <span class="k">"aggs"</span>: {
+    <span class="k">"avg_duration_s"</span>: {
+      <span class="k">"avg"</span>: { <span class="k">"field"</span>: <span class="s">"duration_seconds"</span> }
+    }
+  },
+  <span class="k">"fields"</span>: [<span class="s">"is_error"</span>, <span class="s">"duration_seconds"</span>]
+}</pre>
+          </div>
+          <div class="qe-right">
+            <div class="pane-label">// Notes</div>
+            <div class="note-panel">
+              <div class="np-item"><strong>FULL INTEGRATION:</strong> Runtime fields defined in runtime_mappings can be used in queries, filters, aggregations, sorting, and returned in the fields array — all in the same request.</div>
+              <div class="np-item green"><strong>emit():</strong> The Painless emit() function outputs the computed value for the runtime field. For boolean: emit(condition). For double: emit(numericValue). Must use emit, not return.</div>
+              <div class="np-item"><strong>FIELDS vs _source:</strong> Runtime field values appear in the fields array of the response, not in _source (since they're computed, not stored). Access them via response.hits.hits[].fields.</div>
+              <div class="np-item red"><strong>PERFORMANCE:</strong> Runtime fields execute a Painless script on every matching document. For large result sets, this is expensive. Index the field properly if the computation is needed on every query.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════
+       02.05  SCENARIO DRILLS
+  ════════════════════════════════════ -->
+  <div class="section">
+    <div class="sec-hd"><span class="sec-num">02.05</span><span class="sec-title">Exam Scenario Drills</span></div>
+    <div class="card">
+      <p>These hands-on scenarios reflect the style of ECE exam tasks. The exam gives you access to Elastic documentation, but speed matters. Click to reveal each complete solution.</p>
+
+      <div class="drill-grid">
+
+        <div class="drill" onclick="toggleDrill(this,'dr1')">
+          <div class="drill-head">
+            <div class="drill-n">01</div>
+            <div class="drill-info">
+              <div class="drill-tag">Bool Query · Scoring</div>
+              <div class="drill-q">Search the <code>ecommerce</code> index for products in the "clothing" category priced between $20–$100, that are in stock. Boost results where the product name contains "premium". Return only 10 results, showing only the product name and price fields.</div>
+              <div class="drill-hint">Hint: mix filter (no score) for category/price/stock, must for text match, should for boost</div>
+            </div>
+          </div>
+          <div class="drill-ans" id="dr1">
+            <div class="da-inner">
+              <div class="da-label">// Solution</div>
+              <pre class="da-code"><span class="m">GET</span> <span class="p">/ecommerce/_search</span>
+{
+  <span class="k">"size"</span>: <span class="n">10</span>,
+  <span class="k">"_source"</span>: [<span class="s">"product_name"</span>, <span class="s">"price"</span>],
+  <span class="k">"query"</span>: {
+    <span class="k">"bool"</span>: {
+      <span class="k">"filter"</span>: [
+        { <span class="k">"term"</span>:  { <span class="k">"category"</span>:  <span class="s">"clothing"</span> }},
+        { <span class="k">"term"</span>:  { <span class="k">"in_stock"</span>:  <span class="b">true</span> }},
+        { <span class="k">"range"</span>: { <span class="k">"price"</span>: { <span class="k">"gte"</span>: <span class="n">20</span>, <span class="k">"lte"</span>: <span class="n">100</span> }}}
+      ],
+      <span class="k">"should"</span>: [
+        { <span class="k">"match"</span>: { <span class="k">"product_name"</span>: <span class="s">"premium"</span> }}
+      ]
+    }
+  }
+}</pre>
+              <div class="da-note"><strong>Why filter not must:</strong> category, in_stock, and price range are hard constraints — documents either match or they don't. Using filter means no scoring overhead and results are cached. The "premium" should clause boosts score for matching docs but doesn't exclude non-matching ones. _source with an array limits which fields are returned in the response.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="drill" onclick="toggleDrill(this,'dr2')">
+          <div class="drill-head">
+            <div class="drill-n">02</div>
+            <div class="drill-info">
+              <div class="drill-tag">Aggregations · Sub-Agg · Sort by Metric</div>
+              <div class="drill-q">On the <code>flights</code> index, find the top 5 destination countries by average ticket price (descending). For each country, also show the total number of flights and the maximum ticket price.</div>
+              <div class="drill-hint">Hint: terms agg ordered by a sub-agg metric, with multiple metric sub-aggs</div>
+            </div>
+          </div>
+          <div class="drill-ans" id="dr2">
+            <div class="da-inner">
+              <div class="da-label">// Solution</div>
+              <pre class="da-code"><span class="m">GET</span> <span class="p">/flights/_search</span>
+{
+  <span class="k">"size"</span>: <span class="n">0</span>,
+  <span class="k">"aggs"</span>: {
+    <span class="k">"top_dest_countries"</span>: {
+      <span class="k">"terms"</span>: {
+        <span class="k">"field"</span>: <span class="s">"DestCountry"</span>,
+        <span class="k">"size"</span>:  <span class="n">5</span>,
+        <span class="k">"order"</span>: { <span class="k">"avg_price"</span>: <span class="s">"desc"</span> }
+      },
+      <span class="k">"aggs"</span>: {
+        <span class="k">"avg_price"</span>: {
+          <span class="k">"avg"</span>: { <span class="k">"field"</span>: <span class="s">"AvgTicketPrice"</span> }
+        },
+        <span class="k">"total_flights"</span>: {
+          <span class="k">"value_count"</span>: { <span class="k">"field"</span>: <span class="s">"FlightNum"</span> }
+        },
+        <span class="k">"max_price"</span>: {
+          <span class="k">"max"</span>: { <span class="k">"field"</span>: <span class="s">"AvgTicketPrice"</span> }
+        }
+      }
+    }
+  }
+}</pre>
+              <div class="da-note"><strong>Ordering by sub-agg:</strong> The terms agg's "order" key references the sub-agg name "avg_price" (defined inside aggs). size: 0 skips document hits. value_count counts non-null values of a field per bucket — an efficient flight counter. All three sub-aggs run in parallel for each of the top 5 country buckets.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="drill" onclick="toggleDrill(this,'dr3')">
+          <div class="drill-head">
+            <div class="drill-n">03</div>
+            <div class="drill-info">
+              <div class="drill-tag">Async Search · Cross-Cluster</div>
+              <div class="drill-q">Configure cluster <code>c2</code> as a remote cluster (seeds: 10.0.1.105:9300). Then run an asynchronous search against the <code>filebeat-*</code> index on BOTH the local cluster and c2 simultaneously, searching for log messages mentioning "disk full". Set wait_for_completion_timeout to 0. Fetch the results using the returned ID.</div>
+              <div class="drill-hint">Hint: cluster settings, then CCS with async search together</div>
+            </div>
+          </div>
+          <div class="drill-ans" id="dr3">
+            <div class="da-inner">
+              <div class="da-label">// Solution</div>
+              <pre class="da-code"><span class="c">// Step 1: Configure remote cluster</span>
+<span class="m">PUT</span> <span class="p">/_cluster/settings</span>
+{
+  <span class="k">"persistent"</span>: {
+    <span class="k">"cluster.remote.c2.seeds"</span>: [<span class="s">"10.0.1.105:9300"</span>]
+  }
+}
+
+<span class="c">// Step 2: Verify remote cluster connection</span>
+<span class="m">GET</span> <span class="p">/_remote/info</span>
+
+<span class="c">// Step 3: Async cross-cluster search</span>
+<span class="m">POST</span> <span class="p">/filebeat-*,c2:filebeat-*/_async_search</span>
+{
+  <span class="k">"wait_for_completion_timeout"</span>: <span class="s">"0"</span>,
+  <span class="k">"keep_on_completion"</span>: <span class="b">true</span>,
+  <span class="k">"query"</span>: {
+    <span class="k">"match"</span>: { <span class="k">"message"</span>: <span class="s">"disk full"</span> }
+  }
+}
+<span class="c">// Returns: { "id": "FmRldE8...", "is_running": true }</span>
+
+<span class="c">// Step 4: Fetch results by ID</span>
+<span class="m">GET</span> <span class="p">/_async_search/FmRldE8...</span></pre>
+              <div class="da-note"><strong>Key points:</strong> CCS syntax is cluster_name:index_pattern — local indices come first without prefix, remote indices use cluster_name: prefix. Async search and CCS can be combined in one request. wait_for_completion_timeout: "0" returns immediately. Always call GET /_remote/info to confirm connectivity before running CCS in the exam.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="drill" onclick="toggleDrill(this,'dr4')">
+          <div class="drill-head">
+            <div class="drill-n">04</div>
+            <div class="drill-info">
+              <div class="drill-tag">Runtime Field · Aggregation</div>
+              <div class="drill-q">The <code>logs</code> index has a <code>response_time_ms</code> field (integer). Using a runtime field, compute <code>response_time_s</code> (as a double) and aggregate: show average, max, and 95th percentile response time in seconds — all without modifying the index mapping.</div>
+              <div class="drill-hint">Hint: runtime_mappings in the search body + metric aggs referencing the runtime field</div>
+            </div>
+          </div>
+          <div class="drill-ans" id="dr4">
+            <div class="da-inner">
+              <div class="da-label">// Solution</div>
+              <pre class="da-code"><span class="m">GET</span> <span class="p">/logs/_search</span>
+{
+  <span class="k">"size"</span>: <span class="n">0</span>,
+  <span class="k">"runtime_mappings"</span>: {
+    <span class="k">"response_time_s"</span>: {
+      <span class="k">"type"</span>: <span class="s">"double"</span>,
+      <span class="k">"script"</span>: {
+        <span class="k">"source"</span>: <span class="s">"emit(doc['response_time_ms'].value / 1000.0)"</span>
+      }
+    }
+  },
+  <span class="k">"aggs"</span>: {
+    <span class="k">"avg_response_s"</span>: {
+      <span class="k">"avg"</span>: { <span class="k">"field"</span>: <span class="s">"response_time_s"</span> }
+    },
+    <span class="k">"max_response_s"</span>: {
+      <span class="k">"max"</span>: { <span class="k">"field"</span>: <span class="s">"response_time_s"</span> }
+    },
+    <span class="k">"p95_response_s"</span>: {
+      <span class="k">"percentiles"</span>: {
+        <span class="k">"field"</span>:    <span class="s">"response_time_s"</span>,
+        <span class="k">"percents"</span>: [<span class="n">95</span>]
+      }
+    }
+  }
+}</pre>
+              <div class="da-note"><strong>Why this works without schema changes:</strong> runtime_mappings in the request body creates an ephemeral field for the duration of this search only. The Painless script divides ms by 1000.0 (float division) to get seconds as a double. All three aggregations reference the runtime field name "response_time_s" just like any indexed field.</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════
+       QUIZ
+  ════════════════════════════════════ -->
+  <div class="quiz">
+    <div class="quiz-header">
+      <div class="quiz-title">Assessment</div>
+      <div class="quiz-sub">8 Exam-Style Questions · Searching Data Domain</div>
+      <div class="quiz-rule"></div>
+    </div>
+
+    <!-- Q1 -->
+    <div class="qb" id="q1">
+      <div class="q-n">QUESTION 01</div>
+      <div class="q-t">A status field is mapped as <code>keyword</code> and contains the value "Active". Which query will correctly match documents with this value?</div>
+      <div class="opts">
+        <button class="opt" onclick="ans(this,'q1','A','C')"><span class="ol">A</span>match query: {"status": "Active"}</button>
+        <button class="opt" onclick="ans(this,'q1','B','C')"><span class="ol">B</span>match query: {"status": "active"} (lowercase)</button>
+        <button class="opt" onclick="ans(this,'q1','C','C')"><span class="ol">C</span>term query: {"status": {"value": "Active"}}</button>
+        <button class="opt" onclick="ans(this,'q1','D','C')"><span class="ol">D</span>term query: {"status": {"value": "active"}} (lowercase)</button>
+      </div>
+      <div class="exp" id="e-q1"><strong>Correct: term query with exact case "Active".</strong> Keyword fields are not analyzed — they store the exact value as indexed. A term query does not analyze the search value, so <code>term: "Active"</code> matches the stored "Active" exactly. A match query analyzes the search string (lowercases it to "active"), which won't match "Active" in a keyword field. Option D fails because term queries are also not analyzed — "active" (lowercase) won't match "Active" stored in a keyword field.</div>
+    </div>
+
+    <!-- Q2 -->
+    <div class="qb" id="q2">
+      <div class="q-n">QUESTION 02</div>
+      <div class="q-t">You want to search for products where the description contains "wireless headphones" AND the price is between $50–$300 AND the brand is "Sony". Which bool clause placement gives the best query performance?</div>
+      <div class="opts">
+        <button class="opt" onclick="ans(this,'q2','A','D')"><span class="ol">A</span>All three conditions in bool/must</button>
+        <button class="opt" onclick="ans(this,'q2','B','D')"><span class="ol">B</span>description in must, brand in must, price in filter</button>
+        <button class="opt" onclick="ans(this,'q2','C','D')"><span class="ol">C</span>description in must, price in should, brand in should</button>
+        <button class="opt" onclick="ans(this,'q2','D','D')"><span class="ol">D</span>description in must, price range and brand term in filter</button>
+      </div>
+      <div class="exp" id="e-q2"><strong>Correct: description in must, price and brand in filter.</strong> The full-text query on description belongs in must — it's a text match where relevance scoring matters. The price range and brand term are exact/structured queries where you only care about inclusion/exclusion, not scoring. Placing them in filter means: (1) no scoring overhead for those conditions, (2) results are cached in the filter cache for reuse. Putting everything in must scores every condition, which is unnecessary and slower for structured filters.</div>
+    </div>
+
+    <!-- Q3 -->
+    <div class="qb" id="q3">
+      <div class="q-n">QUESTION 03</div>
+      <div class="q-t">You run the following aggregation. What does the <code>order</code> key accomplish?</div>
+      <pre class="q-code">"top_products": {
+  "terms": {
+    "field": "category",
+    "size": 5,
+    "order": { "avg_revenue": "desc" }
+  },
+  "aggs": {
+    "avg_revenue": {
+      "avg": { "field": "revenue" }
+    }
+  }
+}</pre>
+      <div class="opts">
+        <button class="opt" onclick="ans(this,'q3','A','C')"><span class="ol">A</span>Sorts the final response JSON by average revenue</button>
+        <button class="opt" onclick="ans(this,'q3','B','C')"><span class="ol">B</span>Returns the 5 categories with the most documents, then sorts those by avg_revenue</button>
+        <button class="opt" onclick="ans(this,'q3','C','C')"><span class="ol">C</span>Returns the top 5 categories ranked by average revenue (not by doc count)</button>
+        <button class="opt" onclick="ans(this,'q3','D','C')"><span class="ol">D</span>This is invalid — you cannot order a terms agg by a sub-aggregation value</button>
+      </div>
+      <div class="exp" id="e-q3"><strong>Correct: returns the top 5 categories ranked by average revenue.</strong> When a terms agg has <code>order</code> pointing to a sub-agg name, Elasticsearch uses that sub-agg's value to determine which buckets are "top" — instead of the default doc count ordering. The result is the 5 categories with the highest average revenue, not the 5 with the most documents. Option B is wrong because the ordering happens at selection time, not after.</div>
+    </div>
+
+    <!-- Q4 -->
+    <div class="qb" id="q4">
+      <div class="q-n">QUESTION 04</div>
+      <div class="q-t">Which of the following correctly represents the cross-cluster search syntax to query the <code>logs-2024</code> index on a remote cluster named <code>dc2</code>?</div>
+      <div class="opts">
+        <button class="opt" onclick="ans(this,'q4','A','B')"><span class="ol">A</span>GET /logs-2024@dc2/_search</button>
+        <button class="opt" onclick="ans(this,'q4','B','B')"><span class="ol">B</span>GET /dc2:logs-2024/_search</button>
+        <button class="opt" onclick="ans(this,'q4','C','B')"><span class="ol">C</span>GET /dc2/logs-2024/_search with X-Remote-Cluster header</button>
+        <button class="opt" onclick="ans(this,'q4','D','B')"><span class="ol">D</span>GET /logs-2024/_search with "cluster": "dc2" in the body</button>
+      </div>
+      <div class="exp" id="e-q4"><strong>Correct: dc2:logs-2024.</strong> Cross-cluster search uses the <code>cluster_name:index_name</code> colon-separated syntax directly in the URL path. The cluster name must match a configured remote cluster name (from PUT /_cluster/settings persistent.cluster.remote). There are no special headers or body parameters for CCS — the cluster:index syntax in the URL is sufficient.</div>
+    </div>
+
+    <!-- Q5 -->
+    <div class="qb" id="q5">
+      <div class="q-n">QUESTION 05</div>
+      <div class="q-t">What is the difference between <code>should</code> in a bool query that also has a <code>must</code> clause, versus a bool query with ONLY <code>should</code> clauses?</div>
+      <div class="opts">
+        <button class="opt" onclick="ans(this,'q5','A','D')"><span class="ol">A</span>There is no difference — should always requires at least one match</button>
+        <button class="opt" onclick="ans(this,'q5','B','D')"><span class="ol">B</span>With a must clause, should becomes required; without must, should is optional</button>
+        <button class="opt" onclick="ans(this,'q5','C','D')"><span class="ol">C</span>Without a must clause, should clauses never contribute to scoring</button>
+        <button class="opt" onclick="ans(this,'q5','D','D')"><span class="ol">D</span>With a must clause, should clauses are optional (boost only); without must/filter, at least one should must match (minimum_should_match defaults to 1)</button>
+      </div>
+      <div class="exp" id="e-q5"><strong>Correct: D.</strong> When a bool query has no must or filter clauses and only should clauses, minimum_should_match defaults to 1 — at least one should must match for a document to be included. When a must or filter is also present, should clauses become purely optional (minimum_should_match defaults to 0) — they only influence the relevance score of documents that are already required to match by the must/filter. This is a critical exam distinction.</div>
+    </div>
+
+    <!-- Q6 -->
+    <div class="qb" id="q6">
+      <div class="q-n">QUESTION 06</div>
+      <div class="q-t">An asynchronous search returns <code>"is_running": false, "is_partial": false</code>. What does this indicate?</div>
+      <div class="opts">
+        <button class="opt" onclick="ans(this,'q6','A','D')"><span class="ol">A</span>The search failed and returned no results</button>
+        <button class="opt" onclick="ans(this,'q6','B','D')"><span class="ol">B</span>The search is still running but partial results are unavailable</button>
+        <button class="opt" onclick="ans(this,'q6','C','D')"><span class="ol">C</span>The search timed out and the results are incomplete</button>
+        <button class="opt" onclick="ans(this,'q6','D','D')"><span class="ol">D</span>The search has completed successfully and the results are complete</button>
+      </div>
+      <div class="exp" id="e-q6"><strong>Correct: search completed, results are complete.</strong> For async searches: <code>is_running: true</code> = still executing. <code>is_running: false, is_partial: true</code> = finished but some shards failed or timed out (partial results). <code>is_running: false, is_partial: false</code> = fully complete, all shards responded, full results available. This is the final state you should check for before consuming the results.</div>
+    </div>
+
+    <!-- Q7 -->
+    <div class="qb" id="q7">
+      <div class="q-n">QUESTION 07</div>
+      <div class="q-t">What is the correct way to find all documents where a field called <code>archived_at</code> does NOT exist (is absent or null)?</div>
+      <div class="opts">
+        <button class="opt" onclick="ans(this,'q7','A','C')"><span class="ol">A</span>Using the "missing" query: {"missing": {"field": "archived_at"}}</button>
+        <button class="opt" onclick="ans(this,'q7','B','C')"><span class="ol">B</span>Using term query: {"archived_at": null}</button>
+        <button class="opt" onclick="ans(this,'q7','C','C')"><span class="ol">C</span>Using bool/must_not with exists: {"bool": {"must_not": [{"exists": {"field": "archived_at"}}]}}</button>
+        <button class="opt" onclick="ans(this,'q7','D','C')"><span class="ol">D</span>Using wildcard query: {"archived_at": {"value": "null"}}</button>
+      </div>
+      <div class="exp" id="e-q7"><strong>Correct: bool/must_not + exists.</strong> There is no "missing" query in Elasticsearch (it was removed). The correct idiom for "field does not exist or is null" is to negate the exists query using bool/must_not. This is a very common pattern in the exam. Option B is invalid syntax. Option D would search for the string literal "null" in a field, not for absent fields.</div>
+    </div>
+
+    <!-- Q8 -->
+    <div class="qb" id="q8">
+      <div class="q-n">QUESTION 08</div>
+      <div class="q-t">You want to aggregate daily flight counts over the last 30 days, including days with zero flights (no documents). Which <code>date_histogram</code> parameter ensures empty days appear in results?</div>
+      <div class="opts">
+        <button class="opt" onclick="ans(this,'q8','A','B')"><span class="ol">A</span>Set "include_empty_buckets": true in the date_histogram</button>
+        <button class="opt" onclick="ans(this,'q8','B','B')"><span class="ol">B</span>Set "min_doc_count": 0 and provide an "extended_bounds" with min/max range</button>
+        <button class="opt" onclick="ans(this,'q8','C','B')"><span class="ol">C</span>Set "size": 30 in the date_histogram</button>
+        <button class="opt" onclick="ans(this,'q8','D','B')"><span class="ol">D</span>Use a range aggregation instead, which always returns all defined ranges</button>
+      </div>
+      <div class="exp" id="e-q8"><strong>Correct: min_doc_count: 0 with extended_bounds.</strong> By default, date_histogram only returns buckets that contain at least one document. Setting <code>min_doc_count: 0</code> includes empty buckets, but only between the observed min and max dates in the data. To also include buckets at the edges of your desired range (e.g., days before the first or after the last document), you must also set <code>extended_bounds</code> with explicit min/max values. "include_empty_buckets" is not a real parameter.</div>
+    </div>
+
+    <div class="scorebox" id="scorebox">
+      <div class="score-big" id="score-num">0/8</div>
+      <div class="score-sub">Searching Data · Assessment Complete</div>
+      <div class="score-msg" id="score-msg"></div>
+      <button class="btn-reset" onclick="resetQuiz()">↺ Retry</button>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="ft">ECE · TOPIC 02 · SEARCHING DATA · ELASTIC CERTIFIED ENGINEER</div>
+    <div class="nav-btns">
+      <a href="#" class="nbtn">← Topic 1</a>
+      <button class="nbtn primary" onclick="alert('Topic 3: Developing Search Applications — coming next!')">Topic 3: Search Applications →</button>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+// ── Generic tab switcher ──
+function switchQE(group, id, btn) {
+  // hide all panels for this group
+  document.querySelectorAll(`[id^="${group}-"]`).forEach(p => {
+    p.classList.remove('active');
+  });
+  document.getElementById(`${group}-${id}`).classList.add('active');
+  btn.closest('.qe-tabs, .qe-panel').querySelectorAll ? null : null;
+  // reset all tab buttons in same container
+  btn.parentElement.querySelectorAll('.qe-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function switchAgg(group, id, btn) {
+  document.querySelectorAll(`[id^="${group}-"]`).forEach(p => p.classList.remove('active'));
+  document.getElementById(`${group}-${id}`).classList.add('active');
+  btn.parentElement.querySelectorAll('.agg-type-btn').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ── Bool clause explorer ──
+const boolData = {
+  'bc-must': {
+    code: `<span class="k">"bool"</span>: {
+  <span class="k">"must"</span>: [
+    { <span class="k">"match"</span>: { <span class="k">"title"</span>: <span class="s">"elasticsearch guide"</span> }},
+    { <span class="k">"match"</span>: { <span class="k">"body"</span>:  <span class="s">"aggregations"</span>         }}
+  ]
+}
+<span class="c">// Both title AND body conditions must match.</span>
+<span class="c">// Score = sum of scores from both match queries.</span>`,
+    notes: `<div class="np-item green"><strong>MUST = AND + SCORED:</strong> All must clauses must match. Each matching must clause contributes its score. More must matches = higher relevance score.</div>
+<div class="np-item"><strong>MULTIPLE MUSTS:</strong> When there are multiple must clauses, they all must be satisfied. Elasticsearch ANDs them together in a conjunction.</div>
+<div class="np-item red"><strong>VS FILTER:</strong> Use must only for full-text queries where the relevance score matters. For structured filters (exact match, range), use filter instead — it's faster and cached.</div>`
+  },
+  'bc-filter': {
+    code: `<span class="k">"bool"</span>: {
+  <span class="k">"filter"</span>: [
+    { <span class="k">"term"</span>:  { <span class="k">"status"</span>: <span class="s">"published"</span> }},
+    { <span class="k">"range"</span>: { <span class="k">"date"</span>:   { <span class="k">"gte"</span>: <span class="s">"now-30d"</span> }}}
+  ]
+}
+<span class="c">// Documents must match ALL filter clauses.</span>
+<span class="c">// _score = 0 for all results (no scoring).</span>
+<span class="c">// Results are CACHED for repeated queries.</span>`,
+    notes: `<div class="np-item green"><strong>FILTER = AND + UNSCORED + CACHED:</strong> Must match but contributes zero score. Results stored in filter cache — identical filter clauses in future queries hit the cache instantly.</div>
+<div class="np-item"><strong>BEST FOR:</strong> date ranges, term exact matches, numeric ranges, boolean fields. Anything where you care about inclusion/exclusion but not relevance ranking.</div>
+<div class="np-item red"><strong>EXAM PATTERN:</strong> "Find active products in stock priced under $100" — all three go in filter. None affect the text relevance score so all belong in filter context.</div>`
+  },
+  'bc-should': {
+    code: `<span class="k">"bool"</span>: {
+  <span class="k">"must"</span>: [
+    { <span class="k">"match"</span>: { <span class="k">"title"</span>: <span class="s">"search"</span> }}
+  ],
+  <span class="k">"should"</span>: [
+    { <span class="k">"term"</span>: { <span class="k">"tags"</span>: <span class="s">"featured"</span> }},
+    { <span class="k">"range"</span>: { <span class="k">"views"</span>: { <span class="k">"gte"</span>: <span class="n">1000</span> }}}
+  ]
+}
+<span class="c">// With must present: should is optional.</span>
+<span class="c">// Featured / high-views articles score higher.</span>
+<span class="c">// Articles without these still appear.</span>`,
+    notes: `<div class="np-item"><strong>SHOULD = OR + BOOST:</strong> When combined with must/filter, should clauses are optional — they boost score if matching but do not exclude non-matching docs. minimum_should_match defaults to 0.</div>
+<div class="np-item green"><strong>ALONE = REQUIRED:</strong> When a bool has ONLY should clauses, minimum_should_match defaults to 1 — at least one must match.</div>
+<div class="np-item red"><strong>EXAM TRAP:</strong> Adding should clauses to a bool that has must doesn't change which documents are returned — only their relative scores. If you want OR logic that includes/excludes documents, use nested bool or query_string.</div>`
+  },
+  'bc-mustnot': {
+    code: `<span class="k">"bool"</span>: {
+  <span class="k">"must"</span>: [
+    { <span class="k">"match"</span>: { <span class="k">"title"</span>: <span class="s">"guide"</span> }}
+  ],
+  <span class="k">"must_not"</span>: [
+    { <span class="k">"term"</span>:   { <span class="k">"status"</span>:    <span class="s">"draft"</span>  }},
+    { <span class="k">"exists"</span>: { <span class="k">"field"</span>:     <span class="s">"deleted_at"</span> }}
+  ]
+}
+<span class="c">// Exclude drafts and soft-deleted documents.</span>
+<span class="c">// must_not does NOT affect score.</span>
+<span class="c">// Results are CACHED (like filter).</span>`,
+    notes: `<div class="np-item"><strong>MUST_NOT = AND NOT + UNSCORED + CACHED:</strong> Matching documents are excluded from results. Does not contribute to score. Like filter context, must_not results are cached.</div>
+<div class="np-item green"><strong>COMMON PATTERNS:</strong> Exclude soft-deleted records, exclude specific categories, exclude documents where a field exists (using must_not + exists).</div>
+<div class="np-item red"><strong>NOT A NEGATIVE SCORE:</strong> must_not doesn't penalise matching documents — it completely excludes them. If you want "downrank but not exclude", use should with a negative boost value instead.</div>`
+  }
+};
+
+let activeBoolClause = null;
+function showBoolClause(el, id) {
+  const detail = document.getElementById('bb-detail');
+  if (activeBoolClause === id) {
+    detail.classList.remove('show');
+    document.querySelectorAll('.bb-clause').forEach(c => c.classList.remove('selected'));
+    activeBoolClause = null; return;
+  }
+  document.querySelectorAll('.bb-clause').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('bb-code').innerHTML = boolData[id].code;
+  document.getElementById('bb-notes').innerHTML = boolData[id].notes;
+  detail.classList.add('show');
+  activeBoolClause = id;
+}
+
+// ── Drill toggles ──
+function toggleDrill(el, id) {
+  const body = document.getElementById(id);
+  const open = body.classList.contains('show');
+  document.querySelectorAll('.drill-ans').forEach(b => b.classList.remove('show'));
+  document.querySelectorAll('.drill').forEach(d => d.classList.remove('open'));
+  if (!open) { body.classList.add('show'); el.classList.add('open'); }
+}
+
+// ── Quiz ──
+const correct = { q1:'C', q2:'D', q3:'C', q4:'B', q5:'D', q6:'D', q7:'C', q8:'B' };
+const answered = {};
+let score = 0;
+
+function ans(btn, qId, chosen) {
+  if (answered[qId]) return;
+  answered[qId] = true;
+  const isRight = chosen === correct[qId];
+  if (isRight) score++;
+  const opts = document.getElementById(qId).querySelectorAll('.opt');
+  const letters = ['A','B','C','D'];
+  opts.forEach((o, i) => {
+    o.classList.add('locked'); o.style.cursor = 'default';
+    if (letters[i] === correct[qId]) o.classList.add(isRight && o===btn ? 'correct' : 'revealc');
+  });
+  if (!isRight) { btn.classList.remove('revealc'); btn.classList.add('wrong'); }
+  else { btn.classList.remove('revealc'); btn.classList.add('correct'); }
+  document.getElementById('e-' + qId).classList.add('show');
+  updateProg();
+  if (Object.keys(answered).length === 8) setTimeout(showScore, 500);
+}
+
+function updateProg() {
+  const n = Object.keys(answered).length;
+  document.getElementById('progFill').style.width = (n / 8 * 100) + '%';
+  document.getElementById('progTxt').textContent = n + ' / 8 answered';
+}
+
+function showScore() {
+  document.getElementById('score-num').textContent = score + '/8';
+  const p = score / 8 * 100;
+  document.getElementById('score-msg').textContent =
+    p === 100 ? 'Perfect score. Every query type and aggregation pattern mastered.' :
+    p >= 87   ? 'Excellent. Revisit the should/must_not interaction before the exam.' :
+    p >= 62   ? 'Solid foundation. Focus on term vs match and bool clause scoring.' :
+                'Keep drilling. Priority: must vs filter, term vs match, agg ordering.';
+  document.getElementById('scorebox').classList.add('show');
+}
+
+function resetQuiz() {
+  Object.keys(answered).forEach(k => delete answered[k]);
+  score = 0;
+  document.getElementById('scorebox').classList.remove('show');
+  document.querySelectorAll('.opt').forEach(o => { o.classList.remove('correct','wrong','revealc','locked'); o.style.cursor = ''; });
+  document.querySelectorAll('.exp').forEach(e => e.classList.remove('show'));
+  document.getElementById('progFill').style.width = '0%';
+  document.getElementById('progTxt').textContent = '0 / 8 answered';
+}
+</script>
+</body>
+</html>

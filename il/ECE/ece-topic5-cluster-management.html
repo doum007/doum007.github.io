@@ -1,0 +1,1808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ECE Topic 5: Cluster Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=JetBrains+Mono:ital,wght@0,300;0,400;0,600;1,300&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:      #06060f;
+    --bg2:     #09091a;
+    --bg3:     #0c0c22;
+    --panel:   #0f0f28;
+    --panel2:  #13133a;
+    --border:  #1a1a45;
+    --border2: #252560;
+    --violet:  #7c3aed;
+    --viol2:   #9b5ff5;
+    --viol3:   #c084fc;
+    --viol4:   rgba(124,58,237,0.15);
+    --silver:  #e2e8f0;
+    --silver2: #94a3b8;
+    --silver3: #64748b;
+    --cyan:    #22d3ee;
+    --cyan2:   #06b6d4;
+    --gold:    #f59e0b;
+    --red:     #ef4444;
+    --green:   #22c55e;
+    --dim:     #334155;
+    --text:    #cbd5e1;
+    --text2:   #94a3b8;
+    --mono:    'JetBrains Mono', monospace;
+    --display: 'Orbitron', sans-serif;
+    --body:    'Outfit', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--body);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Star field */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 60% 70%, rgba(255,255,255,0.2) 0%, transparent 100%),
+      radial-gradient(1px 1px at 80% 15%, rgba(255,255,255,0.25) 0%, transparent 100%),
+      radial-gradient(1px 1px at 40% 80%, rgba(255,255,255,0.15) 0%, transparent 100%),
+      radial-gradient(1px 1px at 10% 60%, rgba(255,255,255,0.2) 0%, transparent 100%),
+      radial-gradient(1px 1px at 90% 45%, rgba(255,255,255,0.2) 0%, transparent 100%),
+      radial-gradient(600px 400px at 0% 0%, rgba(124,58,237,0.06) 0%, transparent 70%),
+      radial-gradient(400px 600px at 100% 100%, rgba(34,211,238,0.04) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+
+  /* Horizon glow */
+  body::after {
+    content: '';
+    position: fixed; bottom: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(124,58,237,0.4), rgba(34,211,238,0.3), transparent);
+    pointer-events: none; z-index: 0;
+  }
+
+  .container { max-width: 1080px; margin: 0 auto; padding: 0 40px; position: relative; z-index: 1; }
+
+  /* ── HEADER ── */
+  header { padding: 48px 0 0; margin-bottom: 52px; }
+
+  .header-console {
+    border: 1px solid var(--border2);
+    background: var(--panel);
+    overflow: hidden; margin-bottom: 32px;
+    box-shadow: 0 0 40px rgba(124,58,237,0.12), inset 0 0 80px rgba(124,58,237,0.03);
+  }
+  .console-bar {
+    background: var(--panel2); border-bottom: 1px solid var(--border2);
+    padding: 10px 18px; display: flex; align-items: center; gap: 14px;
+  }
+  .console-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .console-dot.red    { background: var(--red);   box-shadow: 0 0 6px var(--red);   }
+  .console-dot.gold   { background: var(--gold);  box-shadow: 0 0 6px var(--gold);  }
+  .console-dot.green  { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .console-id { font-family: var(--mono); font-size: 10px; color: var(--silver3); letter-spacing: 3px; margin-left: auto; }
+
+  .console-body { padding: 28px 32px; }
+
+  .cert-tag { font-family: var(--mono); font-size: 10px; color: var(--violet); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+  .cert-tag::before { content: ''; display: inline-block; width: 6px; height: 6px; background: var(--violet); border-radius: 50%; box-shadow: 0 0 8px var(--violet); }
+
+  h1 {
+    font-family: var(--display);
+    font-size: clamp(2.2rem, 6vw, 5rem);
+    font-weight: 900; line-height: 1;
+    letter-spacing: 4px; text-transform: uppercase;
+    color: var(--silver);
+  }
+  h1 .viol-word { color: var(--viol2); text-shadow: 0 0 30px rgba(155,95,245,0.5); }
+  h1 .sub-line {
+    font-family: var(--mono); font-size: 11px; font-weight: 300;
+    color: var(--silver3); letter-spacing: 3px; display: block;
+    margin-top: 14px; text-transform: uppercase;
+  }
+
+  .header-stats { display: flex; gap: 0; margin-top: 28px; }
+  .hstat {
+    padding: 14px 20px; border: 1px solid var(--border2); border-right: none;
+    text-align: center; background: rgba(124,58,237,0.05); position: relative;
+  }
+  .hstat:last-child { border-right: 1px solid var(--border2); }
+  .hstat.hl { background: rgba(124,58,237,0.12); border-color: rgba(124,58,237,0.4); }
+  .hstat.hl::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1px; background: var(--violet); }
+  .hsv { font-family: var(--display); font-size: 2rem; font-weight: 700; color: var(--viol2); line-height: 1; }
+  .hsl { font-family: var(--mono); font-size: 8px; color: var(--silver3); letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+
+  /* Nav */
+  .topic-nav { display: flex; margin-top: 0; border-top: 1px solid var(--border2); overflow-x: auto; }
+  .topic-nav a {
+    font-family: var(--mono); font-size: 10px; padding: 12px 18px;
+    text-decoration: none; color: var(--silver3); letter-spacing: 1px; text-transform: uppercase;
+    border-right: 1px solid var(--border2); transition: all 0.12s; white-space: nowrap;
+  }
+  .topic-nav a:last-child { border-right: none; }
+  .topic-nav a.active { background: var(--violet); color: var(--white, #fff); box-shadow: inset 0 -2px 0 var(--viol3); }
+  .topic-nav a:hover:not(.active) { background: var(--panel2); color: var(--silver); }
+
+  /* Progress */
+  .prog-row { display: flex; align-items: center; gap: 14px; margin: 22px 0 56px; }
+  .prog-track { flex: 1; height: 2px; background: var(--border); position: relative; overflow: hidden; }
+  .prog-fill { height: 100%; background: linear-gradient(90deg, var(--violet), var(--viol3), var(--cyan)); width: 0%; transition: width 0.4s; position: relative; }
+  .prog-fill::after { content: ''; position: absolute; right: 0; top: -2px; width: 6px; height: 6px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
+  .prog-txt { font-family: var(--mono); font-size: 10px; color: var(--silver3); letter-spacing: 1px; white-space: nowrap; }
+
+  /* ── SECTION ── */
+  .section { margin-bottom: 68px; animation: materialise 0.5s ease both; }
+  .section:nth-child(1){animation-delay:.05s}.section:nth-child(2){animation-delay:.1s}
+  .section:nth-child(3){animation-delay:.15s}.section:nth-child(4){animation-delay:.2s}
+  .section:nth-child(5){animation-delay:.25s}.section:nth-child(6){animation-delay:.3s}
+  @keyframes materialise { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+
+  .sec-hd { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+  .sec-num {
+    font-family: var(--display); font-size: 0.85rem; font-weight: 700;
+    color: var(--viol2); letter-spacing: 3px;
+    border: 1px solid rgba(124,58,237,0.4); padding: 6px 14px;
+    background: rgba(124,58,237,0.08); text-shadow: 0 0 12px rgba(155,95,245,0.5);
+  }
+  .sec-title { font-family: var(--display); font-size: 1.1rem; font-weight: 600; letter-spacing: 3px; color: var(--silver); text-transform: uppercase; }
+  .sec-rule { flex: 1; height: 1px; background: linear-gradient(90deg, var(--border2), transparent); }
+
+  /* Card */
+  .card {
+    background: var(--panel); border: 1px solid var(--border2);
+    padding: 24px 28px; position: relative; overflow: hidden;
+    box-shadow: 0 0 20px rgba(124,58,237,0.05);
+  }
+  .card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, var(--violet), rgba(124,58,237,0.1));
+  }
+  .card p { font-size: 0.95rem; line-height: 1.9; color: var(--text2); margin-bottom: 14px; font-weight: 300; }
+  .card p:last-child { margin-bottom: 0; }
+  strong { color: var(--silver); font-weight: 500; }
+  code { font-family: var(--mono); font-size: 11px; color: var(--viol3); background: rgba(124,58,237,0.1); padding: 1px 5px; border: 1px solid rgba(124,58,237,0.2); }
+
+  /* ── CODE EXPLORER ── */
+  .cex { background: var(--bg2); border: 1px solid var(--border2); overflow: hidden; margin: 22px 0;
+         box-shadow: 0 0 20px rgba(124,58,237,0.05); }
+  .cex-hd {
+    background: var(--panel2); border-bottom: 1px solid var(--border2);
+    padding: 0; display: flex; align-items: stretch; flex-wrap: wrap;
+  }
+  .cex-label {
+    font-family: var(--mono); font-size: 10px; color: var(--viol3); letter-spacing: 2px;
+    text-transform: uppercase; padding: 11px 18px; border-right: 1px solid var(--border2);
+    display: flex; align-items: center;
+  }
+  .cex-tabs { display: flex; flex-wrap: wrap; }
+  .cex-tab {
+    font-family: var(--mono); font-size: 10px; padding: 11px 18px;
+    background: none; border: none; border-right: 1px solid var(--border2); color: var(--silver3);
+    cursor: pointer; transition: all 0.12s; letter-spacing: 1px; text-transform: uppercase;
+  }
+  .cex-tab.active { background: var(--violet); color: #fff; }
+  .cex-tab:hover:not(.active) { background: var(--panel); color: var(--silver); }
+
+  .cex-panel { display: none; }
+  .cex-panel.active { display: block; }
+
+  .cex-body { display: grid; grid-template-columns: 1.15fr 0.85fr; }
+  @media(max-width:680px){ .cex-body { grid-template-columns: 1fr; } }
+
+  .cex-left { padding: 20px 22px; border-right: 1px solid var(--border); background: rgba(0,0,0,0.3); }
+  .cex-right { padding: 20px 22px; }
+  .cex-sl { font-family: var(--mono); font-size: 9px; color: var(--silver3); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+
+  pre.co {
+    font-family: var(--mono); font-size: 11.5px; line-height: 1.9;
+    white-space: pre-wrap; word-break: break-word; overflow-x: auto;
+  }
+  .cm { color: var(--viol3); font-weight: 600; }
+  .cp { color: #86efac; }
+  .ck { color: var(--cyan); }
+  .cs { color: #a5f3a5; }
+  .cn { color: var(--gold); }
+  .cb { color: #c084fc; }
+  .cmt{ color: var(--dim); font-style: italic; }
+
+  .ann-list { display: flex; flex-direction: column; gap: 8px; }
+  .ann {
+    font-family: var(--mono); font-size: 11px; line-height: 1.7;
+    padding: 9px 12px; border-left: 2px solid;
+  }
+  .ann.i { border-color: var(--cyan2); background: rgba(34,211,238,0.05); color: var(--cyan2); }
+  .ann.i strong { color: #67e8f9; }
+  .ann.w { border-color: var(--gold); background: rgba(245,158,11,0.05); color: #fbbf24; }
+  .ann.w strong { color: var(--gold); }
+  .ann.g { border-color: var(--green); background: rgba(34,197,94,0.05); color: #4ade80; }
+  .ann.g strong { color: var(--green); }
+  .ann.r { border-color: var(--red); background: rgba(239,68,68,0.05); color: #f87171; }
+  .ann.r strong { color: var(--red); }
+  .ann.v { border-color: var(--viol2); background: rgba(124,58,237,0.06); color: var(--viol3); }
+  .ann.v strong { color: var(--viol2); }
+
+  /* ── NODE ROLE GRID ── */
+  .node-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: 12px; margin: 22px 0; }
+  .node-card {
+    background: var(--panel); border: 1px solid var(--border2); padding: 16px 18px;
+    cursor: pointer; transition: all 0.18s; position: relative; overflow: hidden;
+  }
+  .node-card::after {
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+    background: var(--violet); transform: scaleX(0); transform-origin: left;
+    transition: transform 0.2s;
+  }
+  .node-card:hover::after, .node-card.open::after { transform: scaleX(1); }
+  .node-card:hover { border-color: rgba(124,58,237,0.5); box-shadow: 0 0 16px rgba(124,58,237,0.12); }
+  .node-card.open { border-color: var(--violet); box-shadow: 0 0 20px rgba(124,58,237,0.18); }
+  .nc-role { font-family: var(--mono); font-size: 8px; color: var(--silver3); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 6px; }
+  .nc-name { font-family: var(--display); font-size: 1rem; font-weight: 600; color: var(--viol3); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+  .node-card.open .nc-name { color: #fff; text-shadow: 0 0 10px var(--viol3); }
+  .nc-desc { font-family: var(--body); font-size: 11.5px; color: var(--text2); line-height: 1.55; font-weight: 300; }
+
+  .node-detail {
+    display: none; grid-column: 1 / -1; background: var(--bg2);
+    border: 1px solid var(--violet); padding: 18px 22px;
+    box-shadow: 0 0 24px rgba(124,58,237,0.15);
+    animation: glow-in 0.2s ease;
+  }
+  @keyframes glow-in { from{opacity:0;box-shadow:none} to{opacity:1;box-shadow:0 0 24px rgba(124,58,237,0.15)} }
+  .node-detail.show { display: block; }
+  .nd-label { font-family: var(--mono); font-size: 9px; color: var(--viol3); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 12px; }
+
+  /* Inline note */
+  .inote {
+    border-left: 2px solid var(--viol2); background: rgba(124,58,237,0.06);
+    padding: 11px 16px; margin: 14px 0; font-family: var(--mono);
+    font-size: 11.5px; color: var(--silver3); line-height: 1.75;
+  }
+  .inote.w { border-color: var(--gold); background: rgba(245,158,11,0.05); color: #fbbf24; }
+  .inote.r { border-color: var(--red);  background: rgba(239,68,68,0.05);  color: #f87171; }
+  .inote.g { border-color: var(--green);background: rgba(34,197,94,0.05);  color: #4ade80; }
+  .inote.c { border-color: var(--cyan); background: rgba(34,211,238,0.05); color: var(--cyan); }
+  .inote strong { color: var(--silver); }
+  .inote.w strong { color: var(--gold); }
+  .inote.r strong { color: var(--red); }
+  .inote.g strong { color: var(--green); }
+  .inote.c strong { color: var(--cyan); }
+
+  /* Snapshot SLM table */
+  .slm-table { width: 100%; border-collapse: collapse; margin: 18px 0; font-family: var(--mono); font-size: 11px; border: 1px solid var(--border2); }
+  .slm-table th { background: var(--panel2); color: var(--viol3); padding: 10px 14px; text-align: left; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; border-bottom: 1px solid var(--border2); }
+  .slm-table td { padding: 9px 14px; border-bottom: 1px solid var(--border); color: var(--text2); vertical-align: top; }
+  .slm-table tr:last-child td { border-bottom: none; }
+  .slm-table tr:hover td { background: var(--panel2); }
+  .slm-table td:first-child { color: var(--viol3); font-weight: 600; }
+  .badge { display: inline-block; font-family: var(--mono); font-size: 9px; padding: 2px 8px; border: 1px solid; border-radius: 2px; }
+  .badge.y { color: var(--green); border-color: rgba(34,197,94,0.4); background: rgba(34,197,94,0.07); }
+  .badge.n { color: var(--red);   border-color: rgba(239,68,68,0.4);  background: rgba(239,68,68,0.07);  }
+  .badge.p { color: var(--gold);  border-color: rgba(245,158,11,0.4); background: rgba(245,158,11,0.07); }
+  .badge.v { color: var(--viol3); border-color: rgba(124,58,237,0.4); background: rgba(124,58,237,0.07); }
+
+  /* ── DRILLS ── */
+  .drills { border: 1px solid var(--border2); overflow: hidden; margin: 22px 0; }
+  .drill { border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.12s; }
+  .drill:last-child { border-bottom: none; }
+  .drill:hover { background: var(--panel2); }
+  .drill.open { background: var(--panel); }
+  .drill-hd { padding: 16px 20px; display: flex; align-items: flex-start; gap: 16px; }
+  .drill-n { font-family: var(--display); font-size: 2.2rem; font-weight: 900; color: var(--dim); min-width: 48px; line-height: 1; transition: all 0.2s; }
+  .drill:hover .drill-n, .drill.open .drill-n { color: var(--viol2); text-shadow: 0 0 12px rgba(155,95,245,0.5); }
+  .drill-content { flex: 1; }
+  .drill-cat { font-family: var(--mono); font-size: 9px; color: var(--silver3); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
+  .drill-task { font-family: var(--body); font-size: 0.93rem; color: var(--text2); line-height: 1.55; font-weight: 300; }
+  .drill-body { display: none; border-top: 1px solid var(--border); }
+  .drill-body.show { display: block; }
+  .drill-sol { padding: 18px 20px; }
+  .ds-lbl { font-family: var(--mono); font-size: 9px; color: var(--green); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 10px; }
+  pre.ds-code {
+    font-family: var(--mono); font-size: 11.5px; line-height: 1.85;
+    background: rgba(0,0,0,0.4); padding: 18px; overflow-x: auto; white-space: pre-wrap;
+    border-left: 2px solid var(--violet); color: var(--text2);
+  }
+  .ds-note { font-family: var(--body); font-size: 12px; color: var(--silver3); margin-top: 12px; line-height: 1.75; padding: 10px 14px; background: rgba(124,58,237,0.05); border: 1px solid var(--border2); font-weight: 300; }
+  .ds-note strong { color: var(--viol3); }
+
+  /* ── FINAL SUMMARY ── */
+  .final-summary {
+    background: linear-gradient(135deg, var(--panel) 0%, var(--panel2) 100%);
+    border: 1px solid var(--border2); padding: 32px;
+    box-shadow: 0 0 40px rgba(124,58,237,0.12); margin: 22px 0;
+    position: relative; overflow: hidden;
+  }
+  .final-summary::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--violet), var(--cyan), var(--violet));
+  }
+  .fs-title { font-family: var(--display); font-size: 1.8rem; font-weight: 900; color: var(--silver); letter-spacing: 4px; text-transform: uppercase; margin-bottom: 20px; }
+  .fs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 12px; }
+  .fs-topic {
+    background: rgba(0,0,0,0.3); border: 1px solid var(--border2); padding: 14px 18px;
+    transition: all 0.15s; cursor: default;
+  }
+  .fs-topic:hover { border-color: rgba(124,58,237,0.4); background: rgba(124,58,237,0.05); }
+  .fst-num { font-family: var(--display); font-size: 1.8rem; font-weight: 900; color: var(--viol2); line-height: 1; margin-bottom: 4px; }
+  .fst-name { font-family: var(--display); font-size: 0.8rem; letter-spacing: 2px; color: var(--silver); text-transform: uppercase; margin-bottom: 6px; }
+  .fst-tags { font-family: var(--mono); font-size: 10px; color: var(--silver3); line-height: 1.7; }
+
+  /* ── QUIZ ── */
+  .quiz {
+    background: linear-gradient(180deg, var(--panel) 0%, var(--bg2) 100%);
+    border: 1px solid var(--border2);
+    padding: 52px 40px; margin-top: 72px; position: relative;
+    box-shadow: 0 0 60px rgba(124,58,237,0.15);
+  }
+  .quiz::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--violet), var(--cyan2), var(--viol3), var(--cyan));
+  }
+  .quiz-pretitle { font-family: var(--mono); font-size: 10px; color: var(--silver3); letter-spacing: 4px; text-transform: uppercase; margin-bottom: 6px; }
+  .quiz-title { font-family: var(--display); font-size: 3.2rem; font-weight: 900; letter-spacing: 4px; color: var(--silver); text-transform: uppercase; margin-bottom: 4px; text-shadow: 0 0 40px rgba(155,95,245,0.3); }
+  .quiz-sub { font-family: var(--mono); font-size: 11px; color: var(--silver3); margin-bottom: 48px; }
+
+  .qb { margin-bottom: 44px; padding-bottom: 44px; border-bottom: 1px solid var(--border); }
+  .qb:last-of-type { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .q-n { font-family: var(--mono); font-size: 9px; color: var(--silver3); letter-spacing: 4px; margin-bottom: 8px; }
+  .q-t { font-family: var(--body); font-weight: 300; font-size: 0.98rem; color: var(--silver); line-height: 1.65; margin-bottom: 6px; }
+  pre.q-code {
+    font-family: var(--mono); font-size: 11px; line-height: 1.8;
+    background: rgba(0,0,0,0.4); border-left: 2px solid var(--viol2);
+    padding: 13px 16px; color: var(--text2); margin: 12px 0; overflow-x: auto; white-space: pre;
+  }
+
+  .opts { display: flex; flex-direction: column; gap: 7px; margin-top: 14px; }
+  .opt {
+    display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px;
+    border: 1px solid var(--border2); background: rgba(124,58,237,0.03); color: var(--silver3);
+    font-family: var(--mono); font-size: 11.5px; cursor: pointer; transition: all 0.12s;
+    text-align: left; width: 100%; line-height: 1.55;
+  }
+  .opt:hover:not(.locked) { border-color: rgba(124,58,237,0.5); color: var(--silver); background: rgba(124,58,237,0.08); box-shadow: 0 0 10px rgba(124,58,237,0.08); }
+  .opt .ol { color: var(--viol3); font-weight: 700; min-width: 18px; }
+  .opt.correct { border-color: var(--green); background: rgba(34,197,94,0.08); color: #4ade80; box-shadow: 0 0 12px rgba(34,197,94,0.1); }
+  .opt.wrong   { border-color: var(--red);   background: rgba(239,68,68,0.08);  color: #f87171; }
+  .opt.revealc { border-color: rgba(34,197,94,0.3); background: rgba(34,197,94,0.04); color: rgba(74,222,128,0.5); opacity: 0.6; }
+
+  .exp {
+    display: none; margin-top: 10px; padding: 12px 18px;
+    background: rgba(124,58,237,0.04); border: 1px solid rgba(124,58,237,0.2);
+    font-family: var(--mono); font-size: 11px; color: var(--silver3); line-height: 1.85;
+  }
+  .exp.show { display: block; animation: fadeIn 0.2s ease; }
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+  .exp strong { color: var(--viol3); }
+
+  .scorebox { display: none; margin-top: 40px; padding: 40px; border: 1px solid var(--border2); text-align: center; background: rgba(124,58,237,0.05); }
+  .scorebox.show { display: block; animation: fadeIn 0.4s ease; }
+  .score-big { font-family: var(--display); font-size: 6.5rem; font-weight: 900; color: var(--viol2); letter-spacing: 6px; line-height: 1; text-shadow: 0 0 60px rgba(155,95,245,0.5); }
+  .score-sub { font-family: var(--mono); font-size: 10px; color: var(--silver3); letter-spacing: 4px; margin: 10px 0 14px; text-transform: uppercase; }
+  .score-msg { font-family: var(--body); font-weight: 300; font-size: 0.98rem; color: var(--text2); }
+  .btn-reset {
+    margin-top: 22px; background: none; border: 1px solid var(--viol2); color: var(--viol3);
+    font-family: var(--mono); font-size: 11px; padding: 12px 32px; cursor: pointer;
+    letter-spacing: 4px; text-transform: uppercase; transition: all 0.2s;
+  }
+  .btn-reset:hover { background: var(--violet); color: #fff; box-shadow: 0 0 20px rgba(124,58,237,0.4); }
+
+  footer {
+    margin-top: 80px; padding: 32px 0; border-top: 1px solid var(--border2);
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;
+  }
+  .ft { font-family: var(--mono); font-size: 10px; color: var(--dim); letter-spacing: 2px; }
+  .nav-btns { display: flex; gap: 0; }
+  .nbtn {
+    font-family: var(--mono); font-size: 11px; padding: 11px 20px;
+    border: 1px solid var(--border2); border-right: none; color: var(--silver3);
+    background: none; cursor: pointer; letter-spacing: 1px; text-decoration: none;
+    transition: all 0.15s; text-transform: uppercase;
+  }
+  .nbtn:last-child { border-right: 1px solid var(--border2); }
+  .nbtn:hover { background: var(--panel); color: var(--silver); }
+  .nbtn.primary {
+    background: linear-gradient(135deg, var(--violet), var(--cyan2)); color: #fff;
+    border-color: var(--violet); font-weight: 600; letter-spacing: 2px;
+    box-shadow: 0 0 20px rgba(124,58,237,0.3);
+  }
+  .nbtn.primary:hover { box-shadow: 0 0 30px rgba(124,58,237,0.5); }
+
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg2); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- ── HEADER ── -->
+<header>
+  <div class="header-console">
+    <div class="console-bar">
+      <div class="console-dot red"></div>
+      <div class="console-dot gold"></div>
+      <div class="console-dot green"></div>
+      <span class="console-id">ECE · DOMAIN V · CLUSTER-MGMT · v8.x</span>
+    </div>
+    <div class="console-body">
+      <div class="cert-tag">Elastic Certified Engineer · Final Domain</div>
+      <h1>CLUSTER<span class="viol-word">MANAGEMENT</span>
+        <span class="sub-line">// node roles · security · shard allocation · snapshots · CCR · monitoring</span>
+      </h1>
+      <div class="header-stats">
+        <div class="hstat"><div class="hsv">5</div><div class="hsl">of 5</div></div>
+        <div class="hstat"><div class="hsv">6</div><div class="hsl">Subtopics</div></div>
+        <div class="hstat hl"><div class="hsv">7</div><div class="hsl">Quiz Qs</div></div>
+        <div class="hstat"><div class="hsv">3</div><div class="hsl">Drills</div></div>
+      </div>
+      <nav class="topic-nav">
+        <a href="#">01 · Data Mgmt</a>
+        <a href="#">02 · Searching</a>
+        <a href="#">03 · Search Apps</a>
+        <a href="#">04 · Data Processing</a>
+        <a href="#" class="active">05 · Cluster Mgmt</a>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<div class="prog-row">
+  <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+  <span class="prog-txt" id="progTxt">0 / 7 answered</span>
+</div>
+
+<!-- ═══════════════════════
+     05.01  NODE ROLES
+══════════════════════════ -->
+<div class="section">
+  <div class="sec-hd">
+    <div class="sec-num">05.01</div>
+    <div class="sec-title">Node Roles & Cluster Architecture</div>
+    <div class="sec-rule"></div>
+  </div>
+  <div class="card">
+    <p>Every Elasticsearch node has one or more <strong>roles</strong> that define what it does in the cluster. In production, large clusters dedicate nodes to specific roles. Click any role to see configuration details and when to use it.</p>
+
+    <div class="node-grid" id="nodeGrid">
+      <div class="node-card" onclick="openNode(this,'nr-master')">
+        <div class="nc-role">node.roles: [master]</div>
+        <div class="nc-name">MASTER</div>
+        <div class="nc-desc">Manages cluster state — indices, shards, nodes. Does not store data or handle queries.</div>
+      </div>
+      <div class="node-card" onclick="openNode(this,'nr-data')">
+        <div class="nc-role">node.roles: [data]</div>
+        <div class="nc-name">DATA</div>
+        <div class="nc-desc">Stores shards, handles CRUD, search, and aggregations. Primary workhorse of the cluster.</div>
+      </div>
+      <div class="node-card" onclick="openNode(this,'nr-ingest')">
+        <div class="nc-role">node.roles: [ingest]</div>
+        <div class="nc-name">INGEST</div>
+        <div class="nc-desc">Executes ingest pipelines before documents are indexed. Can be separated to isolate CPU-heavy parsing.</div>
+      </div>
+      <div class="node-card" onclick="openNode(this,'nr-coord')">
+        <div class="nc-role">node.roles: []</div>
+        <div class="nc-name">COORDINATING</div>
+        <div class="nc-desc">Routes requests and merges results. No data stored, no master duties. Pure traffic management.</div>
+      </div>
+      <div class="node-card" onclick="openNode(this,'nr-warm')">
+        <div class="nc-role">node.roles: [data_warm]</div>
+        <div class="nc-name">WARM / COLD</div>
+        <div class="nc-desc">Tiered storage roles for ILM. Warm for less-active data, cold for rarely-queried archives.</div>
+      </div>
+      <div class="node-card" onclick="openNode(this,'nr-ml')">
+        <div class="nc-role">node.roles: [ml, remote_cluster_client]</div>
+        <div class="nc-name">ML / TRANSFORM</div>
+        <div class="nc-desc">Dedicated nodes for machine learning jobs and data transforms. Isolates ML memory from search.</div>
+      </div>
+    </div>
+    <div class="node-detail" id="node-detail">
+      <div class="nd-label" id="nd-label">// —</div>
+      <div id="nd-body" style="display:grid;grid-template-columns:1fr 1fr;gap:0">
+        <div id="nd-code" style="border-right:1px solid var(--border);padding-right:20px"></div>
+        <div id="nd-notes" style="padding-left:20px"></div>
+      </div>
+    </div>
+
+    <div class="inote w" style="margin-top:18px">
+      <strong>EXAM: minimum master-eligible nodes</strong> — always set <code>cluster.initial_master_nodes</code> on first bootstrap only. For a 3-node dedicated master cluster: <code>discovery.zen.minimum_master_nodes: 2</code> (quorum = N/2 + 1). Split-brain prevention requires majority.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════
+     05.02  SECURITY
+══════════════════════════ -->
+<div class="section">
+  <div class="sec-hd">
+    <div class="sec-num">05.02</div>
+    <div class="sec-title">Security — TLS, Auth & RBAC</div>
+    <div class="sec-rule"></div>
+  </div>
+  <div class="card">
+    <p>Elasticsearch security requires <strong>TLS for transport layer</strong> (inter-node), <strong>TLS for HTTP layer</strong> (client-to-cluster), and <strong>role-based access control</strong>. The ECE exam tests enabling security, creating users/roles, and field/document-level security.</p>
+
+    <div class="cex">
+      <div class="cex-hd">
+        <span class="cex-label">// Security Config</span>
+        <div class="cex-tabs">
+          <button class="cex-tab active" onclick="switchTab('sec','s1',this)">TLS Setup</button>
+          <button class="cex-tab" onclick="switchTab('sec','s2',this)">Users & Roles</button>
+          <button class="cex-tab" onclick="switchTab('sec','s3',this)">Field/Doc Security</button>
+        </div>
+      </div>
+
+      <div id="sec-s1" class="cex-panel active">
+        <div class="cex-body">
+          <div class="cex-left">
+            <div class="cex-sl">// elasticsearch.yml — TLS config</div>
+            <pre class="co"><span class="cmt"># Enable security (required for TLS)</span>
+xpack.security.enabled: true
+
+<span class="cmt"># Transport layer (inter-node)</span>
+xpack.security.transport.ssl:
+  enabled:           true
+  verification_mode: certificate
+  keystore.path:     certs/elastic-certificates.p12
+  truststore.path:   certs/elastic-certificates.p12
+
+<span class="cmt"># HTTP layer (REST API + Kibana)</span>
+xpack.security.http.ssl:
+  enabled:      true
+  keystore.path: certs/http.p12
+
+<span class="cmt">---</span>
+<span class="cmt"># Generate certs with elasticsearch-certutil:</span>
+<span class="cmt"># Step 1: Create CA</span>
+<span class="cp">./bin/elasticsearch-certutil ca</span>
+<span class="cmt"># Step 2: Create node certs from CA</span>
+<span class="cp">./bin/elasticsearch-certutil cert --ca elastic-stack-ca.p12</span>
+<span class="cmt"># Step 3: Set built-in user passwords</span>
+<span class="cp">./bin/elasticsearch-setup-passwords interactive</span></pre>
+          </div>
+          <div class="cex-right">
+            <div class="cex-sl">// Notes</div>
+            <div class="ann-list">
+              <div class="ann i"><strong>Two TLS layers:</strong> Transport (port 9300, inter-node communication) and HTTP (port 9200, client requests). Both must be configured separately.</div>
+              <div class="ann i"><strong>verification_mode:</strong> certificate (verify cert is signed by trusted CA) vs full (verify cert + hostname). Use full in production.</div>
+              <div class="ann w"><strong>elasticsearch-certutil:</strong> Bundled tool for generating self-signed CA and node certificates. Creates PKCS12 (.p12) keystores. For multi-node, generate one CA and per-node certs.</div>
+              <div class="ann g"><strong>Built-in users:</strong> elastic (superuser), kibana_system, logstash_system, beats_system, apm_system, remote_monitoring_user. Always set passwords on first boot.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="sec-s2" class="cex-panel">
+        <div class="cex-body">
+          <div class="cex-left">
+            <div class="cex-sl">// Role & user management</div>
+            <pre class="co"><span class="cmt">// Create a custom role</span>
+<span class="cm">POST</span> <span class="cp">/_security/role/app_reader</span>
+{
+  <span class="ck">"cluster"</span>: [<span class="cs">"monitor"</span>],
+  <span class="ck">"indices"</span>: [
+    {
+      <span class="ck">"names"</span>:      [<span class="cs">"app-logs-*"</span>],
+      <span class="ck">"privileges"</span>: [<span class="cs">"read"</span>, <span class="cs">"view_index_metadata"</span>]
+    }
+  ]
+}
+
+<span class="cmt">// Create a user and assign role</span>
+<span class="cm">POST</span> <span class="cp">/_security/user/alice</span>
+{
+  <span class="ck">"password"</span>: <span class="cs">"s3cr3tP@ss"</span>,
+  <span class="ck">"roles"</span>:    [<span class="cs">"app_reader"</span>],
+  <span class="ck">"full_name"</span>: <span class="cs">"Alice Smith"</span>,
+  <span class="ck">"email"</span>:    <span class="cs">"alice@example.com"</span>
+}
+
+<span class="cmt">// Cluster privileges (common)</span>
+<span class="cmt">// monitor     — cluster stats, health, settings</span>
+<span class="cmt">// manage      — monitor + change settings</span>
+<span class="cmt">// manage_ilm  — ILM policy CRUD</span>
+<span class="cmt">// manage_ingest — pipeline CRUD</span>
+
+<span class="cmt">// Index privileges (common)</span>
+<span class="cmt">// read        — search, get</span>
+<span class="cmt">// write       — index, update, delete, bulk</span>
+<span class="cmt">// create_index — create indices</span>
+<span class="cmt">// manage      — alias, mappings, settings</span>
+<span class="cmt">// all         — full control</span>
+
+<span class="cmt">// Check effective permissions</span>
+<span class="cm">GET</span> <span class="cp">/_security/user/alice/_has_privileges</span>
+{
+  <span class="ck">"index"</span>: [{
+    <span class="ck">"names"</span>:      [<span class="cs">"app-logs-*"</span>],
+    <span class="ck">"privileges"</span>: [<span class="cs">"read"</span>]
+  }]
+}</pre>
+          </div>
+          <div class="cex-right">
+            <div class="cex-sl">// Notes</div>
+            <div class="ann-list">
+              <div class="ann i"><strong>Role structure:</strong> cluster (cluster-level actions), indices (per-index privileges with wildcard patterns), applications (Kibana/app-level privileges), run_as (impersonation).</div>
+              <div class="ann i"><strong>index names:</strong> Support wildcards — "logs-*" grants access to all logs-prefixed indices. Multiple entries can be specified for different privilege sets.</div>
+              <div class="ann g"><strong>_has_privileges API:</strong> Check whether a user has specific permissions without trying to execute the action. Useful for application-level permission checking.</div>
+              <div class="ann w"><strong>Native vs file realm:</strong> Native realm stores users in the cluster (API-managed). File realm uses users and roles files on disk (useful for bootstrapping). Both can coexist.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="sec-s3" class="cex-panel">
+        <div class="cex-body">
+          <div class="cex-left">
+            <div class="cex-sl">// Field & document level security</div>
+            <pre class="co"><span class="cmt">// Field-level security — restrict visible fields</span>
+<span class="cm">POST</span> <span class="cp">/_security/role/hr_reader</span>
+{
+  <span class="ck">"indices"</span>: [{
+    <span class="ck">"names"</span>:      [<span class="cs">"employees"</span>],
+    <span class="ck">"privileges"</span>: [<span class="cs">"read"</span>],
+    <span class="ck">"field_security"</span>: {
+      <span class="ck">"grant"</span>: [<span class="cs">"name"</span>, <span class="cs">"department"</span>, <span class="cs">"title"</span>]
+    }
+  }]
+}
+<span class="cmt">// Users with this role CANNOT see salary, ssn, etc.</span>
+<span class="cmt">// grant: explicit allow-list of fields</span>
+<span class="cmt">// except: deny specific fields, allow rest</span>
+
+<span class="cmt">// Document-level security — restrict visible docs</span>
+<span class="cm">POST</span> <span class="cp">/_security/role/eu_data_reader</span>
+{
+  <span class="ck">"indices"</span>: [{
+    <span class="ck">"names"</span>:      [<span class="cs">"customers"</span>],
+    <span class="ck">"privileges"</span>: [<span class="cs">"read"</span>],
+    <span class="ck">"query"</span>: {
+      <span class="ck">"term"</span>: { <span class="ck">"region"</span>: <span class="cs">"eu"</span> }
+    }
+  }]
+}
+<span class="cmt">// Searches through eu_data_reader ONLY return</span>
+<span class="cmt">// documents where region == "eu"</span>
+<span class="cmt">// Non-EU docs are invisible — not even counted</span>
+
+<span class="cmt">// Combining FLS + DLS</span>
+<span class="ck">"indices"</span>: [{
+  <span class="ck">"names"</span>:      [<span class="cs">"customers"</span>],
+  <span class="ck">"privileges"</span>: [<span class="cs">"read"</span>],
+  <span class="ck">"field_security"</span>: {
+    <span class="ck">"grant"</span>: [<span class="cs">"name"</span>, <span class="cs">"email"</span>, <span class="cs">"region"</span>]
+  },
+  <span class="ck">"query"</span>: { <span class="ck">"term"</span>: { <span class="ck">"region"</span>: <span class="cs">"eu"</span> }}
+}]</pre>
+          </div>
+          <div class="cex-right">
+            <div class="cex-sl">// Notes</div>
+            <div class="ann-list">
+              <div class="ann i"><strong>Field-level security (FLS):</strong> Controls which fields a user can see in query results. grant: allowlist. except: denylist (grant everything except listed). Wildcards supported.</div>
+              <div class="ann i"><strong>Document-level security (DLS):</strong> The query acts as a filter — only documents matching the query are visible to this role. Users can't see other documents even if they know the IDs.</div>
+              <div class="ann w"><strong>Performance:</strong> DLS adds a filter to every query executed by the role. FLS adds field masking. Both have performance overhead — avoid on very high-throughput indices.</div>
+              <div class="ann r"><strong>EXAM TRAP:</strong> DLS makes non-matching docs completely invisible — they don't appear in counts either. A user with DLS sees hits.total reflecting only matching docs, not the true index count.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════
+     05.03  SHARD ALLOCATION
+══════════════════════════ -->
+<div class="section">
+  <div class="sec-hd">
+    <div class="sec-num">05.03</div>
+    <div class="sec-title">Shard Allocation & Cluster Health</div>
+    <div class="sec-rule"></div>
+  </div>
+  <div class="card">
+    <p>Shard allocation determines where primary and replica shards live across nodes. Understanding why shards become unassigned — and how to fix it — is a core ECE exam skill.</p>
+
+    <div class="cex">
+      <div class="cex-hd">
+        <span class="cex-label">// Allocation & Health APIs</span>
+        <div class="cex-tabs">
+          <button class="cex-tab active" onclick="switchTab('alloc','a1',this)">Cluster Health</button>
+          <button class="cex-tab" onclick="switchTab('alloc','a2',this)">Allocation Control</button>
+          <button class="cex-tab" onclick="switchTab('alloc','a3',this)">Reroute & Explain</button>
+        </div>
+      </div>
+
+      <div id="alloc-a1" class="cex-panel active">
+        <div class="cex-body">
+          <div class="cex-left">
+            <div class="cex-sl">// Health & shard diagnostics</div>
+            <pre class="co"><span class="cmt">// Overall cluster health</span>
+<span class="cm">GET</span> <span class="cp">/_cluster/health</span>
+<span class="cmt">// green  = all shards assigned</span>
+<span class="cmt">// yellow = all primaries assigned, some replicas not</span>
+<span class="cmt">// red    = some primary shards unassigned</span>
+
+<span class="cmt">// Health for specific index</span>
+<span class="cm">GET</span> <span class="cp">/_cluster/health/my_index?level=shards</span>
+
+<span class="cmt">// List all unassigned shards</span>
+<span class="cm">GET</span> <span class="cp">/_cat/shards?v&h=index,shard,prirep,state,unassigned.reason</span>
+
+<span class="cmt">// Why is a shard unassigned?</span>
+<span class="cm">GET</span> <span class="cp">/_cluster/allocation/explain</span>
+{
+  <span class="ck">"index"</span>: <span class="cs">"my_index"</span>,
+  <span class="ck">"shard"</span>: <span class="cn">0</span>,
+  <span class="ck">"primary"</span>: <span class="cb">true</span>
+}
+
+<span class="cmt">// Node-level shard overview</span>
+<span class="cm">GET</span> <span class="cp">/_cat/nodes?v&h=name,node.role,heap.percent,disk.avail,shards</span>
+
+<span class="cmt">// Index-level shard stats</span>
+<span class="cm">GET</span> <span class="cp">/_cat/shards/my_index?v&s=state</span></pre>
+          </div>
+          <div class="cex-right">
+            <div class="cex-sl">// Health states decoded</div>
+            <div class="ann-list">
+              <div class="ann g"><strong>GREEN:</strong> All primary and replica shards are assigned and active. Cluster is fully operational.</div>
+              <div class="ann w"><strong>YELLOW:</strong> All primaries assigned, but one or more replica shards are unassigned. Common on single-node clusters (no node to place replicas on). Data is safe but redundancy is reduced.</div>
+              <div class="ann r"><strong>RED:</strong> One or more PRIMARY shards are unassigned. Searches on affected indices will return partial or no results. Requires immediate attention.</div>
+              <div class="ann i"><strong>allocation/explain:</strong> The most important diagnostic API. Tells you exactly WHY a shard can't be allocated — disk space, node attributes, replica constraints, etc. Always start here for unassigned shards.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="alloc-a2" class="cex-panel">
+        <div class="cex-body">
+          <div class="cex-left">
+            <div class="cex-sl">// Allocation settings & awareness</div>
+            <pre class="co"><span class="cmt">// Disable allocation (e.g., for rolling restart)</span>
+<span class="cm">PUT</span> <span class="cp">/_cluster/settings</span>
+{
+  <span class="ck">"persistent"</span>: {
+    <span class="ck">"cluster.routing.allocation.enable"</span>: <span class="cs">"none"</span>
+  }
+}
+<span class="cmt">// values: all (default), primaries, new_primaries, none</span>
+
+<span class="cmt">// Re-enable after maintenance</span>
+<span class="cm">PUT</span> <span class="cp">/_cluster/settings</span>
+{
+  <span class="ck">"persistent"</span>: {
+    <span class="ck">"cluster.routing.allocation.enable"</span>: <span class="cs">"all"</span>
+  }
+}
+
+<span class="cmt">// Shard allocation awareness (rack/zone)</span>
+<span class="cmt">// In elasticsearch.yml:</span>
+<span class="cm">node.attr.rack</span>: <span class="cs">rack1</span>
+
+<span class="cmt">// Cluster setting:</span>
+<span class="cm">PUT</span> <span class="cp">/_cluster/settings</span>
+{
+  <span class="ck">"persistent"</span>: {
+    <span class="ck">"cluster.routing.allocation.awareness.attributes"</span>: <span class="cs">"rack"</span>
+  }
+}
+<span class="cmt">// ES spreads primaries+replicas across different racks</span>
+
+<span class="cmt">// Forced awareness (don't place on same rack)</span>
+<span class="ck">"cluster.routing.allocation.awareness.force.rack.values"</span>:
+  <span class="cs">"rack1,rack2,rack3"</span>
+
+<span class="cmt">// Per-index allocation filtering</span>
+<span class="cm">PUT</span> <span class="cp">/warm_data/_settings</span>
+{
+  <span class="ck">"index.routing.allocation.require.node_type"</span>: <span class="cs">"warm"</span>
+}</pre>
+          </div>
+          <div class="cex-right">
+            <div class="cex-sl">// Notes</div>
+            <div class="ann-list">
+              <div class="ann i"><strong>allocation.enable: "none":</strong> Stops ALL shard movements. Use before rolling restarts to prevent ES from frantically reassigning shards while you take nodes down one at a time.</div>
+              <div class="ann i"><strong>Allocation awareness:</strong> Ensures replicas are placed on nodes with different attribute values (e.g., different racks). Provides rack-level resilience — if a rack fails, the remaining rack still has all primary or replica shards.</div>
+              <div class="ann g"><strong>Forced awareness:</strong> Prevents ES from placing all copies of a shard on the same rack even if other racks are temporarily unavailable. Avoids over-allocation to one rack during maintenance.</div>
+              <div class="ann i"><strong>require/include/exclude filters:</strong> require — must match. include — may be placed there. exclude — must NOT be placed there. Used for tiered storage (hot/warm/cold).</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="alloc-a3" class="cex-panel">
+        <div class="cex-body">
+          <div class="cex-left">
+            <div class="cex-sl">// Manual reroute & disk thresholds</div>
+            <pre class="co"><span class="cmt">// Manually move a shard</span>
+<span class="cm">POST</span> <span class="cp">/_cluster/reroute</span>
+{
+  <span class="ck">"commands"</span>: [{
+    <span class="ck">"move"</span>: {
+      <span class="ck">"index"</span>:       <span class="cs">"my_index"</span>,
+      <span class="ck">"shard"</span>:       <span class="cn">0</span>,
+      <span class="ck">"from_node"</span>:   <span class="cs">"node-1"</span>,
+      <span class="ck">"to_node"</span>:     <span class="cs">"node-2"</span>
+    }
+  }]
+}
+
+<span class="cmt">// Force-assign unassigned primary (data loss risk!)</span>
+<span class="cm">POST</span> <span class="cp">/_cluster/reroute</span>
+{
+  <span class="ck">"commands"</span>: [{
+    <span class="ck">"allocate_stale_primary"</span>: {
+      <span class="ck">"index"</span>:          <span class="cs">"my_index"</span>,
+      <span class="ck">"shard"</span>:          <span class="cn">0</span>,
+      <span class="ck">"node"</span>:           <span class="cs">"node-1"</span>,
+      <span class="ck">"accept_data_loss"</span>: <span class="cb">true</span>
+    }
+  }]
+}
+
+<span class="cmt">// Disk-based allocation thresholds</span>
+<span class="cm">PUT</span> <span class="cp">/_cluster/settings</span>
+{
+  <span class="ck">"persistent"</span>: {
+    <span class="ck">"cluster.routing.allocation.disk.threshold_enabled"</span>: <span class="cb">true</span>,
+    <span class="ck">"cluster.routing.allocation.disk.watermark.low"</span>:  <span class="cs">"85%"</span>,
+    <span class="ck">"cluster.routing.allocation.disk.watermark.high"</span>: <span class="cs">"90%"</span>,
+    <span class="ck">"cluster.routing.allocation.disk.watermark.flood_stage"</span>: <span class="cs">"95%"</span>
+  }
+}</pre>
+          </div>
+          <div class="cex-right">
+            <div class="cex-sl">// Notes</div>
+            <div class="ann-list">
+              <div class="ann r"><strong>allocate_stale_primary:</strong> Last resort for unrecoverable shard loss. Forces allocation to a node that has an old copy of the shard. accept_data_loss: true acknowledges you may lose recent writes. Use only after all recovery options exhausted.</div>
+              <div class="ann i"><strong>Disk watermarks:</strong> low (85%) = no new shards allocated here. high (90%) = existing shards moved away. flood_stage (95%) = index becomes read-only (index.blocks.read_only_allow_delete: true). Fix: add disk space or delete data, then clear the block.</div>
+              <div class="ann w"><strong>Clear flood-stage block:</strong> After freeing disk space, run: PUT /index/_settings { "index.blocks.read_only_allow_delete": null } to re-enable writes.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════
+     05.04  SNAPSHOTS & SLM
+══════════════════════════ -->
+<div class="section">
+  <div class="sec-hd">
+    <div class="sec-num">05.04</div>
+    <div class="sec-title">Snapshot Repositories & SLM</div>
+    <div class="sec-rule"></div>
+  </div>
+  <div class="card">
+    <p>Snapshots are the primary backup mechanism for Elasticsearch. <strong>Snapshot Lifecycle Management (SLM)</strong> automates snapshot creation and retention. The ECE exam tests repository registration, taking/restoring snapshots, and configuring SLM policies.</p>
+
+    <div class="cex">
+      <div class="cex-hd">
+        <span class="cex-label">// Snapshot API</span>
+        <div class="cex-tabs">
+          <button class="cex-tab active" onclick="switchTab('snap','sn1',this)">Repository Setup</button>
+          <button class="cex-tab" onclick="switchTab('snap','sn2',this)">Take & Restore</button>
+          <button class="cex-tab" onclick="switchTab('snap','sn3',this)">SLM Policy</button>
+        </div>
+      </div>
+
+      <div id="snap-sn1" class="cex-panel active">
+        <div class="cex-body">
+          <div class="cex-left">
+            <div class="cex-sl">// Register snapshot repository</div>
+            <pre class="co"><span class="cmt">// Shared filesystem repository</span>
+<span class="cm">PUT</span> <span class="cp">/_snapshot/my_backup</span>
+{
+  <span class="ck">"type"</span>: <span class="cs">"fs"</span>,
+  <span class="ck">"settings"</span>: {
+    <span class="ck">"location"</span>:             <span class="cs">"/mnt/snapshots"</span>,
+    <span class="ck">"compress"</span>:             <span class="cb">true</span>,
+    <span class="ck">"max_restore_bytes_per_sec"</span>: <span class="cs">"40mb"</span>,
+    <span class="ck">"max_snapshot_bytes_per_sec"</span>: <span class="cs">"40mb"</span>
+  }
+}
+<span class="cmt">// path.repo must be set in elasticsearch.yml FIRST:</span>
+<span class="cmt">// path.repo: ["/mnt/snapshots"]</span>
+
+<span class="cmt">// S3 repository (requires repository-s3 plugin)</span>
+<span class="cm">PUT</span> <span class="cp">/_snapshot/s3_backup</span>
+{
+  <span class="ck">"type"</span>: <span class="cs">"s3"</span>,
+  <span class="ck">"settings"</span>: {
+    <span class="ck">"bucket"</span>:   <span class="cs">"my-es-snapshots"</span>,
+    <span class="ck">"region"</span>:   <span class="cs">"us-east-1"</span>,
+    <span class="ck">"base_path"</span>: <span class="cs">"prod/cluster1"</span>
+  }
+}
+<span class="cmt">// Also: gcs (Google), azure, hdfs</span>
+
+<span class="cmt">// Verify repository is working</span>
+<span class="cm">POST</span> <span class="cp">/_snapshot/my_backup/_verify</span></pre>
+          </div>
+          <div class="cex-right">
+            <div class="cex-sl">// Notes</div>
+            <div class="ann-list">
+              <div class="ann r"><strong>path.repo REQUIRED:</strong> For fs repositories, you must whitelist the path in elasticsearch.yml on ALL nodes before registering. Without this, registration fails with a security error.</div>
+              <div class="ann i"><strong>compress: true:</strong> Compresses snapshot metadata (not data by default). Add compress: true to reduce storage for metadata-heavy snapshots.</div>
+              <div class="ann g"><strong>_verify:</strong> Tests that all nodes can access the repository location. Run after registration to confirm shared storage is correctly mounted on every node.</div>
+              <div class="ann i"><strong>Throttling:</strong> max_snapshot_bytes_per_sec and max_restore_bytes_per_sec prevent snapshots from saturating network/disk IO. Default: 40mb per node.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="snap-sn2" class="cex-panel">
+        <div class="cex-body">
+          <div class="cex-left">
+            <div class="cex-sl">// Take & restore snapshots</div>
+            <pre class="co"><span class="cmt">// Take snapshot of all indices</span>
+<span class="cm">PUT</span> <span class="cp">/_snapshot/my_backup/snapshot_1</span>
+{
+  <span class="ck">"indices"</span>:             <span class="cs">"*"</span>,
+  <span class="ck">"ignore_unavailable"</span>:  <span class="cb">true</span>,
+  <span class="ck">"include_global_state"</span>: <span class="cb">false</span>,
+  <span class="ck">"metadata"</span>: {
+    <span class="ck">"taken_by"</span>: <span class="cs">"admin"</span>,
+    <span class="ck">"reason"</span>:   <span class="cs">"pre-upgrade backup"</span>
+  }
+}
+
+<span class="cmt">// Snapshot specific indices</span>
+<span class="cm">PUT</span> <span class="cp">/_snapshot/my_backup/snapshot_2</span>
+{
+  <span class="ck">"indices"</span>: [<span class="cs">"orders"</span>, <span class="cs">"customers"</span>, <span class="cs">"products-*"</span>]
+}
+
+<span class="cmt">// Check snapshot status</span>
+<span class="cm">GET</span> <span class="cp">/_snapshot/my_backup/snapshot_1</span>
+<span class="cmt">// state: IN_PROGRESS | SUCCESS | FAILED | PARTIAL</span>
+
+<span class="cmt">// Restore snapshot (index must not exist or be closed)</span>
+<span class="cm">POST</span> <span class="cp">/_snapshot/my_backup/snapshot_1/_restore</span>
+{
+  <span class="ck">"indices"</span>:          <span class="cs">"orders"</span>,
+  <span class="ck">"rename_pattern"</span>:   <span class="cs">"(.+)"</span>,
+  <span class="ck">"rename_replacement"</span>: <span class="cs">"restored_$1"</span>,
+  <span class="ck">"include_global_state"</span>: <span class="cb">false</span>,
+  <span class="ck">"index_settings"</span>: {
+    <span class="ck">"index.number_of_replicas"</span>: <span class="cn">0</span>
+  }
+}
+<span class="cmt">// rename_pattern allows restoring alongside live index</span>
+<span class="cmt">// orders → restored_orders</span>
+
+<span class="cmt">// Delete snapshot</span>
+<span class="cm">DELETE</span> <span class="cp">/_snapshot/my_backup/snapshot_1</span></pre>
+          </div>
+          <div class="cex-right">
+            <div class="cex-sl">// Notes</div>
+            <div class="ann-list">
+              <div class="ann i"><strong>include_global_state:</strong> Whether to snapshot cluster settings, index templates, ILM policies, etc. Set false for index-only backups. Set true for full cluster backup.</div>
+              <div class="ann w"><strong>Restore prerequisite:</strong> The target index must NOT exist, or must be closed (POST /index/_close) before restoring. Otherwise the restore fails.</div>
+              <div class="ann g"><strong>rename on restore:</strong> Use rename_pattern (regex) and rename_replacement to restore to a different name. Essential for restoring next to a live index for comparison/recovery testing.</div>
+              <div class="ann i"><strong>Incremental:</strong> Snapshots are incremental — only changed segments since the last snapshot are stored. Storage usage grows slowly for stable indices.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="snap-sn3" class="cex-panel">
+        <div class="cex-body">
+          <div class="cex-left">
+            <div class="cex-sl">// SLM — Snapshot Lifecycle Management</div>
+            <pre class="co"><span class="cmt">// Create SLM policy</span>
+<span class="cm">PUT</span> <span class="cp">/_slm/policy/nightly_snapshots</span>
+{
+  <span class="ck">"schedule"</span>:   <span class="cs">"0 30 1 * * ?"</span>,  <span class="cmt">// cron: 1:30 AM daily</span>
+  <span class="ck">"name"</span>:       <span class="cs">"&lt;nightly-{now/d}&gt;"</span>,  <span class="cmt">// date-named</span>
+  <span class="ck">"repository"</span>: <span class="cs">"my_backup"</span>,
+  <span class="ck">"config"</span>: {
+    <span class="ck">"indices"</span>:             [<span class="cs">"*"</span>],
+    <span class="ck">"ignore_unavailable"</span>:  <span class="cb">true</span>,
+    <span class="ck">"include_global_state"</span>: <span class="cb">false</span>
+  },
+  <span class="ck">"retention"</span>: {
+    <span class="ck">"expire_after"</span>: <span class="cs">"30d"</span>,
+    <span class="ck">"min_count"</span>:    <span class="cn">5</span>,
+    <span class="ck">"max_count"</span>:    <span class="cn">50</span>
+  }
+}
+
+<span class="cmt">// Manually trigger SLM policy (test it now)</span>
+<span class="cm">POST</span> <span class="cp">/_slm/policy/nightly_snapshots/_execute</span>
+
+<span class="cmt">// Check SLM policy status</span>
+<span class="cm">GET</span> <span class="cp">/_slm/policy/nightly_snapshots</span>
+
+<span class="cmt">// SLM stats (snapshots taken, failed, etc.)</span>
+<span class="cm">GET</span> <span class="cp">/_slm/stats</span>
+
+<span class="cmt">// Cron schedule format: sec min hr dom mon dow yr</span>
+<span class="cmt">// "0 30 1 * * ?" = every day at 01:30:00</span>
+<span class="cmt">// "0 0 */6 * * ?" = every 6 hours</span></pre>
+          </div>
+          <div class="cex-right">
+            <div class="cex-sl">// Notes</div>
+            <div class="ann-list">
+              <div class="ann i"><strong>schedule:</strong> Quartz cron expression. 7-field format: seconds minutes hours day-of-month month day-of-week year. "?" = don't care for that field.</div>
+              <div class="ann i"><strong>name template:</strong> &lt;...&gt; syntax with date math. &lt;nightly-{now/d}&gt; produces names like "nightly-2024.03.15". Ensures unique, date-searchable snapshot names.</div>
+              <div class="ann g"><strong>retention:</strong> expire_after — age limit. min_count — keep at least N snapshots regardless of age. max_count — never keep more than N snapshots. All three work together.</div>
+              <div class="ann w"><strong>_execute:</strong> Immediately runs the SLM policy and takes a snapshot. Essential for testing the policy without waiting for the cron schedule. Returns the snapshot name.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════
+     05.05  CCR
+══════════════════════════ -->
+<div class="section">
+  <div class="sec-hd">
+    <div class="sec-num">05.05</div>
+    <div class="sec-title">Cross-Cluster Replication (CCR)</div>
+    <div class="sec-rule"></div>
+  </div>
+  <div class="card">
+    <p>CCR replicates indices from a <strong>leader</strong> cluster to one or more <strong>follower</strong> clusters in near-real-time. Used for disaster recovery, geographic data distribution, and centralised reporting.</p>
+
+    <div class="cex">
+      <div class="cex-hd">
+        <span class="cex-label">// CCR Configuration</span>
+        <div class="cex-tabs">
+          <button class="cex-tab active" onclick="switchTab('ccr','c1',this)">Setup & Follow</button>
+          <button class="cex-tab" onclick="switchTab('ccr','c2',this)">Auto-Follow</button>
+          <button class="cex-tab" onclick="switchTab('ccr','c3',this)">Pause & Resume</button>
+        </div>
+      </div>
+
+      <div id="ccr-c1" class="cex-panel active">
+        <div class="cex-body">
+          <div class="cex-left">
+            <div class="cex-sl">// On the FOLLOWER cluster</div>
+            <pre class="co"><span class="cmt">// Step 1: Configure remote cluster connection</span>
+<span class="cm">PUT</span> <span class="cp">/_cluster/settings</span>
+{
+  <span class="ck">"persistent"</span>: {
+    <span class="ck">"cluster.remote.leader_cluster.seeds"</span>: [
+      <span class="cs">"leader-node1:9300"</span>
+    ]
+  }
+}
+
+<span class="cmt">// Step 2: Create a follower index</span>
+<span class="cm">PUT</span> <span class="cp">/follower_index/_ccr/follow</span>
+{
+  <span class="ck">"remote_cluster"</span>: <span class="cs">"leader_cluster"</span>,
+  <span class="ck">"leader_index"</span>:   <span class="cs">"leader_index"</span>,
+  <span class="ck">"settings"</span>: {
+    <span class="ck">"index.number_of_replicas"</span>: <span class="cn">1</span>
+  },
+  <span class="ck">"max_read_request_operation_count"</span>: <span class="cn">5120</span>,
+  <span class="ck">"max_outstanding_read_requests"</span>:   <span class="cn">12</span>
+}
+
+<span class="cmt">// Check CCR stats</span>
+<span class="cm">GET</span> <span class="cp">/follower_index/_ccr/stats</span>
+<span class="cmt">// Look for: operations_received, failed_read_requests</span>
+
+<span class="cmt">// REQUIREMENTS:</span>
+<span class="cmt">// - Platinum/Enterprise license</span>
+<span class="cmt">// - Remote cluster configured</span>
+<span class="cmt">// - Leader index must be "soft-deleted" enabled</span>
+<span class="cmt">// - Follower is READ-ONLY (no direct writes)</span></pre>
+          </div>
+          <div class="cex-right">
+            <div class="cex-sl">// Notes</div>
+            <div class="ann-list">
+              <div class="ann i"><strong>Architecture:</strong> The follower cluster reads from the leader's soft-deletes transaction log. Changes on the leader are replicated in near-real-time to the follower.</div>
+              <div class="ann r"><strong>Follower is READ-ONLY:</strong> You cannot index directly to a follower index. All writes must go to the leader. Followers are search replicas only.</div>
+              <div class="ann w"><strong>Soft deletes required:</strong> Leader indices must have index.soft_deletes.enabled: true (default since 7.0). Older indices may need to be reindexed to enable CCR.</div>
+              <div class="ann i"><strong>Use cases:</strong> DR (follower in different datacenter), local reads (reduce latency by having regional followers), reporting cluster (separate analytics workload from production).</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="ccr-c2" class="cex-panel">
+        <div class="cex-body">
+          <div class="cex-left">
+            <div class="cex-sl">// Auto-follow patterns</div>
+            <pre class="co"><span class="cmt">// Automatically follow new indices matching a pattern</span>
+<span class="cm">PUT</span> <span class="cp">/_ccr/auto_follow/logs_pattern</span>
+{
+  <span class="ck">"remote_cluster"</span>:    <span class="cs">"leader_cluster"</span>,
+  <span class="ck">"leader_index_patterns"</span>: [<span class="cs">"logs-*"</span>],
+  <span class="ck">"follow_index_pattern"</span>:  <span class="cs">"{{leader_index}}"</span>,
+  <span class="ck">"settings"</span>: {
+    <span class="ck">"index.number_of_replicas"</span>: <span class="cn">0</span>
+  }
+}
+
+<span class="cmt">// Any new index on the leader matching logs-*</span>
+<span class="cmt">// will automatically get a follower index created.</span>
+<span class="cmt">// Essential for time-series data / data streams.</span>
+
+<span class="cmt">// Check auto-follow stats</span>
+<span class="cm">GET</span> <span class="cp">/_ccr/auto_follow/logs_pattern</span>
+<span class="cm">GET</span> <span class="cp">/_ccr/stats</span>
+
+<span class="cmt">// Delete auto-follow pattern</span>
+<span class="cm">DELETE</span> <span class="cp">/_ccr/auto_follow/logs_pattern</span>
+<span class="cmt">// Note: deleting the pattern does NOT unfollow</span>
+<span class="cmt">// existing follower indices — those must be paused</span>
+<span class="cmt">// or unfollowed separately.</span></pre>
+          </div>
+          <div class="cex-right">
+            <div class="cex-sl">// Notes</div>
+            <div class="ann-list">
+              <div class="ann g"><strong>Auto-follow:</strong> Critical for rolling daily/monthly indices (logs-2024.01.*, logs-2024.02.*). Without auto-follow, you'd need to manually create a follower every time a new index is created.</div>
+              <div class="ann i"><strong>{{leader_index}}:</strong> Template variable in follow_index_pattern — creates the follower with the same name as the leader. Can also prefix/suffix: "follower-{{leader_index}}".</div>
+              <div class="ann w"><strong>Existing indices:</strong> Auto-follow only applies to NEW indices created after the pattern is set. Existing indices matching the pattern must be followed manually.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="ccr-c3" class="cex-panel">
+        <div class="cex-body">
+          <div class="cex-left">
+            <div class="cex-sl">// Pause, resume, unfollow</div>
+            <pre class="co"><span class="cmt">// Pause replication (e.g., for maintenance)</span>
+<span class="cm">POST</span> <span class="cp">/follower_index/_ccr/pause_follow</span>
+
+<span class="cmt">// Resume replication</span>
+<span class="cm">POST</span> <span class="cp">/follower_index/_ccr/resume_follow</span>
+{
+  <span class="ck">"max_read_request_operation_count"</span>: <span class="cn">5120</span>
+}
+
+<span class="cmt">// Unfollow — promote follower to a regular index</span>
+<span class="cmt">// Step 1: Pause the follow</span>
+<span class="cm">POST</span> <span class="cp">/follower_index/_ccr/pause_follow</span>
+<span class="cmt">// Step 2: Close the index</span>
+<span class="cm">POST</span> <span class="cp">/follower_index/_close</span>
+<span class="cmt">// Step 3: Unfollow (converts to regular index)</span>
+<span class="cm">POST</span> <span class="cp">/follower_index/_ccr/unfollow</span>
+<span class="cmt">// Step 4: Re-open</span>
+<span class="cm">POST</span> <span class="cp">/follower_index/_open</span>
+<span class="cmt">// Now writable as a normal index</span>
+
+<span class="cmt">// Forget follower (on LEADER — stop tracking)</span>
+<span class="cm">POST</span> <span class="cp">/leader_index/_ccr/forget_follower</span>
+{
+  <span class="ck">"follower_cluster"</span>:       <span class="cs">"follower_cluster"</span>,
+  <span class="ck">"follower_index"</span>:         <span class="cs">"follower_index"</span>,
+  <span class="ck">"follower_index_uuid"</span>:    <span class="cs">"..."</span>,
+  <span class="ck">"leader_remote_cluster"</span>:  <span class="cs">"leader_cluster"</span>
+}</pre>
+          </div>
+          <div class="cex-right">
+            <div class="cex-sl">// Notes</div>
+            <div class="ann-list">
+              <div class="ann i"><strong>Pause vs unfollow:</strong> Pause keeps the follower relationship intact but stops replication temporarily. Unfollow severs the relationship permanently and makes the index writable.</div>
+              <div class="ann g"><strong>Failover pattern:</strong> When the leader cluster fails, use the unfollow workflow on the follower to promote it to a writable index. Applications redirect writes to the former follower.</div>
+              <div class="ann w"><strong>Unfollow sequence is critical:</strong> Must pause → close → unfollow → open in that exact order. Skipping close causes unfollow to fail.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════
+     05.06  DRILLS
+══════════════════════════ -->
+<div class="section">
+  <div class="sec-hd">
+    <div class="sec-num">05.06</div>
+    <div class="sec-title">Exam Scenario Drills</div>
+    <div class="sec-rule"></div>
+  </div>
+  <div class="card">
+    <p>Final ECE-format drills covering the full cluster management domain.</p>
+
+    <div class="drills">
+      <div class="drill" onclick="toggleDrill(this,'dr1')">
+        <div class="drill-hd">
+          <div class="drill-n">01</div>
+          <div class="drill-content">
+            <div class="drill-cat">Security · Roles · Field-Level Security</div>
+            <div class="drill-task">Create a role <code>support_agent</code> that: (1) can read and search the <code>tickets-*</code> indices, (2) can only see the fields <code>ticket_id</code>, <code>status</code>, <code>subject</code>, <code>created_at</code> — NOT <code>customer_email</code> or <code>internal_notes</code>, (3) can only see tickets where <code>assigned_team: "support"</code>. Then create a user <code>agent_bob</code> with this role.</div>
+          </div>
+        </div>
+        <div class="drill-body" id="dr1">
+          <div class="drill-sol">
+            <div class="ds-lbl">// Solution</div>
+            <pre class="ds-code"><span class="cmt">// Step 1: Create role with FLS + DLS</span>
+<span class="cm">POST</span> <span class="cp">/_security/role/support_agent</span>
+{
+  <span class="ck">"cluster"</span>: [<span class="cs">"monitor"</span>],
+  <span class="ck">"indices"</span>: [
+    {
+      <span class="ck">"names"</span>:      [<span class="cs">"tickets-*"</span>],
+      <span class="ck">"privileges"</span>: [<span class="cs">"read"</span>, <span class="cs">"view_index_metadata"</span>],
+      <span class="ck">"field_security"</span>: {
+        <span class="ck">"grant"</span>: [
+          <span class="cs">"ticket_id"</span>,
+          <span class="cs">"status"</span>,
+          <span class="cs">"subject"</span>,
+          <span class="cs">"created_at"</span>
+        ]
+      },
+      <span class="ck">"query"</span>: {
+        <span class="ck">"term"</span>: {
+          <span class="ck">"assigned_team"</span>: <span class="cs">"support"</span>
+        }
+      }
+    }
+  ]
+}
+
+<span class="cmt">// Step 2: Create user</span>
+<span class="cm">POST</span> <span class="cp">/_security/user/agent_bob</span>
+{
+  <span class="ck">"password"</span>:  <span class="cs">"Str0ngP@ss!"</span>,
+  <span class="ck">"roles"</span>:     [<span class="cs">"support_agent"</span>],
+  <span class="ck">"full_name"</span>: <span class="cs">"Bob Smith"</span>,
+  <span class="ck">"email"</span>:    <span class="cs">"bob@support.example.com"</span>
+}
+
+<span class="cmt">// Step 3: Verify permissions</span>
+<span class="cm">GET</span> <span class="cp">/_security/user/agent_bob/_has_privileges</span>
+{
+  <span class="ck">"index"</span>: [{
+    <span class="ck">"names"</span>:      [<span class="cs">"tickets-2024"</span>],
+    <span class="ck">"privileges"</span>: [<span class="cs">"read"</span>]
+  }]
+}</pre>
+            <div class="ds-note"><strong>Key decisions:</strong> Both field_security and query can coexist in the same index entry — they apply AND logic. grant lists ONLY allowed fields; customer_email and internal_notes are not listed so they're invisible. The DLS query filters documents — agent_bob literally cannot see tickets from other teams even if they know the IDs. view_index_metadata allows the user to see index metadata (needed for Kibana to function). cluster: monitor lets the user view cluster health in Kibana.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="drill" onclick="toggleDrill(this,'dr2')">
+        <div class="drill-hd">
+          <div class="drill-n">02</div>
+          <div class="drill-content">
+            <div class="drill-cat">Snapshots · SLM · Restore</div>
+            <div class="drill-task">Register an S3 snapshot repository named <code>prod_backup</code> using bucket <code>es-prod-snapshots</code>. Create an SLM policy <code>daily_backup</code> that runs every night at 2 AM UTC, snapshots all indices, keeps snapshots for 14 days with a minimum of 3. Then restore just the <code>orders</code> index from <code>snapshot_20240315</code>, renaming it to <code>orders_restored</code>.</div>
+          </div>
+        </div>
+        <div class="drill-body" id="dr2">
+          <div class="drill-sol">
+            <div class="ds-lbl">// Solution</div>
+            <pre class="ds-code"><span class="cmt">// Step 1: Register S3 repository</span>
+<span class="cm">PUT</span> <span class="cp">/_snapshot/prod_backup</span>
+{
+  <span class="ck">"type"</span>: <span class="cs">"s3"</span>,
+  <span class="ck">"settings"</span>: {
+    <span class="ck">"bucket"</span>:   <span class="cs">"es-prod-snapshots"</span>,
+    <span class="ck">"region"</span>:   <span class="cs">"us-east-1"</span>,
+    <span class="ck">"base_path"</span>: <span class="cs">"cluster/production"</span>
+  }
+}
+
+<span class="cmt">// Step 2: Verify repository</span>
+<span class="cm">POST</span> <span class="cp">/_snapshot/prod_backup/_verify</span>
+
+<span class="cmt">// Step 3: Create SLM policy</span>
+<span class="cm">PUT</span> <span class="cp">/_slm/policy/daily_backup</span>
+{
+  <span class="ck">"schedule"</span>:   <span class="cs">"0 0 2 * * ?"</span>,
+  <span class="ck">"name"</span>:       <span class="cs">"&lt;daily-{now/d}&gt;"</span>,
+  <span class="ck">"repository"</span>: <span class="cs">"prod_backup"</span>,
+  <span class="ck">"config"</span>: {
+    <span class="ck">"indices"</span>:             [<span class="cs">"*"</span>],
+    <span class="ck">"ignore_unavailable"</span>:  <span class="cb">true</span>,
+    <span class="ck">"include_global_state"</span>: <span class="cb">false</span>
+  },
+  <span class="ck">"retention"</span>: {
+    <span class="ck">"expire_after"</span>: <span class="cs">"14d"</span>,
+    <span class="ck">"min_count"</span>:    <span class="cn">3</span>,
+    <span class="ck">"max_count"</span>:    <span class="cn">30</span>
+  }
+}
+
+<span class="cmt">// Step 4: Restore only 'orders' index, renamed</span>
+<span class="cm">POST</span> <span class="cp">/_snapshot/prod_backup/snapshot_20240315/_restore</span>
+{
+  <span class="ck">"indices"</span>:            <span class="cs">"orders"</span>,
+  <span class="ck">"rename_pattern"</span>:     <span class="cs">"orders"</span>,
+  <span class="ck">"rename_replacement"</span>: <span class="cs">"orders_restored"</span>,
+  <span class="ck">"include_global_state"</span>: <span class="cb">false</span>,
+  <span class="ck">"index_settings"</span>: {
+    <span class="ck">"index.number_of_replicas"</span>: <span class="cn">0</span>
+  }
+}
+
+<span class="cmt">// Monitor restore progress</span>
+<span class="cm">GET</span> <span class="cp">/_cat/recovery/orders_restored?v</span></pre>
+            <div class="ds-note"><strong>Key points:</strong> S3 repo requires the repository-s3 plugin installed on all nodes. _verify confirms all nodes can reach S3. The cron "0 0 2 * * ?" = 2:00:00 AM daily (seconds minutes hours). rename_pattern is a literal string (not regex by default here) matching "orders" → renamed to "orders_restored". Set replicas to 0 for fast restore on a single-node test environment. min_count: 3 ensures we always keep at least 3 snapshots even after expire_after kicks in.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="drill" onclick="toggleDrill(this,'dr3')">
+        <div class="drill-hd">
+          <div class="drill-n">03</div>
+          <div class="drill-content">
+            <div class="drill-cat">Shard Allocation · Rolling Restart · Health Diagnosis</div>
+            <div class="drill-task">Perform a rolling restart of a 3-node cluster without data loss: (1) disable shard allocation, (2) perform a synced flush, (3) restart a node, (4) wait for the node to rejoin and shards to recover, (5) re-enable allocation. Also show how to diagnose and fix an unassigned shard caused by disk watermark.</div>
+          </div>
+        </div>
+        <div class="drill-body" id="dr3">
+          <div class="drill-sol">
+            <div class="ds-lbl">// Solution</div>
+            <pre class="ds-code"><span class="cmt">// ─── ROLLING RESTART PROCEDURE ───</span>
+
+<span class="cmt">// Step 1: Disable shard allocation</span>
+<span class="cm">PUT</span> <span class="cp">/_cluster/settings</span>
+{
+  <span class="ck">"persistent"</span>: {
+    <span class="ck">"cluster.routing.allocation.enable"</span>: <span class="cs">"none"</span>
+  }
+}
+
+<span class="cmt">// Step 2: Flush all indices</span>
+<span class="cm">POST</span> <span class="cp">/_flush</span>
+
+<span class="cmt">// Step 3: Restart the node (OS-level — outside ES)</span>
+<span class="cmt">// sudo systemctl restart elasticsearch</span>
+
+<span class="cmt">// Step 4: Wait for node to rejoin cluster</span>
+<span class="cm">GET</span> <span class="cp">/_cat/nodes?v</span>
+<span class="cmt">// Confirm the restarted node appears in the list</span>
+
+<span class="cmt">// Step 5: Re-enable allocation</span>
+<span class="cm">PUT</span> <span class="cp">/_cluster/settings</span>
+{
+  <span class="ck">"persistent"</span>: {
+    <span class="ck">"cluster.routing.allocation.enable"</span>: <span class="cs">"all"</span>
+  }
+}
+
+<span class="cmt">// Step 6: Check recovery</span>
+<span class="cm">GET</span> <span class="cp">/_cat/recovery?v&active_only=true</span>
+<span class="cm">GET</span> <span class="cp">/_cluster/health?wait_for_status=green&timeout=60s</span>
+
+<span class="cmt">// ─── DIAGNOSE DISK WATERMARK ISSUE ───</span>
+
+<span class="cmt">// Step 1: Find unassigned shards</span>
+<span class="cm">GET</span> <span class="cp">/_cat/shards?v&h=index,shard,prirep,state,unassigned.reason</span>
+
+<span class="cmt">// Step 2: Get allocation explanation</span>
+<span class="cm">GET</span> <span class="cp">/_cluster/allocation/explain</span>
+{
+  <span class="ck">"index"</span>:   <span class="cs">"my_index"</span>,
+  <span class="ck">"shard"</span>:   <span class="cn">0</span>,
+  <span class="ck">"primary"</span>: <span class="cb">false</span>
+}
+<span class="cmt">// Response will indicate: "disk usage exceeded...</span>
+<span class="cmt">// high watermark threshold [90%]"</span>
+
+<span class="cmt">// Step 3: Raise watermarks temporarily (or free disk)</span>
+<span class="cm">PUT</span> <span class="cp">/_cluster/settings</span>
+{
+  <span class="ck">"transient"</span>: {
+    <span class="ck">"cluster.routing.allocation.disk.watermark.high"</span>: <span class="cs">"95%"</span>
+  }
+}
+
+<span class="cmt">// Step 4: If index was flood-staged (read-only), clear it</span>
+<span class="cm">PUT</span> <span class="cp">/my_index/_settings</span>
+{
+  <span class="ck">"index.blocks.read_only_allow_delete"</span>: <span class="cb">null</span>
+}
+
+<span class="cmt">// Step 5: After freeing disk, restore defaults</span>
+<span class="cm">PUT</span> <span class="cp">/_cluster/settings</span>
+{
+  <span class="ck">"transient"</span>: {
+    <span class="ck">"cluster.routing.allocation.disk.watermark.high"</span>: <span class="cb">null</span>
+  }
+}</pre>
+            <div class="ds-note"><strong>Rolling restart key points:</strong> Disable allocation BEFORE shutting down the node — without this, ES will immediately start moving shards to other nodes when the node disappears, causing unnecessary network IO. Flush reduces the recovery work when the node comes back. Re-enable allocation AFTER the node has rejoined (visible in _cat/nodes). Repeat for each node. Disk watermark fix: use transient settings for temporary adjustments (cleared on restart). Persistent settings survive restarts. null value clears a setting back to its default.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════
+     SERIES COMPLETE SUMMARY
+══════════════════════════ -->
+<div class="section">
+  <div class="sec-hd">
+    <div class="sec-num">COMPLETE</div>
+    <div class="sec-title">ECE Study Series — All 5 Domains</div>
+    <div class="sec-rule"></div>
+  </div>
+  <div class="final-summary">
+    <div class="fs-title">SERIES COMPLETE</div>
+    <div class="fs-grid">
+      <div class="fs-topic">
+        <div class="fst-num">01</div>
+        <div class="fst-name">Data Management</div>
+        <div class="fst-tags">indices · mappings · templates · ILM · analyzers · data streams</div>
+      </div>
+      <div class="fs-topic">
+        <div class="fst-num">02</div>
+        <div class="fst-name">Searching Data</div>
+        <div class="fst-tags">Query DSL · bool · aggregations · async search · CCS · runtime fields</div>
+      </div>
+      <div class="fs-topic">
+        <div class="fst-num">03</div>
+        <div class="fst-name">Search Applications</div>
+        <div class="fst-tags">highlighting · sorting · pagination · fuzzy · templates · aliases</div>
+      </div>
+      <div class="fs-topic">
+        <div class="fst-num">04</div>
+        <div class="fst-name">Data Processing</div>
+        <div class="fst-tags">ingest pipelines · grok · Painless · simulate · reindex · update_by_query</div>
+      </div>
+      <div class="fs-topic">
+        <div class="fst-num">05</div>
+        <div class="fst-name">Cluster Management</div>
+        <div class="fst-tags">node roles · TLS · RBAC · FLS/DLS · allocation · snapshots · SLM · CCR</div>
+      </div>
+    </div>
+    <div style="margin-top:22px;font-family:var(--mono);font-size:11px;color:var(--silver3);line-height:1.9;">
+      <span style="color:var(--viol3)">►</span> 5 topics · 35 quiz questions · 15 exam scenario drills · 5 distinct visual aesthetics<br>
+      <span style="color:var(--cyan)">►</span> ECE is a hands-on performance exam — documentation is allowed · 3 hours · ~10–12 tasks<br>
+      <span style="color:var(--green)">►</span> Good luck.
+    </div>
+  </div>
+</div>
+
+<!-- QUIZ -->
+<div class="quiz">
+  <div class="quiz-pretitle">// final assessment</div>
+  <div class="quiz-title">Assessment</div>
+  <div class="quiz-sub">7 questions · Cluster Management domain · ECE exam style</div>
+
+  <!-- Q1 -->
+  <div class="qb" id="q1">
+    <div class="q-n">QUESTION 01</div>
+    <div class="q-t">A cluster has 3 dedicated master-eligible nodes. What is the minimum number that must be available to elect a master and prevent split-brain?</div>
+    <div class="opts">
+      <button class="opt" onclick="ans(this,'q1','A','C')"><span class="ol">A</span>1 node</button>
+      <button class="opt" onclick="ans(this,'q1','B','C')"><span class="ol">B</span>All 3 nodes</button>
+      <button class="opt" onclick="ans(this,'q1','C','C')"><span class="ol">C</span>2 nodes (quorum = N/2 + 1)</button>
+      <button class="opt" onclick="ans(this,'q1','D','C')"><span class="ol">D</span>2 nodes only if they are voting-only nodes</button>
+    </div>
+    <div class="exp" id="e-q1"><strong>Correct: 2 nodes.</strong> Quorum = floor(N/2) + 1. For 3 master-eligible nodes: floor(3/2) + 1 = 2. At least 2 of the 3 must be available to elect a master and form a quorum. This prevents split-brain — if the cluster splits into partitions, only the partition with 2+ master-eligible nodes can elect a master. A single node cannot elect itself without quorum, preventing two simultaneous masters.</div>
+  </div>
+
+  <!-- Q2 -->
+  <div class="qb" id="q2">
+    <div class="q-n">QUESTION 02</div>
+    <div class="q-t">A user with a role that has Document Level Security applied searches an index. The index contains 10,000 documents but only 300 match the DLS query. What does the user see for <code>hits.total.value</code>?</div>
+    <div class="opts">
+      <button class="opt" onclick="ans(this,'q2','A','B')"><span class="ol">A</span>10,000 (total index count, DLS only filters which are returned)</button>
+      <button class="opt" onclick="ans(this,'q2','B','B')"><span class="ol">B</span>300 (only documents matching the DLS query are visible)</button>
+      <button class="opt" onclick="ans(this,'q2','C','B')"><span class="ol">C</span>0 (DLS prevents any count from being returned)</button>
+      <button class="opt" onclick="ans(this,'q2','D','B')"><span class="ol">D</span>10,000 in the count, but the hits array is filtered to 300</button>
+    </div>
+    <div class="exp" id="e-q2"><strong>Correct: 300.</strong> Document Level Security makes non-matching documents completely invisible to the user — they don't appear in counts, aggregations, or search results. From the user's perspective, the index only contains the 300 matching documents. This is by design for strict data isolation (e.g., multi-tenant setups where users should not know about data they can't access).</div>
+  </div>
+
+  <!-- Q3 -->
+  <div class="qb" id="q3">
+    <div class="q-n">QUESTION 03</div>
+    <div class="q-t">You want to register an <code>fs</code> (shared filesystem) snapshot repository at path <code>/mnt/backups</code>. You run the PUT /_snapshot API but get a security error. What must be done first?</div>
+    <div class="opts">
+      <button class="opt" onclick="ans(this,'q3','A','D')"><span class="ol">A</span>Set xpack.security.enabled: false in elasticsearch.yml</button>
+      <button class="opt" onclick="ans(this,'q3','B','D')"><span class="ol">B</span>Grant the elastic user write permissions on /mnt/backups</button>
+      <button class="opt" onclick="ans(this,'q3','C','D')"><span class="ol">C</span>Install the repository-fs plugin on all nodes</button>
+      <button class="opt" onclick="ans(this,'q3','D','D')"><span class="ol">D</span>Add path.repo: ["/mnt/backups"] to elasticsearch.yml on all nodes and restart</button>
+    </div>
+    <div class="exp" id="e-q3"><strong>Correct: add path.repo to elasticsearch.yml.</strong> Elasticsearch requires fs repository paths to be explicitly whitelisted in elasticsearch.yml via path.repo before they can be registered. This prevents arbitrary paths from being used as repositories (security measure). The setting must be on ALL nodes (since any node may need to write snapshots) and requires a restart. Only after this can the PUT /_snapshot API succeed for that path.</div>
+  </div>
+
+  <!-- Q4 -->
+  <div class="qb" id="q4">
+    <div class="q-n">QUESTION 04</div>
+    <div class="q-t">A node's disk usage reaches 95% (flood stage). What automatic action does Elasticsearch take on indices with shards on that node?</div>
+    <div class="opts">
+      <button class="opt" onclick="ans(this,'q4','A','C')"><span class="ol">A</span>Those indices are immediately deleted to free disk space</button>
+      <button class="opt" onclick="ans(this,'q4','B','C')"><span class="ol">B</span>No automatic action — a health warning is raised only</button>
+      <button class="opt" onclick="ans(this,'q4','C','C')"><span class="ol">C</span>Affected indices are set to read-only (index.blocks.read_only_allow_delete: true)</button>
+      <button class="opt" onclick="ans(this,'q4','D','C')"><span class="ol">D</span>Elasticsearch shuts down the node to prevent data corruption</button>
+    </div>
+    <div class="exp" id="e-q4"><strong>Correct: read-only block.</strong> When disk usage reaches the flood stage threshold (default 95%), Elasticsearch automatically sets index.blocks.read_only_allow_delete: true on all indices with shards on that node. This prevents new writes while still allowing deletes (to free space). After freeing disk, you must manually clear this block: PUT /index/_settings { "index.blocks.read_only_allow_delete": null }. The block does NOT clear automatically when disk usage drops.</div>
+  </div>
+
+  <!-- Q5 -->
+  <div class="qb" id="q5">
+    <div class="q-n">QUESTION 05</div>
+    <div class="q-t">When performing a rolling restart, why should you disable shard allocation (<code>cluster.routing.allocation.enable: "none"</code>) BEFORE taking a node offline?</div>
+    <div class="opts">
+      <button class="opt" onclick="ans(this,'q5','A','B')"><span class="ol">A</span>To prevent the node from being removed from the cluster permanently</button>
+      <button class="opt" onclick="ans(this,'q5','B','B')"><span class="ol">B</span>To prevent Elasticsearch from immediately moving shards to other nodes when the node goes offline, causing unnecessary network IO that would need to be reversed when the node returns</button>
+      <button class="opt" onclick="ans(this,'q5','C','B')"><span class="ol">C</span>To prevent new indices from being created during the maintenance window</button>
+      <button class="opt" onclick="ans(this,'q5','D','B')"><span class="ol">D</span>To ensure the master node is not restarted while data nodes are offline</button>
+    </div>
+    <div class="exp" id="e-q5"><strong>Correct: prevents wasteful shard movement.</strong> Without disabling allocation, when node-1 goes offline, ES immediately starts moving its shards to node-2 and node-3. When node-1 comes back up, ES moves shards again to rebalance. This is two unnecessary large data transfers for each node restarted. By disabling allocation first, ES waits patiently for the node to return, then just recovers the unchanged shards locally — far more efficient.</div>
+  </div>
+
+  <!-- Q6 -->
+  <div class="qb" id="q6">
+    <div class="q-n">QUESTION 06</div>
+    <div class="q-t">In CCR, you need to promote a follower index to a writable index after the leader cluster fails. What is the correct sequence of operations?</div>
+    <div class="opts">
+      <button class="opt" onclick="ans(this,'q6','A','C')"><span class="ol">A</span>DELETE the follower index, then create a new index with the same name</button>
+      <button class="opt" onclick="ans(this,'q6','B','C')"><span class="ol">B</span>POST /_ccr/unfollow directly on the open follower index</button>
+      <button class="opt" onclick="ans(this,'q6','C','C')"><span class="ol">C</span>pause_follow → close index → unfollow → open index</button>
+      <button class="opt" onclick="ans(this,'q6','D','C')"><span class="ol">D</span>resume_follow → unfollow → open index</button>
+    </div>
+    <div class="exp" id="e-q6"><strong>Correct: pause → close → unfollow → open.</strong> The unfollow API requires the index to be closed first. Trying to unfollow an open follower index returns an error. The full sequence is: (1) POST /index/_ccr/pause_follow — stop receiving replication, (2) POST /index/_close — close the index, (3) POST /index/_ccr/unfollow — convert to regular index, (4) POST /index/_open — make it searchable and writable. After this, the index accepts writes like any normal index.</div>
+  </div>
+
+  <!-- Q7 -->
+  <div class="qb" id="q7">
+    <div class="q-n">QUESTION 07</div>
+    <div class="q-t">An SLM policy has <code>expire_after: "7d"</code>, <code>min_count: 5</code>, and <code>max_count: 20</code>. After 30 days of daily snapshots (30 snapshots exist), which snapshots are retained?</div>
+    <div class="opts">
+      <button class="opt" onclick="ans(this,'q7','A','B')"><span class="ol">A</span>Only the 5 most recent snapshots (min_count overrides expire_after)</button>
+      <button class="opt" onclick="ans(this,'q7','B','B')"><span class="ol">B</span>The most recent 7 snapshots (within 7 days), but at least 5 total if fewer than 5 are within 7 days</button>
+      <button class="opt" onclick="ans(this,'q7','C','B')"><span class="ol">C</span>All 30 snapshots are retained because max_count has not been exceeded</button>
+      <button class="opt" onclick="ans(this,'q7','D','B')"><span class="ol">D</span>The most recent 20 snapshots (max_count takes priority over expire_after)</button>
+    </div>
+    <div class="exp" id="e-q7"><strong>Correct: the 7 most recent (within expire_after window), guaranteed minimum 5.</strong> The three retention parameters work together: expire_after deletes snapshots older than 7 days. min_count ensures at least 5 are always kept even if they're older than 7 days (protects against accidental mass deletion). max_count caps at 20 total. After 30 days with daily snapshots: snapshots older than 7 days are deleted → ~7 remain. Since 7 > min_count (5), all within the 7-day window are kept. max_count (20) is not reached so it doesn't trim further.</div>
+  </div>
+
+  <div class="scorebox" id="scorebox">
+    <div class="score-big" id="score-num">0/7</div>
+    <div class="score-sub">Cluster Management · Final Assessment Complete</div>
+    <div class="score-msg" id="score-msg"></div>
+    <button class="btn-reset" onclick="resetQuiz()">↺ RETRY</button>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="ft">ECE · TOPIC 05 · CLUSTER MANAGEMENT · SERIES COMPLETE · ELASTIC CERTIFIED ENGINEER</div>
+  <div class="nav-btns">
+    <span class="nbtn">← Topic 4</span>
+    <span class="nbtn primary">✓ Series Complete</span>
+  </div>
+</footer>
+
+</div>
+
+<script>
+// ── Node role data ──
+const nodeData = {
+  'nr-master': {
+    label: '// master node — cluster control plane',
+    code: `<span class="cmt"># elasticsearch.yml — dedicated master node</span>
+node.roles: [ master ]
+
+<span class="cmt"># Do NOT add data, ingest, or ml roles</span>
+<span class="cmt"># Dedicated masters should be low-spec</span>
+<span class="cmt"># (CPU/RAM for cluster state, not data)</span>
+
+<span class="cmt"># Bootstrap (FIRST startup only):</span>
+cluster.initial_master_nodes:
+  - "master-node-1"
+  - "master-node-2"
+  - "master-node-3"
+
+<span class="cmt"># Discovery:</span>
+discovery.seed_hosts:
+  - "master-node-1:9300"
+  - "master-node-2:9300"
+  - "master-node-3:9300"`,
+    notes: `<div class="ann v"><strong>Responsibilities:</strong> Tracks cluster topology, manages index creation/deletion, assigns shards to nodes, tracks node joins/leaves. Writes cluster state.</div>
+<div class="ann w"><strong>Always 3 dedicated masters</strong> in production (quorum=2). Never 2 (quorum=2, no fault tolerance). Never 4 (quorum=3, same as 3 but wastes a node).</div>
+<div class="ann r"><strong>initial_master_nodes:</strong> Used ONLY on first cluster bootstrap. Remove or comment out after cluster is formed, or it causes issues on restart.</div>`
+  },
+  'nr-data': {
+    label: '// data node — storage and compute',
+    code: `<span class="cmt"># Basic data node</span>
+node.roles: [ data ]
+
+<span class="cmt"># Tiered data roles (hot-warm-cold):</span>
+node.roles: [ data_hot ]
+node.roles: [ data_warm ]
+node.roles: [ data_cold ]
+node.roles: [ data_frozen ]
+
+<span class="cmt"># Hot node also needs data_content</span>
+<span class="cmt"># for non-time-series indices:</span>
+node.roles: [ data_hot, data_content ]
+
+<span class="cmt"># Custom attributes for ILM routing:</span>
+node.attr.data: hot
+node.attr.data: warm`,
+    notes: `<div class="ann v"><strong>data:</strong> General-purpose data role. In small clusters, all nodes can have this role. In large clusters, specialize into tiered roles.</div>
+<div class="ann i"><strong>Tiered roles:</strong> data_hot for active write/query, data_warm for recent read-mostly, data_cold for archived, data_frozen for rarely-accessed. ILM moves data between tiers automatically.</div>
+<div class="ann i"><strong>data_content:</strong> For non-time-series indices (product catalogues, user profiles). Hot nodes should also include data_content so regular indices can land there.</div>`
+  },
+  'nr-ingest': {
+    label: '// ingest node — pipeline execution',
+    code: `<span class="cmt"># Dedicated ingest node</span>
+node.roles: [ ingest ]
+
+<span class="cmt"># In small clusters: all nodes are ingest</span>
+<span class="cmt"># In large clusters: dedicated for heavy parsing</span>
+
+<span class="cmt"># Ingest nodes need MORE CPU</span>
+<span class="cmt"># (grok regex, Painless scripts are CPU-heavy)</span>
+<span class="cmt"># Less RAM than data nodes (no shard storage)</span>
+
+<span class="cmt"># Route bulk API to ingest nodes:</span>
+<span class="cm">POST</span> <span class="cp">http://ingest-node:9200/_bulk</span>`,
+    notes: `<div class="ann v"><strong>Purpose:</strong> Runs ingest pipelines (grok, geoip, Painless scripts) before documents are stored. Separating ingest nodes prevents pipeline CPU load from impacting search performance on data nodes.</div>
+<div class="ann i"><strong>When to dedicate:</strong> High-volume log ingestion with complex pipelines (multiple grok + geoip enrichments). Typically needed at >50k docs/sec with heavy pipelines.</div>
+<div class="ann w"><strong>Default:</strong> All nodes have the ingest role by default. You can disable it on data nodes with node.roles: [data] (no ingest).</div>`
+  },
+  'nr-coord': {
+    label: '// coordinating-only node — request routing',
+    code: `<span class="cmt"># Coordinating-only: empty roles list</span>
+node.roles: []
+
+<span class="cmt"># This node:</span>
+<span class="cmt"># - Routes search/index requests to shards</span>
+<span class="cmt"># - Merges results from all shards</span>
+<span class="cmt"># - Holds NO data shards</span>
+<span class="cmt"># - Does NOT participate in master elections</span>
+
+<span class="cmt"># Good candidate for load balancer target</span>
+<span class="cmt"># (point Kibana/application here)</span>
+
+<span class="cmt"># Needs good CPU + RAM for result merging</span>
+<span class="cmt"># on large aggregations</span>`,
+    notes: `<div class="ann v"><strong>Use case:</strong> High-traffic clusters where you want to isolate the "scatter-gather" work of coordinating large searches from data storage. Acts as a smart load balancer.</div>
+<div class="ann i"><strong>Memory for aggregations:</strong> Coordinating nodes must hold all shard results in memory before merging. For large aggs, give them significant heap (16–32GB).</div>
+<div class="ann w"><strong>Not required:</strong> Every node in ES is a coordinating node implicitly. Dedicated coordinating nodes are only needed at scale when coordination overhead is measurable.</div>`
+  },
+  'nr-warm': {
+    label: '// warm / cold / frozen — tiered storage',
+    code: `<span class="cmt"># Warm node</span>
+node.roles: [ data_warm ]
+node.attr.data: warm
+
+<span class="cmt"># Cold node (usually fewer/cheaper disks)</span>
+node.roles: [ data_cold ]
+node.attr.data: cold
+
+<span class="cmt"># ILM warm phase routes to warm nodes:</span>
+<span class="ck">"warm"</span>: {
+  <span class="ck">"actions"</span>: {
+    <span class="ck">"allocate"</span>: {
+      <span class="ck">"require"</span>: { <span class="ck">"data"</span>: <span class="cs">"warm"</span> }
+    }
+  }
+}
+
+<span class="cmt"># Frozen: searchable snapshots on demand</span>
+node.roles: [ data_frozen ]`,
+    notes: `<div class="ann v"><strong>Tiered storage strategy:</strong> Hot nodes use fast NVMe SSDs. Warm nodes use slower HDDs. Cold/Frozen use object storage (S3). ILM automatically migrates data through tiers.</div>
+<div class="ann i"><strong>data_warm vs data_cold:</strong> Warm indices are fully cached on the node. Cold indices can use searchable snapshots (partially cached). Frozen uses minimal local caching.</div>
+<div class="ann g"><strong>Cost savings:</strong> Tiered storage can reduce cluster costs dramatically — hot NVMe for recent data, cheap HDDs or S3 for historical archives.</div>`
+  },
+  'nr-ml': {
+    label: '// ml / transform / remote_cluster_client',
+    code: `<span class="cmt"># ML node (requires Platinum license)</span>
+node.roles: [ ml ]
+xpack.ml.enabled: true
+
+<span class="cmt"># Transform node</span>
+node.roles: [ transform ]
+
+<span class="cmt"># Remote cluster client</span>
+<span class="cmt"># (for cross-cluster search/replication)</span>
+node.roles: [ remote_cluster_client ]
+
+<span class="cmt"># All-in-one small cluster default:</span>
+node.roles:
+  - master
+  - data
+  - ingest
+  - ml
+  - remote_cluster_client`,
+    notes: `<div class="ann v"><strong>ml role:</strong> Runs anomaly detection and forecast jobs. ML jobs are memory-intensive — dedicated ML nodes prevent them from impacting search performance.</div>
+<div class="ann i"><strong>transform:</strong> Runs transform jobs (pivot/latest) that summarise data. Can be on data nodes or dedicated nodes for heavy transform workloads.</div>
+<div class="ann i"><strong>remote_cluster_client:</strong> Required on nodes that need to connect to remote clusters for CCS or CCR. In practice, often added to coordinating or data nodes.</div>`
+  }
+};
+
+let activeNode = null;
+function openNode(card, key) {
+  const detail = document.getElementById('node-detail');
+  const label = document.getElementById('nd-label');
+  const code = document.getElementById('nd-code');
+  const notes = document.getElementById('nd-notes');
+  document.querySelectorAll('.node-card').forEach(c => c.classList.remove('open'));
+  if (activeNode === key) { detail.classList.remove('show'); activeNode = null; return; }
+  const d = nodeData[key];
+  label.textContent = d.label;
+  code.innerHTML = `<div class="cex-sl">// Config</div><pre class="co">${d.code}</pre>`;
+  notes.innerHTML = `<div class="cex-sl">// Notes</div><div class="ann-list">${d.notes}</div>`;
+  detail.classList.add('show');
+  card.classList.add('open');
+  card.after(detail);
+  activeNode = key;
+}
+
+// ── Tab switcher ──
+function switchTab(group, id, btn) {
+  document.querySelectorAll(`[id^="${group}-"]`).forEach(p => p.classList.remove('active'));
+  document.getElementById(`${group}-${id.replace(group+'-','')}`).classList.add('active');
+  btn.closest('.cex-tabs').querySelectorAll('.cex-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ── Drills ──
+function toggleDrill(el, id) {
+  const body = document.getElementById(id);
+  const open = body.classList.contains('show');
+  document.querySelectorAll('.drill-body').forEach(b => b.classList.remove('show'));
+  document.querySelectorAll('.drill').forEach(d => d.classList.remove('open'));
+  if (!open) { body.classList.add('show'); el.classList.add('open'); }
+}
+
+// ── Quiz ──
+const correct = { q1:'C', q2:'B', q3:'D', q4:'C', q5:'B', q6:'C', q7:'B' };
+const answered = {};
+let score = 0;
+
+function ans(btn, qId, chosen) {
+  if (answered[qId]) return;
+  answered[qId] = true;
+  const isRight = chosen === correct[qId];
+  if (isRight) score++;
+  const opts = document.getElementById(qId).querySelectorAll('.opt');
+  const letters = ['A','B','C','D'];
+  opts.forEach((o, i) => {
+    o.classList.add('locked'); o.style.cursor = 'default';
+    if (letters[i] === correct[qId]) o.classList.add('revealc');
+  });
+  btn.classList.remove('revealc');
+  btn.classList.add(isRight ? 'correct' : 'wrong');
+  document.getElementById('e-' + qId).classList.add('show');
+  updateProgress();
+  if (Object.keys(answered).length === 7) setTimeout(showScore, 600);
+}
+
+function updateProgress() {
+  const n = Object.keys(answered).length;
+  document.getElementById('progFill').style.width = (n / 7 * 100) + '%';
+  document.getElementById('progTxt').textContent = n + ' / 7 answered';
+}
+
+function showScore() {
+  document.getElementById('score-num').textContent = score + '/7';
+  const p = score / 7 * 100;
+  document.getElementById('score-msg').textContent =
+    p === 100 ? 'Perfect. Cluster operations fully mastered. You are ready.' :
+    p >= 85   ? 'Strong. Review CCR unfollow sequence and disk watermark recovery.' :
+    p >= 57   ? 'Developing. Focus on quorum math, DLS behavior, and rolling restart procedure.' :
+                'Keep studying. Priority: node roles, security RBAC, snapshot management, and allocation.';
+  document.getElementById('scorebox').classList.add('show');
+}
+
+function resetQuiz() {
+  Object.keys(answered).forEach(k => delete answered[k]);
+  score = 0;
+  document.getElementById('scorebox').classList.remove('show');
+  document.querySelectorAll('.opt').forEach(o => { o.classList.remove('correct','wrong','revealc','locked'); o.style.cursor = ''; });
+  document.querySelectorAll('.exp').forEach(e => e.classList.remove('show'));
+  document.getElementById('progFill').style.width = '0%';
+  document.getElementById('progTxt').textContent = '0 / 7 answered';
+}
+</script>
+</body>
+</html>

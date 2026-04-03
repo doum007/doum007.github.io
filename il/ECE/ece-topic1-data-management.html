@@ -1,0 +1,1864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ECE Topic 1: Data Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@300;400;500;600;700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:      #020d1a;
+    --bg2:     #041526;
+    --s1:      #061e36;
+    --s2:      #082540;
+    --s3:      #0a2d4d;
+    --border:  #0e3a5e;
+    --bord2:   #155080;
+    --cyan:    #00d4ff;
+    --cyan2:   #40e8ff;
+    --cyan3:   #80f0ff;
+    --cyan4:   #b0f7ff;
+    --lime:    #39ff7a;
+    --amber:   #ffb830;
+    --red:     #ff4455;
+    --violet:  #9966ff;
+    --text:    #cce8f4;
+    --dim:     #5a8aaa;
+    --muted:   #2a4a60;
+    --mono:    'Courier Prime', monospace;
+    --display: 'Chakra Petch', sans-serif;
+    --sans:    'DM Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Blueprint grid */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.04) 1px, transparent 1px),
+      linear-gradient(rgba(0,212,255,0.015) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.015) 1px, transparent 1px);
+    background-size: 80px 80px, 80px 80px, 16px 16px, 16px 16px;
+    pointer-events: none; z-index: 0;
+  }
+
+  /* Radial glow top-left */
+  body::after {
+    content: '';
+    position: fixed; top: -20%; left: -10%;
+    width: 60vw; height: 60vw;
+    background: radial-gradient(ellipse, rgba(0,212,255,0.06) 0%, transparent 65%);
+    pointer-events: none; z-index: 0;
+  }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 32px; position: relative; z-index: 1; }
+
+  /* ── HEADER ── */
+  header { padding: 44px 0 0; margin-bottom: 48px; }
+
+  .header-top {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    flex-wrap: wrap; gap: 20px; margin-bottom: 28px;
+  }
+
+  .cert-badge {
+    font-family: var(--display); font-size: 10px; letter-spacing: 3px;
+    color: var(--cyan); border: 1px solid rgba(0,212,255,0.3);
+    background: rgba(0,212,255,0.05); padding: 6px 18px; text-transform: uppercase;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .cert-badge::before { content: '◈'; }
+
+  .stat-row { display: flex; gap: 0; }
+  .stat-box {
+    padding: 10px 18px; border: 1px solid var(--border); border-right: none;
+    text-align: center; background: var(--s1);
+  }
+  .stat-box:last-child { border-right: 1px solid var(--border); }
+  .stat-box.accent { background: rgba(0,212,255,0.08); border-color: rgba(0,212,255,0.3); }
+  .sv { font-family: var(--display); font-size: 1.6rem; color: var(--cyan); line-height: 1; }
+  .sl { font-family: var(--display); font-size: 9px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+  .stat-box.accent .sl { color: rgba(0,212,255,0.5); }
+
+  h1 {
+    font-family: var(--display);
+    font-size: clamp(2.8rem, 7vw, 5.5rem);
+    font-weight: 700; line-height: 0.9;
+    letter-spacing: 2px; color: var(--text);
+    text-transform: uppercase;
+  }
+  h1 .accent { color: var(--cyan); display: block; }
+  h1 .sub { font-size: 0.32em; font-weight: 300; color: var(--dim); letter-spacing: 4px; display: block; margin-top: 10px; }
+
+  /* Nav */
+  .topic-nav {
+    display: flex; gap: 3px; flex-wrap: wrap;
+    margin: 28px 0 0;
+    padding: 14px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .topic-nav a {
+    font-family: var(--display); font-size: 9px; padding: 6px 14px;
+    text-decoration: none; transition: all 0.15s; border: 1px solid var(--muted);
+    color: var(--muted); letter-spacing: 2px; text-transform: uppercase;
+    background: transparent;
+  }
+  .topic-nav a.active { background: var(--cyan); color: var(--bg); border-color: var(--cyan); font-weight: 600; }
+  .topic-nav a:hover:not(.active) { border-color: var(--cyan); color: var(--cyan); }
+
+  /* Progress */
+  .prog-row { display: flex; align-items: center; gap: 12px; margin: 18px 0 52px; }
+  .prog-track { flex: 1; height: 2px; background: var(--border); overflow: hidden; }
+  .prog-fill { height: 100%; background: linear-gradient(90deg, var(--cyan), var(--lime)); width: 0%; transition: width 0.5s; }
+  .prog-txt { font-family: var(--display); font-size: 10px; color: var(--dim); letter-spacing: 1px; }
+
+  /* ── SECTIONS ── */
+  .section { margin-bottom: 60px; animation: blueprintIn 0.4s ease both; }
+  @keyframes blueprintIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+  .section:nth-child(1){animation-delay:.04s}.section:nth-child(2){animation-delay:.09s}
+  .section:nth-child(3){animation-delay:.14s}.section:nth-child(4){animation-delay:.19s}
+  .section:nth-child(5){animation-delay:.24s}.section:nth-child(6){animation-delay:.29s}
+  .section:nth-child(7){animation-delay:.34s}
+
+  .sec-hd { display: flex; align-items: stretch; gap: 0; margin-bottom: 22px; }
+  .sec-num {
+    font-family: var(--display); font-size: 0.9rem; font-weight: 700;
+    background: var(--cyan); color: var(--bg);
+    padding: 6px 14px; display: flex; align-items: center; letter-spacing: 2px;
+  }
+  .sec-title {
+    font-family: var(--display); font-size: 1.1rem; font-weight: 600;
+    background: var(--s2); color: var(--text); padding: 6px 20px;
+    display: flex; align-items: center; letter-spacing: 2px; text-transform: uppercase;
+    border: 1px solid var(--border); border-left: none; flex: 1;
+  }
+
+  /* Card */
+  .card {
+    background: rgba(4,21,38,0.9); border: 1px solid var(--border);
+    padding: 26px 30px; position: relative; overflow: hidden;
+  }
+  .card::after {
+    content: ''; position: absolute; top: 0; left: 0; bottom: 0; width: 2px;
+    background: linear-gradient(180deg, var(--cyan), transparent);
+  }
+  .card p { font-size: 0.95rem; line-height: 1.85; color: var(--dim); margin-bottom: 14px; font-weight: 300; }
+  .card p:last-child { margin-bottom: 0; }
+  strong { color: var(--text); font-weight: 500; }
+  code { font-family: var(--mono); font-size: 12px; color: var(--cyan2); background: rgba(0,212,255,0.08); padding: 1px 6px; border: 1px solid rgba(0,212,255,0.15); }
+
+  /* ── API EXPLORER ── */
+  .api-explorer {
+    background: var(--bg2); border: 1px solid var(--border); overflow: hidden; margin: 22px 0;
+  }
+  .ae-header {
+    background: var(--s2); border-bottom: 1px solid var(--border);
+    padding: 10px 18px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  }
+  .ae-label { font-family: var(--display); font-size: 10px; color: var(--cyan); letter-spacing: 2px; text-transform: uppercase; }
+  .ae-tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+  .ae-tab {
+    font-family: var(--display); font-size: 10px; padding: 5px 14px;
+    background: var(--s1); border: 1px solid var(--border); color: var(--dim);
+    cursor: pointer; transition: all 0.15s; letter-spacing: 1px; text-transform: uppercase;
+  }
+  .ae-tab.active { background: var(--cyan); color: var(--bg); border-color: var(--cyan); font-weight: 700; }
+  .ae-tab:hover:not(.active) { border-color: var(--cyan); color: var(--cyan2); }
+
+  .ae-panel { display: none; }
+  .ae-panel.active { display: block; }
+
+  .ae-body { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+  @media(max-width:700px){ .ae-body { grid-template-columns: 1fr; } }
+
+  .ae-left { border-right: 1px solid var(--border); padding: 18px 20px; }
+  .ae-right { padding: 18px 20px; background: rgba(0,0,0,0.2); }
+
+  .ae-section-label {
+    font-family: var(--display); font-size: 9px; color: var(--dim); letter-spacing: 3px;
+    text-transform: uppercase; margin-bottom: 10px;
+    padding-bottom: 6px; border-bottom: 1px solid var(--border);
+  }
+
+  pre.api-code {
+    font-family: var(--mono); font-size: 12px; line-height: 1.85;
+    color: var(--dim); white-space: pre-wrap; word-break: break-word;
+    overflow-x: auto;
+  }
+  .ac-method { color: var(--lime); font-weight: 700; }
+  .ac-path   { color: var(--cyan2); }
+  .ac-key    { color: var(--cyan3); }
+  .ac-str    { color: #90d0ff; }
+  .ac-num    { color: var(--amber); }
+  .ac-bool   { color: var(--violet); }
+  .ac-cmt    { color: var(--muted); font-style: italic; }
+  .ac-kw     { color: var(--lime); }
+
+  .ae-notes { font-family: var(--sans); font-size: 12px; line-height: 1.75; color: var(--dim); }
+  .ae-notes .tip {
+    background: rgba(0,212,255,0.05); border-left: 2px solid var(--cyan);
+    padding: 8px 12px; margin-bottom: 8px; font-size: 11px;
+  }
+  .ae-notes .tip strong { color: var(--cyan2); font-family: var(--display); font-size: 11px; letter-spacing: 1px; }
+  .ae-notes .warn { border-left-color: var(--amber); background: rgba(255,184,48,0.05); }
+  .ae-notes .warn strong { color: var(--amber); }
+  .ae-notes .err  { border-left-color: var(--red); background: rgba(255,68,85,0.05); }
+  .ae-notes .err  strong { color: var(--red); }
+
+  /* ── ILM DIAGRAM ── */
+  .ilm-diagram {
+    display: flex; align-items: stretch; gap: 0; margin: 22px 0;
+    overflow-x: auto; padding-bottom: 4px;
+  }
+  .ilm-phase {
+    flex: 1; min-width: 140px; background: var(--s1); border: 1px solid var(--border);
+    border-right: none; padding: 16px; cursor: pointer; transition: all 0.2s;
+    position: relative; overflow: hidden;
+  }
+  .ilm-phase:last-child { border-right: 1px solid var(--border); }
+  .ilm-phase:hover { background: var(--s2); transform: translateY(-3px); }
+  .ilm-phase.active { background: var(--s2); border-color: var(--cyan); }
+  .ilm-phase::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  }
+  .ilm-phase.hot::before   { background: var(--red); }
+  .ilm-phase.warm::before  { background: var(--amber); }
+  .ilm-phase.cold::before  { background: #4499ff; }
+  .ilm-phase.frozen::before{ background: var(--violet); }
+  .ilm-phase.delete::before{ background: var(--dim); }
+
+  .ph-name {
+    font-family: var(--display); font-size: 1rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;
+  }
+  .ilm-phase.hot    .ph-name { color: var(--red); }
+  .ilm-phase.warm   .ph-name { color: var(--amber); }
+  .ilm-phase.cold   .ph-name { color: #4499ff; }
+  .ilm-phase.frozen .ph-name { color: var(--violet); }
+  .ilm-phase.delete .ph-name { color: var(--dim); }
+
+  .ph-desc { font-family: var(--mono); font-size: 10px; color: var(--dim); line-height: 1.6; }
+  .ph-arrow {
+    position: absolute; right: -12px; top: 50%; transform: translateY(-50%);
+    font-size: 1.2rem; color: var(--border); z-index: 2;
+  }
+
+  .ilm-detail {
+    background: rgba(0,0,0,0.4); border: 1px solid var(--cyan);
+    padding: 16px 20px; margin-top: -1px; display: none;
+    animation: fadeSlide 0.2s ease;
+  }
+  @keyframes fadeSlide { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
+  .ilm-detail.show { display: block; }
+  .ild-title { font-family: var(--display); font-size: 11px; color: var(--cyan); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; }
+  .ild-body { font-family: var(--mono); font-size: 11px; line-height: 1.85; color: var(--dim); white-space: pre-wrap; }
+
+  /* Mapping type table */
+  .type-table { width: 100%; border-collapse: collapse; margin: 18px 0; font-family: var(--mono); font-size: 11px; }
+  .type-table th {
+    background: var(--s2); color: var(--cyan); padding: 9px 14px;
+    text-align: left; letter-spacing: 2px; font-size: 10px; border: 1px solid var(--border);
+    font-family: var(--display); text-transform: uppercase;
+  }
+  .type-table td { padding: 9px 14px; border: 1px solid var(--border); color: var(--dim); vertical-align: top; }
+  .type-table tr:hover td { background: rgba(0,212,255,0.03); }
+  .type-table td:first-child { color: var(--cyan2); font-weight: 700; }
+  .badge { display: inline-block; font-size: 9px; padding: 1px 7px; border: 1px solid; margin: 1px; }
+  .badge.y { color: var(--lime); border-color: rgba(57,255,122,0.3); background: rgba(57,255,122,0.06); }
+  .badge.n { color: var(--red); border-color: rgba(255,68,85,0.3); background: rgba(255,68,85,0.06); }
+  .badge.p { color: var(--amber); border-color: rgba(255,184,48,0.3); background: rgba(255,184,48,0.06); }
+
+  /* Note */
+  .note {
+    border-left: 2px solid var(--cyan); background: rgba(0,212,255,0.04);
+    padding: 12px 18px; margin: 14px 0; font-family: var(--mono);
+    font-size: 12px; line-height: 1.7; color: var(--dim);
+  }
+  .note.warn  { border-left-color: var(--amber); background: rgba(255,184,48,0.04); }
+  .note.err   { border-left-color: var(--red);   background: rgba(255,68,85,0.04); }
+  .note.lime  { border-left-color: var(--lime);  background: rgba(57,255,122,0.04); }
+  .note strong { color: var(--cyan2); }
+  .note.warn  strong { color: var(--amber); }
+  .note.err   strong { color: var(--red); }
+  .note.lime  strong { color: var(--lime); }
+
+  /* Two-col */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 18px 0; }
+  @media(max-width:600px){ .two-col { grid-template-columns: 1fr; } }
+  .mini { background: var(--s1); border: 1px solid var(--border); padding: 16px 18px; }
+  .ml { font-family: var(--display); font-size: 10px; color: var(--dim); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; }
+  .mv { font-family: var(--mono); font-size: 11px; color: var(--text); line-height: 1.85; }
+  .mv .c { color: var(--cyan2); } .mv .g { color: var(--lime); }
+  .mv .a { color: var(--amber); } .mv .r { color: var(--red); }
+  .mv .v { color: var(--violet); }
+
+  /* ── SCENARIO DRILLS ── */
+  .drills { display: flex; flex-direction: column; gap: 10px; margin: 20px 0; }
+  .drill {
+    background: var(--s1); border: 1px solid var(--border); overflow: hidden;
+    cursor: pointer; transition: border-color 0.2s;
+  }
+  .drill:hover { border-color: var(--cyan); }
+  .drill.open  { border-color: var(--cyan); }
+  .drill-hd {
+    padding: 14px 18px; display: flex; align-items: flex-start; gap: 14px;
+  }
+  .drill-num { font-family: var(--display); font-size: 1.5rem; font-weight: 700; color: var(--muted); min-width: 40px; transition: color 0.2s; }
+  .drill:hover .drill-num, .drill.open .drill-num { color: var(--cyan); }
+  .drill-content { flex: 1; }
+  .drill-scenario { font-family: var(--display); font-size: 10px; color: var(--cyan); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
+  .drill-task { font-family: var(--sans); font-size: 0.9rem; font-weight: 500; color: var(--text); line-height: 1.5; }
+  .drill-body { display: none; border-top: 1px solid var(--border); }
+  .drill-body.show { display: block; }
+  .drill-solution { padding: 16px 18px; }
+  .ds-label { font-family: var(--display); font-size: 9px; color: var(--lime); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 10px; }
+  pre.ds-code {
+    font-family: var(--mono); font-size: 12px; line-height: 1.85; color: var(--dim);
+    white-space: pre-wrap; background: rgba(0,0,0,0.3); padding: 16px; overflow-x: auto;
+    border-left: 2px solid var(--lime);
+  }
+  .ds-note { font-family: var(--mono); font-size: 11px; color: var(--dim); margin-top: 10px; line-height: 1.65; padding: 10px 14px; background: rgba(57,255,122,0.04); border: 1px solid rgba(57,255,122,0.12); }
+  .ds-note strong { color: var(--lime); }
+
+  /* ── QUIZ ── */
+  .quiz {
+    background: var(--bg2); border: 1px solid var(--border);
+    padding: 40px 32px; margin-top: 60px; position: relative;
+  }
+  .quiz::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--cyan), var(--lime), var(--amber));
+  }
+  .quiz-header {
+    display: flex; align-items: center; gap: 16px; margin-bottom: 36px;
+  }
+  .quiz-title {
+    font-family: var(--display); font-size: 1.6rem; font-weight: 700;
+    letter-spacing: 3px; color: var(--cyan); text-transform: uppercase;
+  }
+  .quiz-sub { font-family: var(--mono); font-size: 11px; color: var(--dim); margin-top: 4px; }
+
+  .qb { margin-bottom: 36px; padding-bottom: 36px; border-bottom: 1px solid var(--border); }
+  .qb:last-of-type { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .q-n { font-family: var(--display); font-size: 10px; color: var(--cyan); letter-spacing: 2px; margin-bottom: 8px; }
+  .q-t { font-family: var(--sans); font-size: 0.975rem; font-weight: 500; color: var(--text); margin-bottom: 6px; line-height: 1.55; }
+  pre.q-code {
+    font-family: var(--mono); font-size: 11px; line-height: 1.75;
+    background: rgba(0,0,0,0.4); border: 1px solid var(--border);
+    border-left: 2px solid var(--cyan); padding: 12px 16px; color: var(--dim);
+    margin: 10px 0; overflow-x: auto; white-space: pre; word-break: normal;
+  }
+
+  .opts { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+  .opt {
+    display: flex; align-items: flex-start; gap: 12px; padding: 11px 16px;
+    border: 1px solid var(--border); background: var(--s1); color: var(--dim);
+    font-family: var(--mono); font-size: 12px; cursor: pointer; transition: all 0.15s;
+    text-align: left; width: 100%; line-height: 1.55;
+  }
+  .opt:hover:not(.locked) { border-color: var(--cyan); color: var(--text); background: rgba(0,212,255,0.05); }
+  .opt .ol { color: var(--cyan); font-weight: 700; min-width: 18px; font-family: var(--display); }
+  .opt.correct { border-color: var(--lime);  background: rgba(57,255,122,0.07); color: #90ffb0; }
+  .opt.wrong   { border-color: var(--red);   background: rgba(255,68,85,0.07);  color: #ffaaaa; }
+  .opt.revealc { border-color: var(--lime);  background: rgba(57,255,122,0.03); color: var(--lime); opacity: 0.55; }
+
+  .exp {
+    display: none; margin-top: 12px; padding: 12px 16px;
+    background: rgba(0,212,255,0.04); border: 1px solid rgba(0,212,255,0.15);
+    font-family: var(--mono); font-size: 11px; color: var(--dim); line-height: 1.8;
+  }
+  .exp.show { display: block; }
+  .exp strong { color: var(--cyan2); }
+
+  .scorebox { display: none; margin-top: 28px; padding: 28px; background: var(--s1); border: 1px solid var(--border); text-align: center; }
+  .scorebox.show { display: block; }
+  .score-big { font-family: var(--display); font-size: 5rem; font-weight: 700; color: var(--cyan); letter-spacing: 4px; }
+  .score-sub { font-family: var(--display); font-size: 10px; color: var(--dim); letter-spacing: 3px; margin: 4px 0 12px; text-transform: uppercase; }
+  .score-msg { font-family: var(--sans); font-size: 0.95rem; font-weight: 300; color: var(--dim); }
+  .btn-reset {
+    margin-top: 18px; background: none; border: 1px solid var(--cyan); color: var(--cyan);
+    font-family: var(--display); font-size: 11px; padding: 10px 28px; cursor: pointer;
+    letter-spacing: 3px; text-transform: uppercase; transition: all 0.2s;
+  }
+  .btn-reset:hover { background: var(--cyan); color: var(--bg); }
+
+  footer {
+    margin-top: 80px; padding: 32px 0;
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;
+  }
+  .ft { font-family: var(--display); font-size: 10px; color: var(--muted); letter-spacing: 2px; }
+  .nav-btns { display: flex; gap: 0; }
+  .nbtn {
+    font-family: var(--display); font-size: 11px; padding: 11px 22px;
+    border: 1px solid var(--border); border-right: none; color: var(--dim);
+    background: none; cursor: pointer; letter-spacing: 2px; text-decoration: none;
+    transition: all 0.15s; text-transform: uppercase;
+  }
+  .nbtn:last-child { border-right: 1px solid var(--border); }
+  .nbtn:hover { background: var(--s1); color: var(--cyan); border-color: var(--cyan); }
+  .nbtn.primary { background: var(--cyan); color: var(--bg); border-color: var(--cyan); font-weight: 700; }
+  .nbtn.primary:hover { background: var(--cyan2); border-color: var(--cyan2); }
+
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--bord2); }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- ── HEADER ── -->
+  <header>
+    <div class="header-top">
+      <div>
+        <div class="cert-badge">Elastic Certified Engineer · ECE</div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-box"><div class="sv">5</div><div class="sl">Topics</div></div>
+        <div class="stat-box"><div class="sv">1</div><div class="sl">of 5</div></div>
+        <div class="stat-box accent"><div class="sv">7</div><div class="sl">Quiz Qs</div></div>
+      </div>
+    </div>
+    <h1>DATA<span class="accent">MANAGEMENT</span><span class="sub">// indices · mappings · templates · ILM · data streams · analyzers</span></h1>
+
+    <nav class="topic-nav">
+      <a href="#" class="active">01 · Data Management</a>
+      <a href="#">02 · Searching Data</a>
+      <a href="#">03 · Search Applications</a>
+      <a href="#">04 · Data Processing</a>
+      <a href="#">05 · Cluster Management</a>
+    </nav>
+  </header>
+
+  <div class="prog-row">
+    <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+    <span class="prog-txt" id="progTxt">0 / 7 answered</span>
+  </div>
+
+  <!-- ═══════════════════════════
+       01.01 — INDEX FUNDAMENTALS
+  ══════════════════════════════ -->
+  <div class="section">
+    <div class="sec-hd"><span class="sec-num">01.01</span><span class="sec-title">Index Fundamentals</span></div>
+    <div class="card">
+      <p>An <strong>index</strong> is a logical namespace that maps to one or more primary shards (and optionally replica shards). Every document in Elasticsearch lives in an index. The ECE exam tests your ability to create and configure indices with precise settings via the REST API — the UI alone is not sufficient.</p>
+      <p>Key index settings that must be set <strong>at creation time</strong> (immutable): <code>number_of_shards</code>. Key settings changeable at runtime: <code>number_of_replicas</code>, routing allocation, refresh interval.</p>
+
+      <div class="api-explorer">
+        <div class="ae-header">
+          <span class="ae-label">// API Explorer</span>
+          <div class="ae-tabs">
+            <button class="ae-tab active" onclick="switchTab('idx','t1',this)">Create Index</button>
+            <button class="ae-tab" onclick="switchTab('idx','t2',this)">Update Settings</button>
+            <button class="ae-tab" onclick="switchTab('idx','t3',this)">Aliases</button>
+            <button class="ae-tab" onclick="switchTab('idx','t4',this)">Reindex</button>
+          </div>
+        </div>
+        <div id="idx-t1" class="ae-panel active">
+          <div class="ae-body">
+            <div class="ae-left">
+              <div class="ae-section-label">// Request</div>
+              <pre class="api-code"><span class="ac-method">PUT</span> <span class="ac-path">/my_index</span>
+{
+  <span class="ac-key">"settings"</span>: {
+    <span class="ac-key">"number_of_shards"</span>:   <span class="ac-num">1</span>,   <span class="ac-cmt">// immutable after creation</span>
+    <span class="ac-key">"number_of_replicas"</span>: <span class="ac-num">1</span>,   <span class="ac-cmt">// can change anytime</span>
+    <span class="ac-key">"refresh_interval"</span>:   <span class="ac-str">"1s"</span> <span class="ac-cmt">// -1 to disable</span>
+  },
+  <span class="ac-key">"mappings"</span>: {
+    <span class="ac-key">"properties"</span>: {
+      <span class="ac-key">"title"</span>:  { <span class="ac-key">"type"</span>: <span class="ac-str">"text"</span>,    <span class="ac-key">"analyzer"</span>: <span class="ac-str">"english"</span> },
+      <span class="ac-key">"price"</span>:  { <span class="ac-key">"type"</span>: <span class="ac-str">"float"</span>   },
+      <span class="ac-key">"status"</span>: { <span class="ac-key">"type"</span>: <span class="ac-str">"keyword"</span> },
+      <span class="ac-key">"date"</span>:   { <span class="ac-key">"type"</span>: <span class="ac-str">"date"</span>,
+                  <span class="ac-key">"format"</span>: <span class="ac-str">"yyyy-MM-dd||epoch_millis"</span> }
+    }
+  },
+  <span class="ac-key">"aliases"</span>: {
+    <span class="ac-key">"products"</span>: {}  <span class="ac-cmt">// creates alias at index creation</span>
+  }
+}</pre>
+            </div>
+            <div class="ae-right">
+              <div class="ae-section-label">// Key Notes</div>
+              <div class="ae-notes">
+                <div class="tip"><strong>IMMUTABLE:</strong> number_of_shards cannot change after index creation. To change shard count you must reindex into a new index.</div>
+                <div class="tip"><strong>ALIASES:</strong> Define aliases at creation time or add later with the _aliases API. Aliases enable zero-downtime reindexing.</div>
+                <div class="tip warn"><strong>EXAM TRAP:</strong> Setting number_of_replicas: 0 is valid and used when you have only one node (replicas would be unassigned otherwise).</div>
+                <div class="tip"><strong>VERIFY:</strong> GET /my_index — returns full settings, mappings, aliases for the index.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="idx-t2" class="ae-panel">
+          <div class="ae-body">
+            <div class="ae-left">
+              <div class="ae-section-label">// Request</div>
+              <pre class="api-code"><span class="ac-cmt">// Change replicas (can be done at any time)</span>
+<span class="ac-method">PUT</span> <span class="ac-path">/my_index/_settings</span>
+{
+  <span class="ac-key">"number_of_replicas"</span>: <span class="ac-num">2</span>
+}
+
+<span class="ac-cmt">// Disable refresh (for bulk loading performance)</span>
+<span class="ac-method">PUT</span> <span class="ac-path">/my_index/_settings</span>
+{
+  <span class="ac-key">"refresh_interval"</span>: <span class="ac-str">"-1"</span>
+}
+
+<span class="ac-cmt">// Re-enable refresh after bulk load</span>
+<span class="ac-method">PUT</span> <span class="ac-path">/my_index/_settings</span>
+{
+  <span class="ac-key">"refresh_interval"</span>: <span class="ac-str">"1s"</span>
+}
+
+<span class="ac-cmt">// Make index read-only</span>
+<span class="ac-method">PUT</span> <span class="ac-path">/my_index/_settings</span>
+{
+  <span class="ac-key">"index.blocks.write"</span>: <span class="ac-bool">true</span>
+}
+
+<span class="ac-cmt">// Force merge (run after bulk load + read-only)</span>
+<span class="ac-method">POST</span> <span class="ac-path">/my_index/_forcemerge?max_num_segments=1</span></pre>
+            </div>
+            <div class="ae-right">
+              <div class="ae-section-label">// Key Notes</div>
+              <div class="ae-notes">
+                <div class="tip"><strong>BULK LOAD PATTERN:</strong> Before: replicas=0, refresh=-1. After: restore replicas, restore refresh, force merge.</div>
+                <div class="tip warn"><strong>FORCE MERGE:</strong> Reduces segment count for read performance. Only run on indices that will no longer receive writes (ILM warm/cold phases).</div>
+                <div class="tip"><strong>blocks.write:</strong> Used in ILM warm phase to make index read-only before force merge. GET /my_index/_settings to verify.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="idx-t3" class="ae-panel">
+          <div class="ae-body">
+            <div class="ae-left">
+              <div class="ae-section-label">// Request</div>
+              <pre class="api-code"><span class="ac-cmt">// Add alias to existing index</span>
+<span class="ac-method">POST</span> <span class="ac-path">/_aliases</span>
+{
+  <span class="ac-key">"actions"</span>: [
+    {
+      <span class="ac-key">"add"</span>: {
+        <span class="ac-key">"index"</span>: <span class="ac-str">"my_index_v2"</span>,
+        <span class="ac-key">"alias"</span>: <span class="ac-str">"my_index"</span>
+      }
+    },
+    {
+      <span class="ac-key">"remove"</span>: {
+        <span class="ac-key">"index"</span>: <span class="ac-str">"my_index_v1"</span>,
+        <span class="ac-key">"alias"</span>: <span class="ac-str">"my_index"</span>
+      }
+    }
+  ]
+}
+
+<span class="ac-cmt">// Write alias — only one index can be the write target</span>
+<span class="ac-method">POST</span> <span class="ac-path">/_aliases</span>
+{
+  <span class="ac-key">"actions"</span>: [{
+    <span class="ac-key">"add"</span>: {
+      <span class="ac-key">"index"</span>:     <span class="ac-str">"logs-2024-01"</span>,
+      <span class="ac-key">"alias"</span>:     <span class="ac-str">"logs"</span>,
+      <span class="ac-key">"is_write_index"</span>: <span class="ac-bool">true</span>
+    }
+  }]
+}
+
+<span class="ac-cmt">// Filtered alias</span>
+<span class="ac-method">POST</span> <span class="ac-path">/_aliases</span>
+{
+  <span class="ac-key">"actions"</span>: [{
+    <span class="ac-key">"add"</span>: {
+      <span class="ac-key">"index"</span>:  <span class="ac-str">"logs"</span>,
+      <span class="ac-key">"alias"</span>:  <span class="ac-str">"error_logs"</span>,
+      <span class="ac-key">"filter"</span>: { <span class="ac-key">"term"</span>: { <span class="ac-key">"level"</span>: <span class="ac-str">"error"</span> }}
+    }
+  }]
+}</pre>
+            </div>
+            <div class="ae-right">
+              <div class="ae-section-label">// Key Notes</div>
+              <div class="ae-notes">
+                <div class="tip"><strong>ATOMIC SWAP:</strong> The _aliases API with add+remove in one request does a zero-downtime index swap — no requests are lost.</div>
+                <div class="tip"><strong>is_write_index:</strong> When an alias points to multiple indices, exactly one must be the write target. Writes to alias without is_write_index on multi-index alias = error.</div>
+                <div class="tip warn"><strong>FILTERED ALIAS:</strong> Applies a query filter to all searches through the alias. Users querying error_logs only see error-level documents even though the underlying index has all levels.</div>
+                <div class="tip"><strong>VERIFY:</strong> GET /my_index/_alias — see all aliases for an index. GET /_alias/my_alias — see which indices an alias points to.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="idx-t4" class="ae-panel">
+          <div class="ae-body">
+            <div class="ae-left">
+              <div class="ae-section-label">// Request</div>
+              <pre class="api-code"><span class="ac-cmt">// Basic reindex</span>
+<span class="ac-method">POST</span> <span class="ac-path">/_reindex</span>
+{
+  <span class="ac-key">"source"</span>: { <span class="ac-key">"index"</span>: <span class="ac-str">"old_index"</span> },
+  <span class="ac-key">"dest"</span>:   { <span class="ac-key">"index"</span>: <span class="ac-str">"new_index"</span> }
+}
+
+<span class="ac-cmt">// Reindex with query filter</span>
+<span class="ac-method">POST</span> <span class="ac-path">/_reindex</span>
+{
+  <span class="ac-key">"source"</span>: {
+    <span class="ac-key">"index"</span>: <span class="ac-str">"old_index"</span>,
+    <span class="ac-key">"query"</span>: {
+      <span class="ac-key">"range"</span>: {
+        <span class="ac-key">"date"</span>: { <span class="ac-key">"gte"</span>: <span class="ac-str">"2024-01-01"</span> }
+      }
+    }
+  },
+  <span class="ac-key">"dest"</span>: { <span class="ac-key">"index"</span>: <span class="ac-str">"new_index"</span> }
+}
+
+<span class="ac-cmt">// Reindex from remote cluster</span>
+<span class="ac-method">POST</span> <span class="ac-path">/_reindex</span>
+{
+  <span class="ac-key">"source"</span>: {
+    <span class="ac-key">"remote"</span>: {
+      <span class="ac-key">"host"</span>:     <span class="ac-str">"http://remote:9200"</span>,
+      <span class="ac-key">"username"</span>: <span class="ac-str">"elastic"</span>,
+      <span class="ac-key">"password"</span>: <span class="ac-str">"changeme"</span>
+    },
+    <span class="ac-key">"index"</span>: <span class="ac-str">"source_index"</span>
+  },
+  <span class="ac-key">"dest"</span>: { <span class="ac-key">"index"</span>: <span class="ac-str">"local_index"</span> }
+}</pre>
+            </div>
+            <div class="ae-right">
+              <div class="ae-section-label">// Key Notes</div>
+              <div class="ae-notes">
+                <div class="tip"><strong>USE CASE:</strong> Reindex when you need to change the number_of_shards, change a field mapping type, or apply a new analyzer to existing data.</div>
+                <div class="tip warn"><strong>DOES NOT COPY SETTINGS:</strong> _reindex only copies documents. You must create the destination index with the correct settings/mappings FIRST, then reindex into it.</div>
+                <div class="tip"><strong>REMOTE REINDEX:</strong> The remote host must be whitelisted in elasticsearch.yml via reindex.remote.whitelist.</div>
+                <div class="tip"><strong>ASYNC:</strong> Add ?wait_for_completion=false to run as background task. Use GET /_tasks/&lt;task_id&gt; to monitor.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════
+       01.02 — MAPPINGS
+  ══════════════════════════════ -->
+  <div class="section">
+    <div class="sec-hd"><span class="sec-num">01.02</span><span class="sec-title">Mappings & Field Types</span></div>
+    <div class="card">
+      <p>Mappings define the schema of an index — how fields are stored and indexed. The ECE exam heavily tests your ability to choose the right field type and configure advanced mapping features including <strong>multi-fields</strong>, <strong>nested objects</strong>, and <strong>dynamic templates</strong>.</p>
+
+      <table class="type-table">
+        <thead>
+          <tr><th>Type</th><th>Use Case</th><th>Analyzed?</th><th>Aggregatable?</th><th>Sortable?</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>text</td><td>Full-text search (blog posts, descriptions)</td><td><span class="badge y">YES</span></td><td><span class="badge n">NO*</span></td><td><span class="badge n">NO*</span></td></tr>
+          <tr><td>keyword</td><td>Exact match, aggregations, sorting (status, ID, tag)</td><td><span class="badge n">NO</span></td><td><span class="badge y">YES</span></td><td><span class="badge y">YES</span></td></tr>
+          <tr><td>integer / long / float / double</td><td>Numeric values, range queries</td><td><span class="badge n">NO</span></td><td><span class="badge y">YES</span></td><td><span class="badge y">YES</span></td></tr>
+          <tr><td>date</td><td>Timestamps, date ranges (stored as epoch ms internally)</td><td><span class="badge n">NO</span></td><td><span class="badge y">YES</span></td><td><span class="badge y">YES</span></td></tr>
+          <tr><td>boolean</td><td>true/false flags</td><td><span class="badge n">NO</span></td><td><span class="badge y">YES</span></td><td><span class="badge y">YES</span></td></tr>
+          <tr><td>object</td><td>Nested JSON object (flattened — loses array relationships)</td><td><span class="badge p">FIELDS</span></td><td><span class="badge p">FIELDS</span></td><td><span class="badge p">FIELDS</span></td></tr>
+          <tr><td>nested</td><td>Array of objects preserving inner-object relationships</td><td><span class="badge p">FIELDS</span></td><td><span class="badge y">YES</span></td><td><span class="badge n">NO</span></td></tr>
+          <tr><td>geo_point</td><td>Lat/lon coordinates, geo distance queries</td><td><span class="badge n">NO</span></td><td><span class="badge y">YES</span></td><td><span class="badge y">YES</span></td></tr>
+          <tr><td>ip</td><td>IPv4/IPv6 addresses, CIDR range queries</td><td><span class="badge n">NO</span></td><td><span class="badge y">YES</span></td><td><span class="badge y">YES</span></td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:11px;font-family:var(--mono);color:var(--muted)">* text fields with keyword multi-field can be aggregated/sorted via the .keyword sub-field</p>
+
+      <div class="api-explorer">
+        <div class="ae-header">
+          <span class="ae-label">// Mapping Patterns</span>
+          <div class="ae-tabs">
+            <button class="ae-tab active" onclick="switchTab('map','m1',this)">Multi-fields</button>
+            <button class="ae-tab" onclick="switchTab('map','m2',this)">Nested Objects</button>
+            <button class="ae-tab" onclick="switchTab('map','m3',this)">Dynamic Templates</button>
+            <button class="ae-tab" onclick="switchTab('map','m4',this)">Runtime Fields</button>
+          </div>
+        </div>
+        <div id="map-m1" class="ae-panel active">
+          <div class="ae-body">
+            <div class="ae-left">
+              <div class="ae-section-label">// Multi-field mapping</div>
+              <pre class="api-code"><span class="ac-method">PUT</span> <span class="ac-path">/products</span>
+{
+  <span class="ac-key">"mappings"</span>: {
+    <span class="ac-key">"properties"</span>: {
+      <span class="ac-key">"title"</span>: {
+        <span class="ac-key">"type"</span>: <span class="ac-str">"text"</span>,
+        <span class="ac-key">"analyzer"</span>: <span class="ac-str">"english"</span>,
+        <span class="ac-key">"fields"</span>: {
+          <span class="ac-key">"keyword"</span>: {
+            <span class="ac-key">"type"</span>: <span class="ac-str">"keyword"</span>,
+            <span class="ac-key">"ignore_above"</span>: <span class="ac-num">256</span>
+          },
+          <span class="ac-key">"raw"</span>: {
+            <span class="ac-key">"type"</span>: <span class="ac-str">"text"</span>,
+            <span class="ac-key">"analyzer"</span>: <span class="ac-str">"standard"</span>
+          }
+        }
+      }
+    }
+  }
+}
+
+<span class="ac-cmt">// Now you can:</span>
+<span class="ac-cmt">// Full-text search: title (english analyzer)</span>
+<span class="ac-cmt">// Exact match / aggregation: title.keyword</span>
+<span class="ac-cmt">// Standard analysis: title.raw</span></pre>
+            </div>
+            <div class="ae-right">
+              <div class="ae-section-label">// Key Notes</div>
+              <div class="ae-notes">
+                <div class="tip"><strong>MULTI-FIELDS:</strong> One document field stored multiple ways — full-text search AND exact-match keyword in the same field.</div>
+                <div class="tip"><strong>ignore_above: 256</strong> — keyword fields longer than 256 chars are not indexed (prevents mapping explosion from very long strings).</div>
+                <div class="tip warn"><strong>EXAM SCENARIO:</strong> "Users need to search products by title AND sort/aggregate by title" → text field with a .keyword multi-field.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="map-m2" class="ae-panel">
+          <div class="ae-body">
+            <div class="ae-left">
+              <div class="ae-section-label">// Nested type for array of objects</div>
+              <pre class="api-code"><span class="ac-cmt">// PROBLEM: object type flattens arrays</span>
+<span class="ac-cmt">// Doc: { "comments": [</span>
+<span class="ac-cmt">//   {"user":"alice","likes":5},</span>
+<span class="ac-cmt">//   {"user":"bob",  "likes":3}</span>
+<span class="ac-cmt">// ]}</span>
+<span class="ac-cmt">// object type stores as:</span>
+<span class="ac-cmt">// comments.user: [alice, bob]</span>
+<span class="ac-cmt">// comments.likes: [5, 3]</span>
+<span class="ac-cmt">// → alice and likes:3 can incorrectly match!</span>
+
+<span class="ac-cmt">// SOLUTION: nested type</span>
+<span class="ac-method">PUT</span> <span class="ac-path">/blog</span>
+{
+  <span class="ac-key">"mappings"</span>: {
+    <span class="ac-key">"properties"</span>: {
+      <span class="ac-key">"comments"</span>: {
+        <span class="ac-key">"type"</span>: <span class="ac-str">"nested"</span>,
+        <span class="ac-key">"properties"</span>: {
+          <span class="ac-key">"user"</span>:  { <span class="ac-key">"type"</span>: <span class="ac-str">"keyword"</span> },
+          <span class="ac-key">"likes"</span>: { <span class="ac-key">"type"</span>: <span class="ac-str">"integer"</span> }
+        }
+      }
+    }
+  }
+}
+
+<span class="ac-cmt">// Query with nested query</span>
+<span class="ac-method">GET</span> <span class="ac-path">/blog/_search</span>
+{
+  <span class="ac-key">"query"</span>: {
+    <span class="ac-key">"nested"</span>: {
+      <span class="ac-key">"path"</span>: <span class="ac-str">"comments"</span>,
+      <span class="ac-key">"query"</span>: {
+        <span class="ac-key">"bool"</span>: {
+          <span class="ac-key">"must"</span>: [
+            { <span class="ac-key">"term"</span>:  { <span class="ac-key">"comments.user"</span>: <span class="ac-str">"alice"</span> }},
+            { <span class="ac-key">"range"</span>: { <span class="ac-key">"comments.likes"</span>: { <span class="ac-key">"gt"</span>: <span class="ac-num">4</span> }}}
+          ]
+        }
+      }
+    }
+  }
+}</pre>
+            </div>
+            <div class="ae-right">
+              <div class="ae-section-label">// Key Notes</div>
+              <div class="ae-notes">
+                <div class="tip"><strong>NESTED vs OBJECT:</strong> Use nested when you need to query across fields of the same array element. Object type loses per-element relationships.</div>
+                <div class="tip warn"><strong>COST:</strong> Nested documents are stored as hidden separate documents. Each nested object = one extra Lucene doc. High cardinality nested arrays = performance hit.</div>
+                <div class="tip"><strong>EXAM SCENARIO:</strong> "Configure index so it properly maintains relationships of nested arrays of objects" → type: nested + nested query.</div>
+                <div class="tip"><strong>ALWAYS:</strong> Queries on nested fields MUST use the nested query wrapper with the correct path.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="map-m3" class="ae-panel">
+          <div class="ae-body">
+            <div class="ae-left">
+              <div class="ae-section-label">// Dynamic templates</div>
+              <pre class="api-code"><span class="ac-method">PUT</span> <span class="ac-path">/my_index</span>
+{
+  <span class="ac-key">"mappings"</span>: {
+    <span class="ac-key">"dynamic_templates"</span>: [
+      {
+        <span class="ac-key">"strings_as_keywords"</span>: {
+          <span class="ac-key">"match_mapping_type"</span>: <span class="ac-str">"string"</span>,
+          <span class="ac-key">"mapping"</span>: {
+            <span class="ac-key">"type"</span>: <span class="ac-str">"keyword"</span>,
+            <span class="ac-key">"ignore_above"</span>: <span class="ac-num">256</span>
+          }
+        }
+      },
+      {
+        <span class="ac-key">"longs_as_integers"</span>: {
+          <span class="ac-key">"match_mapping_type"</span>: <span class="ac-str">"long"</span>,
+          <span class="ac-key">"mapping"</span>: { <span class="ac-key">"type"</span>: <span class="ac-str">"integer"</span> }
+        }
+      },
+      {
+        <span class="ac-key">"named_fields"</span>: {
+          <span class="ac-key">"match"</span>:   <span class="ac-str">"*_text"</span>,
+          <span class="ac-key">"mapping"</span>: {
+            <span class="ac-key">"type"</span>:     <span class="ac-str">"text"</span>,
+            <span class="ac-key">"analyzer"</span>: <span class="ac-str">"english"</span>
+          }
+        }
+      }
+    ]
+  }
+}</pre>
+            </div>
+            <div class="ae-right">
+              <div class="ae-section-label">// Key Notes</div>
+              <div class="ae-notes">
+                <div class="tip"><strong>MATCH CONDITIONS:</strong> match_mapping_type (by inferred type), match (field name glob), path_match (dot-notated path), unmatch (exclusion glob).</div>
+                <div class="tip"><strong>COMMON EXAM TASK:</strong> "Convert all string fields to keyword type" → dynamic template with match_mapping_type: "string".</div>
+                <div class="tip warn"><strong>ORDERING:</strong> Dynamic templates are evaluated in ORDER. First match wins. Put most specific templates first.</div>
+                <div class="tip"><strong>vs DYNAMIC MAPPING:</strong> dynamic: true = all fields auto-mapped by ES. dynamic: "strict" = unmapped fields cause an error. dynamic: false = unmapped fields ignored (not indexed but still in _source).</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="map-m4" class="ae-panel">
+          <div class="ae-body">
+            <div class="ae-left">
+              <div class="ae-section-label">// Runtime fields</div>
+              <pre class="api-code"><span class="ac-cmt">// Runtime field — computed at query time, not indexed</span>
+<span class="ac-method">PUT</span> <span class="ac-path">/logs</span>
+{
+  <span class="ac-key">"mappings"</span>: {
+    <span class="ac-key">"runtime"</span>: {
+      <span class="ac-key">"day_of_week"</span>: {
+        <span class="ac-key">"type"</span>: <span class="ac-str">"keyword"</span>,
+        <span class="ac-key">"script"</span>: {
+          <span class="ac-key">"source"</span>: <span class="ac-str">"""
+            emit(doc['@timestamp'].value
+              .dayOfWeekEnum
+              .getDisplayName(
+                TextStyle.FULL,
+                Locale.ROOT
+              )
+            );
+          """</span>
+        }
+      }
+    },
+    <span class="ac-key">"properties"</span>: {
+      <span class="ac-key">"@timestamp"</span>: { <span class="ac-key">"type"</span>: <span class="ac-str">"date"</span> },
+      <span class="ac-key">"message"</span>:    { <span class="ac-key">"type"</span>: <span class="ac-str">"text"</span>  }
+    }
+  }
+}
+
+<span class="ac-cmt">// OR define at query time (no schema change)</span>
+<span class="ac-method">GET</span> <span class="ac-path">/logs/_search</span>
+{
+  <span class="ac-key">"runtime_mappings"</span>: {
+    <span class="ac-key">"response_code"</span>: {
+      <span class="ac-key">"type"</span>: <span class="ac-str">"long"</span>,
+      <span class="ac-key">"script"</span>: <span class="ac-str">"emit(Integer.parseInt(doc['raw_code'].value))"</span>
+    }
+  },
+  <span class="ac-key">"query"</span>: { <span class="ac-key">"range"</span>: { <span class="ac-key">"response_code"</span>: { <span class="ac-key">"gte"</span>: <span class="ac-num">500</span> }}}
+}</pre>
+            </div>
+            <div class="ae-right">
+              <div class="ae-section-label">// Key Notes</div>
+              <div class="ae-notes">
+                <div class="tip"><strong>RUNTIME FIELDS:</strong> Computed at query time using Painless. Not stored in the index. Useful for schema evolution without reindexing.</div>
+                <div class="tip warn"><strong>PERFORMANCE:</strong> Runtime fields scan all matching docs and compute on-the-fly. Much slower than indexed fields for large datasets. Use indexed fields for frequent queries.</div>
+                <div class="tip"><strong>TWO WAYS:</strong> (1) Define in mapping — available always. (2) Define in query body under runtime_mappings — ad-hoc, query-scoped only.</div>
+                <div class="tip"><strong>EXAM TIP:</strong> "Write a search that utilizes a runtime field" — define runtime_mappings in the search body and then reference the runtime field in query/aggs/sort.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="note warn">
+        <p><strong>MAPPING EXPLOSION WARNING:</strong> Never allow user-controlled field names to be dynamically mapped — this can create thousands of mappings and degrade performance. Use <code>dynamic: false</code> or <code>dynamic: "strict"</code> on objects with user-controlled content.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════
+       01.03 — INDEX TEMPLATES
+  ══════════════════════════════ -->
+  <div class="section">
+    <div class="sec-hd"><span class="sec-num">01.03</span><span class="sec-title">Index Templates & Component Templates</span></div>
+    <div class="card">
+      <p>Index templates automatically apply settings, mappings, and aliases to new indices matching an index pattern. The modern approach uses <strong>composable templates</strong> (index templates + component templates), which replaced legacy <code>_template</code> in v7.8+. The ECE exam uses the modern composable template API.</p>
+
+      <div class="api-explorer">
+        <div class="ae-header">
+          <span class="ae-label">// Template API</span>
+          <div class="ae-tabs">
+            <button class="ae-tab active" onclick="switchTab('tmpl','tp1',this)">Component Template</button>
+            <button class="ae-tab" onclick="switchTab('tmpl','tp2',this)">Index Template</button>
+            <button class="ae-tab" onclick="switchTab('tmpl','tp3',this)">Data Stream</button>
+          </div>
+        </div>
+        <div id="tmpl-tp1" class="ae-panel active">
+          <div class="ae-body">
+            <div class="ae-left">
+              <div class="ae-section-label">// Step 1: Create reusable component templates</div>
+              <pre class="api-code"><span class="ac-cmt">// Component template for common settings</span>
+<span class="ac-method">PUT</span> <span class="ac-path">/_component_template/common_settings</span>
+{
+  <span class="ac-key">"template"</span>: {
+    <span class="ac-key">"settings"</span>: {
+      <span class="ac-key">"number_of_shards"</span>:   <span class="ac-num">1</span>,
+      <span class="ac-key">"number_of_replicas"</span>: <span class="ac-num">1</span>
+    }
+  }
+}
+
+<span class="ac-cmt">// Component template for common mappings</span>
+<span class="ac-method">PUT</span> <span class="ac-path">/_component_template/common_mappings</span>
+{
+  <span class="ac-key">"template"</span>: {
+    <span class="ac-key">"mappings"</span>: {
+      <span class="ac-key">"dynamic_templates"</span>: [{
+        <span class="ac-key">"strings_as_keywords"</span>: {
+          <span class="ac-key">"match_mapping_type"</span>: <span class="ac-str">"string"</span>,
+          <span class="ac-key">"mapping"</span>: { <span class="ac-key">"type"</span>: <span class="ac-str">"keyword"</span> }
+        }
+      }],
+      <span class="ac-key">"properties"</span>: {
+        <span class="ac-key">"@timestamp"</span>: { <span class="ac-key">"type"</span>: <span class="ac-str">"date"</span> }
+      }
+    }
+  }
+}</pre>
+            </div>
+            <div class="ae-right">
+              <div class="ae-section-label">// Key Notes</div>
+              <div class="ae-notes">
+                <div class="tip"><strong>COMPONENT TEMPLATES:</strong> Reusable building blocks (settings, mappings, or aliases separately). Referenced by index templates via composed_of.</div>
+                <div class="tip"><strong>ADVANTAGE:</strong> Define common config once, reuse across many index templates. Change component template = all index templates using it inherit the change.</div>
+                <div class="tip warn"><strong>NOT AUTO-APPLIED:</strong> Component templates alone do nothing. They must be composed into an index template (PUT /_index_template) to take effect.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="tmpl-tp2" class="ae-panel">
+          <div class="ae-body">
+            <div class="ae-left">
+              <div class="ae-section-label">// Step 2: Create index template</div>
+              <pre class="api-code"><span class="ac-method">PUT</span> <span class="ac-path">/_index_template/logs_template</span>
+{
+  <span class="ac-key">"index_patterns"</span>: [<span class="ac-str">"logs-*"</span>],
+  <span class="ac-key">"priority"</span>: <span class="ac-num">200</span>,   <span class="ac-cmt">// higher = wins over conflicting templates</span>
+  <span class="ac-key">"composed_of"</span>: [
+    <span class="ac-str">"common_settings"</span>,
+    <span class="ac-str">"common_mappings"</span>
+  ],
+  <span class="ac-key">"template"</span>: {           <span class="ac-cmt">// template-specific overrides</span>
+    <span class="ac-key">"settings"</span>: {
+      <span class="ac-key">"index.lifecycle.name"</span>: <span class="ac-str">"logs_policy"</span>
+    },
+    <span class="ac-key">"mappings"</span>: {
+      <span class="ac-key">"properties"</span>: {
+        <span class="ac-key">"log_level"</span>: { <span class="ac-key">"type"</span>: <span class="ac-str">"keyword"</span> },
+        <span class="ac-key">"service"</span>:   { <span class="ac-key">"type"</span>: <span class="ac-str">"keyword"</span> }
+      }
+    },
+    <span class="ac-key">"aliases"</span>: {
+      <span class="ac-key">"all_logs"</span>: {}
+    }
+  }
+}
+
+<span class="ac-cmt">// Verify template matches an index pattern:</span>
+<span class="ac-method">POST</span> <span class="ac-path">/_index_template/_simulate_index/logs-2024-01</span></pre>
+            </div>
+            <div class="ae-right">
+              <div class="ae-section-label">// Key Notes</div>
+              <div class="ae-notes">
+                <div class="tip"><strong>PRIORITY:</strong> When multiple templates match an index name, the one with the highest priority wins. Built-in templates (metrics-*, logs-*) have priority 100 — use 200+ for custom templates to override them.</div>
+                <div class="tip"><strong>_simulate_index:</strong> Dry-run what settings/mappings would be applied to a hypothetical index. Use this to verify your template before creating real indices.</div>
+                <div class="tip warn"><strong>LEGACY vs MODERN:</strong> PUT /_template (legacy, use for v7 compat only). PUT /_index_template (modern composable). ECE exam uses modern API.</div>
+                <div class="tip"><strong>index.lifecycle.name:</strong> Link ILM policy to template so all new matching indices automatically follow the lifecycle.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="tmpl-tp3" class="ae-panel">
+          <div class="ae-body">
+            <div class="ae-left">
+              <div class="ae-section-label">// Data stream + template</div>
+              <pre class="api-code"><span class="ac-cmt">// Index template must have data_stream: {}</span>
+<span class="ac-method">PUT</span> <span class="ac-path">/_index_template/metrics_template</span>
+{
+  <span class="ac-key">"index_patterns"</span>: [<span class="ac-str">"metrics-*"</span>],
+  <span class="ac-key">"data_stream"</span>: {},   <span class="ac-cmt">// enables data stream mode</span>
+  <span class="ac-key">"priority"</span>: <span class="ac-num">200</span>,
+  <span class="ac-key">"template"</span>: {
+    <span class="ac-key">"settings"</span>: {
+      <span class="ac-key">"number_of_shards"</span>:   <span class="ac-num">1</span>,
+      <span class="ac-key">"number_of_replicas"</span>: <span class="ac-num">1</span>
+    },
+    <span class="ac-key">"mappings"</span>: {
+      <span class="ac-key">"properties"</span>: {
+        <span class="ac-key">"@timestamp"</span>: { <span class="ac-key">"type"</span>: <span class="ac-str">"date"</span> }
+        <span class="ac-cmt">// @timestamp is REQUIRED for data streams</span>
+      }
+    }
+  }
+}
+
+<span class="ac-cmt">// Create data stream (just index a doc OR)</span>
+<span class="ac-method">PUT</span> <span class="ac-path">/_data_stream/metrics-server-prod</span>
+
+<span class="ac-cmt">// Index a doc — always use POST, not PUT</span>
+<span class="ac-method">POST</span> <span class="ac-path">/metrics-server-prod/_doc</span>
+{
+  <span class="ac-key">"@timestamp"</span>: <span class="ac-str">"2024-03-15T10:00:00Z"</span>,
+  <span class="ac-key">"cpu_pct"</span>:    <span class="ac-num">42.5</span>
+}
+
+<span class="ac-cmt">// Rollover current write index</span>
+<span class="ac-method">POST</span> <span class="ac-path">/metrics-server-prod/_rollover</span></pre>
+            </div>
+            <div class="ae-right">
+              <div class="ae-section-label">// Key Notes</div>
+              <div class="ae-notes">
+                <div class="tip"><strong>DATA STREAMS:</strong> Managed time-series indices that automatically roll over. Name pattern: .ds-&lt;name&gt;-&lt;date&gt;-NNN (backing indices). The data stream name is the alias.</div>
+                <div class="tip warn"><strong>REQUIRES @timestamp:</strong> Data streams MUST have an @timestamp field of type date. Documents without @timestamp will be rejected.</div>
+                <div class="tip"><strong>WRITE vs READ:</strong> Data streams route writes to the current write index (latest). Reads span ALL backing indices automatically.</div>
+                <div class="tip warn"><strong>NO CUSTOM ID:</strong> Data streams only support append. Cannot PUT /stream/_doc/custom_id. Cannot update or delete individual documents by ID without first converting to regular index.</div>
+                <div class="tip"><strong>ROLLOVER:</strong> Triggered automatically by ILM (max_age/max_size/max_docs) or manually via _rollover API.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════
+       01.04 — ILM
+  ══════════════════════════════ -->
+  <div class="section">
+    <div class="sec-hd"><span class="sec-num">01.04</span><span class="sec-title">Index Lifecycle Management (ILM)</span></div>
+    <div class="card">
+      <p><strong>ILM</strong> automates the movement of indices through lifecycle phases. The exam requires you to create complete ILM policies from scratch via the API, including all phase transitions, rollover conditions, and actions.</p>
+
+      <div class="ilm-diagram">
+        <div class="ilm-phase hot" onclick="showILM(this,'ilm-hot')">
+          <div class="ph-name">HOT</div>
+          <div class="ph-desc">Actively indexed<br>High I/O performance<br>Rollover conditions</div>
+          <div class="ph-arrow">→</div>
+        </div>
+        <div class="ilm-phase warm" onclick="showILM(this,'ilm-warm')">
+          <div class="ph-name">WARM</div>
+          <div class="ph-desc">Read-only<br>Force merge<br>Shrink possible</div>
+          <div class="ph-arrow">→</div>
+        </div>
+        <div class="ilm-phase cold" onclick="showILM(this,'ilm-cold')">
+          <div class="ph-name">COLD</div>
+          <div class="ph-desc">Infrequent access<br>Searchable snapshot<br>Reduced hardware</div>
+          <div class="ph-arrow">→</div>
+        </div>
+        <div class="ilm-phase frozen" onclick="showILM(this,'ilm-frozen')">
+          <div class="ph-name">FROZEN</div>
+          <div class="ph-desc">Mounted snapshot<br>Minimal resources<br>Slow queries</div>
+          <div class="ph-arrow">→</div>
+        </div>
+        <div class="ilm-phase delete" onclick="showILM(this,'ilm-delete')">
+          <div class="ph-name">DELETE</div>
+          <div class="ph-desc">Index removed<br>After retention<br>period ends</div>
+        </div>
+      </div>
+
+      <div class="ilm-detail" id="ilm-hot">
+        <div class="ild-title">HOT Phase — Typical Actions & Rollover Conditions</div>
+        <div class="ild-body"><pre class="api-code" style="background:transparent;padding:0;border:none"><span class="ac-key">"hot"</span>: {
+  <span class="ac-key">"actions"</span>: {
+    <span class="ac-key">"rollover"</span>: {
+      <span class="ac-key">"max_primary_shard_size"</span>: <span class="ac-str">"50gb"</span>, <span class="ac-cmt">// roll when shard hits 50GB</span>
+      <span class="ac-key">"max_age"</span>:               <span class="ac-str">"30d"</span>,   <span class="ac-cmt">// OR index is 30 days old</span>
+      <span class="ac-key">"max_docs"</span>:              <span class="ac-num">1000000</span>  <span class="ac-cmt">// OR 1M documents</span>
+    },
+    <span class="ac-key">"set_priority"</span>: { <span class="ac-key">"priority"</span>: <span class="ac-num">100</span> } <span class="ac-cmt">// shard recovery priority</span>
+  }
+}</span>
+
+Key: Rollover conditions are OR — first condition met triggers rollover.
+Rollover REQUIRES: index must have an alias with is_write_index: true OR be a data stream.</pre></div>
+      </div>
+      <div class="ilm-detail" id="ilm-warm">
+        <div class="ild-title">WARM Phase — Read-only optimisation</div>
+        <div class="ild-body"><pre class="api-code" style="background:transparent;padding:0;border:none"><span class="ac-key">"warm"</span>: {
+  <span class="ac-key">"min_age"</span>: <span class="ac-str">"7d"</span>,   <span class="ac-cmt">// wait 7 days after rollover before entering warm</span>
+  <span class="ac-key">"actions"</span>: {
+    <span class="ac-key">"forcemerge"</span>: { <span class="ac-key">"max_num_segments"</span>: <span class="ac-num">1</span> }, <span class="ac-cmt">// merge into 1 segment</span>
+    <span class="ac-key">"shrink"</span>:     { <span class="ac-key">"number_of_shards"</span>: <span class="ac-num">1</span>  }, <span class="ac-cmt">// reduce shard count</span>
+    <span class="ac-key">"readonly"</span>:   {},                           <span class="ac-cmt">// set index.blocks.write: true</span>
+    <span class="ac-key">"allocate"</span>: {                               <span class="ac-cmt">// move to warm nodes</span>
+      <span class="ac-key">"require"</span>: { <span class="ac-key">"data"</span>: <span class="ac-str">"warm"</span> }
+    },
+    <span class="ac-key">"set_priority"</span>: { <span class="ac-key">"priority"</span>: <span class="ac-num">50</span> }
+  }
+}
+
+min_age is measured from ROLLOVER time (not index creation), in hot-warm-cold-delete.</pre></div>
+      </div>
+      <div class="ilm-detail" id="ilm-cold">
+        <div class="ild-title">COLD Phase — Searchable snapshots</div>
+        <div class="ild-body"><pre class="api-code" style="background:transparent;padding:0;border:none"><span class="ac-key">"cold"</span>: {
+  <span class="ac-key">"min_age"</span>: <span class="ac-str">"30d"</span>,
+  <span class="ac-key">"actions"</span>: {
+    <span class="ac-key">"searchable_snapshot"</span>: {
+      <span class="ac-key">"snapshot_repository"</span>: <span class="ac-str">"my_snapshot_repo"</span>
+    },
+    <span class="ac-key">"set_priority"</span>: { <span class="ac-key">"priority"</span>: <span class="ac-num">0</span> }
+  }
+}
+
+searchable_snapshot in cold: index is converted to a fully-cached snapshot.
+Data is read from the snapshot repository (S3, GCS, Azure) but cached locally.
+Reduces hot storage usage while remaining fully searchable.</pre></div>
+      </div>
+      <div class="ilm-detail" id="ilm-frozen">
+        <div class="ild-title">FROZEN Phase — Minimal footprint</div>
+        <div class="ild-body"><pre class="api-code" style="background:transparent;padding:0;border:none"><span class="ac-key">"frozen"</span>: {
+  <span class="ac-key">"min_age"</span>: <span class="ac-str">"60d"</span>,
+  <span class="ac-key">"actions"</span>: {
+    <span class="ac-key">"searchable_snapshot"</span>: {
+      <span class="ac-key">"snapshot_repository"</span>: <span class="ac-str">"my_snapshot_repo"</span>
+    }
+  }
+}
+
+Frozen: snapshot mounted with minimal local caching. Queries are slower (fetches from
+repo on demand) but uses near-zero local storage. Good for compliance/archive.</pre></div>
+      </div>
+      <div class="ilm-detail" id="ilm-delete">
+        <div class="ild-title">DELETE Phase — End of retention</div>
+        <div class="ild-body"><pre class="api-code" style="background:transparent;padding:0;border:none"><span class="ac-key">"delete"</span>: {
+  <span class="ac-key">"min_age"</span>: <span class="ac-str">"180d"</span>,
+  <span class="ac-key">"actions"</span>: {
+    <span class="ac-key">"delete"</span>: {
+      <span class="ac-key">"delete_searchable_snapshot"</span>: <span class="ac-bool">true</span> <span class="ac-cmt">// also remove the snapshot</span>
+    }
+  }
+}
+
+COMPLETE POLICY: PUT /_ilm/policy/logs_policy { "policy": { "phases": { "hot": {...}, "warm": {...}, "cold": {...}, "delete": {...} } } }</pre></div>
+      </div>
+
+      <div class="api-explorer" style="margin-top:20px">
+        <div class="ae-header">
+          <span class="ae-label">// Complete ILM Policy Example</span>
+        </div>
+        <div class="ae-panel active" style="display:block">
+          <div class="ae-body">
+            <div class="ae-left">
+              <div class="ae-section-label">// Full policy (exam-ready)</div>
+              <pre class="api-code"><span class="ac-method">PUT</span> <span class="ac-path">/_ilm/policy/logs_policy</span>
+{
+  <span class="ac-key">"policy"</span>: {
+    <span class="ac-key">"phases"</span>: {
+      <span class="ac-key">"hot"</span>: {
+        <span class="ac-key">"actions"</span>: {
+          <span class="ac-key">"rollover"</span>: {
+            <span class="ac-key">"max_primary_shard_size"</span>: <span class="ac-str">"10gb"</span>,
+            <span class="ac-key">"max_age"</span>: <span class="ac-str">"1d"</span>
+          }
+        }
+      },
+      <span class="ac-key">"warm"</span>: {
+        <span class="ac-key">"min_age"</span>: <span class="ac-str">"7d"</span>,
+        <span class="ac-key">"actions"</span>: {
+          <span class="ac-key">"forcemerge"</span>: { <span class="ac-key">"max_num_segments"</span>: <span class="ac-num">1</span> },
+          <span class="ac-key">"readonly"</span>: {},
+          <span class="ac-key">"set_priority"</span>: { <span class="ac-key">"priority"</span>: <span class="ac-num">50</span> }
+        }
+      },
+      <span class="ac-key">"cold"</span>: {
+        <span class="ac-key">"min_age"</span>: <span class="ac-str">"30d"</span>,
+        <span class="ac-key">"actions"</span>: {
+          <span class="ac-key">"searchable_snapshot"</span>: {
+            <span class="ac-key">"snapshot_repository"</span>: <span class="ac-str">"my_repo"</span>
+          }
+        }
+      },
+      <span class="ac-key">"delete"</span>: {
+        <span class="ac-key">"min_age"</span>: <span class="ac-str">"180d"</span>,
+        <span class="ac-key">"actions"</span>: {
+          <span class="ac-key">"delete"</span>: {}
+        }
+      }
+    }
+  }
+}</pre>
+            </div>
+            <div class="ae-right">
+              <div class="ae-section-label">// Key Notes</div>
+              <div class="ae-notes">
+                <div class="tip"><strong>APPLY TO TEMPLATE:</strong> After creating the policy, reference it in an index template: <code>"index.lifecycle.name": "logs_policy"</code> in settings. Also set <code>"index.lifecycle.rollover_alias"</code> for non-data-stream indices.</div>
+                <div class="tip warn"><strong>ROLLOVER ALIAS:</strong> For regular (non-data-stream) indices, rollover requires an alias. Set index.lifecycle.rollover_alias in settings. The alias must have is_write_index: true on the current index.</div>
+                <div class="tip"><strong>CHECK STATUS:</strong> GET /logs-000001/_ilm/explain — shows current phase, step, and any errors for an index in ILM.</div>
+                <div class="tip"><strong>FORCE PHASE:</strong> POST /logs-000001/_ilm/move to manually advance an index to a specific step (useful for testing).</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════
+       01.05 — ANALYZERS
+  ══════════════════════════════ -->
+  <div class="section">
+    <div class="sec-hd"><span class="sec-num">01.05</span><span class="sec-title">Custom Analyzers</span></div>
+    <div class="card">
+      <p>An analyzer is a chain of three components: <strong>Character Filters → Tokenizer → Token Filters</strong>. Understanding how text is processed is critical for building effective search. The exam requires defining and applying custom analyzers to satisfy specific requirements.</p>
+
+      <div class="two-col">
+        <div class="mini">
+          <div class="ml">Analyzer Components</div>
+          <div class="mv">
+            <span class="c">Character Filters</span> (optional, multiple)<br>
+            → html_strip, mapping, pattern_replace<br>
+            → Applied to raw text BEFORE tokenization<br><br>
+            <span class="c">Tokenizer</span> (exactly one required)<br>
+            → standard, whitespace, pattern, keyword<br>
+            → Splits text into tokens<br><br>
+            <span class="c">Token Filters</span> (optional, multiple)<br>
+            → lowercase, stop, stemmer, synonym<br>
+            → Applied to tokens AFTER tokenization
+          </div>
+        </div>
+        <div class="mini">
+          <div class="ml">Built-in Analyzers</div>
+          <div class="mv">
+            <span class="g">standard</span> — lowercase + stop words<br>
+            <span class="g">english</span>  — stemming, stop words<br>
+            <span class="g">keyword</span>  — no tokenization (whole string)<br>
+            <span class="g">whitespace</span> — splits on whitespace only<br>
+            <span class="g">simple</span>   — splits on non-letters, lowercases<br>
+            <span class="g">pattern</span>  — regex-based tokenization<br>
+            <span class="g">language</span> — per-language (english, french…)<br><br>
+            Test with: <span class="a">GET /index/_analyze</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="api-explorer">
+        <div class="ae-header">
+          <span class="ae-label">// Custom Analyzer</span>
+          <div class="ae-tabs">
+            <button class="ae-tab active" onclick="switchTab('anlz','a1',this)">Define Analyzer</button>
+            <button class="ae-tab" onclick="switchTab('anlz','a2',this)">Test Analyzer</button>
+            <button class="ae-tab" onclick="switchTab('anlz','a3',this)">Synonym Filter</button>
+          </div>
+        </div>
+        <div id="anlz-a1" class="ae-panel active">
+          <div class="ae-body">
+            <div class="ae-left">
+              <div class="ae-section-label">// Custom analyzer in index settings</div>
+              <pre class="api-code"><span class="ac-method">PUT</span> <span class="ac-path">/my_index</span>
+{
+  <span class="ac-key">"settings"</span>: {
+    <span class="ac-key">"analysis"</span>: {
+      <span class="ac-key">"char_filter"</span>: {
+        <span class="ac-key">"html_clean"</span>: {
+          <span class="ac-key">"type"</span>: <span class="ac-str">"html_strip"</span>
+        }
+      },
+      <span class="ac-key">"tokenizer"</span>: {
+        <span class="ac-key">"my_tokenizer"</span>: {
+          <span class="ac-key">"type"</span>:    <span class="ac-str">"pattern"</span>,
+          <span class="ac-key">"pattern"</span>: <span class="ac-str">"[\\W]"</span>    <span class="ac-cmt">// split on non-word chars</span>
+        }
+      },
+      <span class="ac-key">"filter"</span>: {
+        <span class="ac-key">"en_stop"</span>: {
+          <span class="ac-key">"type"</span>:     <span class="ac-str">"stop"</span>,
+          <span class="ac-key">"stopwords"</span>: <span class="ac-str">"_english_"</span>
+        },
+        <span class="ac-key">"en_stem"</span>: {
+          <span class="ac-key">"type"</span>:     <span class="ac-str">"stemmer"</span>,
+          <span class="ac-key">"language"</span>: <span class="ac-str">"english"</span>
+        }
+      },
+      <span class="ac-key">"analyzer"</span>: {
+        <span class="ac-key">"my_custom"</span>: {
+          <span class="ac-key">"type"</span>:        <span class="ac-str">"custom"</span>,
+          <span class="ac-key">"char_filter"</span>: [<span class="ac-str">"html_clean"</span>],
+          <span class="ac-key">"tokenizer"</span>:   <span class="ac-str">"my_tokenizer"</span>,
+          <span class="ac-key">"filter"</span>:      [<span class="ac-str">"lowercase"</span>, <span class="ac-str">"en_stop"</span>, <span class="ac-str">"en_stem"</span>]
+        }
+      }
+    }
+  },
+  <span class="ac-key">"mappings"</span>: {
+    <span class="ac-key">"properties"</span>: {
+      <span class="ac-key">"content"</span>: {
+        <span class="ac-key">"type"</span>:     <span class="ac-str">"text"</span>,
+        <span class="ac-key">"analyzer"</span>: <span class="ac-str">"my_custom"</span>
+      }
+    }
+  }
+}</pre>
+            </div>
+            <div class="ae-right">
+              <div class="ae-section-label">// Key Notes</div>
+              <div class="ae-notes">
+                <div class="tip"><strong>ORDER MATTERS:</strong> char_filter → tokenizer → filter (in array order). Filters are applied in the order listed in the filter array.</div>
+                <div class="tip warn"><strong>CANNOT CHANGE ANALYZER:</strong> Once an index has data, you cannot update its analyzer. Must reindex into a new index with the updated analyzer.</div>
+                <div class="tip"><strong>search_analyzer:</strong> By default the same analyzer is used for indexing and searching. Set search_analyzer on a field to use different analysis at search time (useful with synonyms).</div>
+                <div class="tip"><strong>EXAM PATTERN:</strong> "Define a custom analyzer that: strips HTML, lowercases, removes stop words, and stems" → define each component, wire them in order in the analyzer definition.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="anlz-a2" class="ae-panel">
+          <div class="ae-body">
+            <div class="ae-left">
+              <div class="ae-section-label">// Test analysis pipeline</div>
+              <pre class="api-code"><span class="ac-cmt">// Test a named analyzer on the index</span>
+<span class="ac-method">GET</span> <span class="ac-path">/my_index/_analyze</span>
+{
+  <span class="ac-key">"analyzer"</span>: <span class="ac-str">"my_custom"</span>,
+  <span class="ac-key">"text"</span>: <span class="ac-str">"&lt;p&gt;Running quickly through the fields&lt;/p&gt;"</span>
+}
+
+<span class="ac-cmt">// Response shows each token after analysis:</span>
+<span class="ac-cmt">// "tokens": [</span>
+<span class="ac-cmt">//   {"token": "run",   "position": 0},</span>
+<span class="ac-cmt">//   {"token": "quick", "position": 1},</span>
+<span class="ac-cmt">//   {"token": "field", "position": 4}</span>
+<span class="ac-cmt">// ]</span>
+<span class="ac-cmt">// (HTML stripped, lowercased, stop words removed, stemmed)</span>
+
+<span class="ac-cmt">// Test a built-in analyzer (no index needed)</span>
+<span class="ac-method">GET</span> <span class="ac-path">/_analyze</span>
+{
+  <span class="ac-key">"analyzer"</span>: <span class="ac-str">"english"</span>,
+  <span class="ac-key">"text"</span>: <span class="ac-str">"The quick brown foxes"</span>
+}
+
+<span class="ac-cmt">// Test step by step (tokenizer only)</span>
+<span class="ac-method">GET</span> <span class="ac-path">/_analyze</span>
+{
+  <span class="ac-key">"tokenizer"</span>: <span class="ac-str">"standard"</span>,
+  <span class="ac-key">"filter"</span>:    [<span class="ac-str">"lowercase"</span>, <span class="ac-str">"stop"</span>],
+  <span class="ac-key">"text"</span>:      <span class="ac-str">"Hello World"</span>
+}</pre>
+            </div>
+            <div class="ae-right">
+              <div class="ae-section-label">// Key Notes</div>
+              <div class="ae-notes">
+                <div class="tip"><strong>_analyze API:</strong> Essential for debugging analyzer behavior. Always use this to verify your custom analyzer produces the expected tokens before applying to production data.</div>
+                <div class="tip"><strong>SEARCH CONSISTENCY:</strong> Search terms are analyzed using the same analyzer as indexing (by default). This is why "Running" matches "run" — both become "run" after analysis.</div>
+                <div class="tip warn"><strong>MISMATCH:</strong> If you search a text field using a term query (not match), the search term is NOT analyzed. "Running" will NOT match "run" with a term query.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="anlz-a3" class="ae-panel">
+          <div class="ae-body">
+            <div class="ae-left">
+              <div class="ae-section-label">// Synonym filter</div>
+              <pre class="api-code"><span class="ac-method">PUT</span> <span class="ac-path">/products</span>
+{
+  <span class="ac-key">"settings"</span>: {
+    <span class="ac-key">"analysis"</span>: {
+      <span class="ac-key">"filter"</span>: {
+        <span class="ac-key">"product_synonyms"</span>: {
+          <span class="ac-key">"type"</span>:     <span class="ac-str">"synonym"</span>,
+          <span class="ac-key">"synonyms"</span>: [
+            <span class="ac-str">"laptop, notebook, computer"</span>,
+            <span class="ac-str">"tv, television"</span>,
+            <span class="ac-str">"mobile => phone, smartphone"</span>
+          ]
+        }
+      },
+      <span class="ac-key">"analyzer"</span>: {
+        <span class="ac-key">"synonym_analyzer"</span>: {
+          <span class="ac-key">"type"</span>:      <span class="ac-str">"custom"</span>,
+          <span class="ac-key">"tokenizer"</span>: <span class="ac-str">"standard"</span>,
+          <span class="ac-key">"filter"</span>:    [<span class="ac-str">"lowercase"</span>, <span class="ac-str">"product_synonyms"</span>]
+        }
+      }
+    }
+  }
+}
+
+<span class="ac-cmt">// Equivalent: a => b means a is replaced by b</span>
+<span class="ac-cmt">// "laptop, notebook" means each expands to the other</span>
+<span class="ac-cmt">// BEST PRACTICE: apply synonyms at SEARCH time only</span>
+<span class="ac-cmt">// → set as search_analyzer, not analyzer</span>
+<span class="ac-cmt">// (avoids index bloat from synonym expansion at index time)</span></pre>
+            </div>
+            <div class="ae-right">
+              <div class="ae-section-label">// Key Notes</div>
+              <div class="ae-notes">
+                <div class="tip"><strong>TWO SYNONYM FORMATS:</strong><br>Expansion: <code>"a, b, c"</code> — all expand to all<br>Replacement: <code>"a => b"</code> — a maps to b only</div>
+                <div class="tip warn"><strong>INDEX vs SEARCH:</strong> Applying synonyms at index time = bigger index. Applying at search time only = smaller index, but you must use search_analyzer. Best practice: synonyms at search time.</div>
+                <div class="tip"><strong>synonyms_path:</strong> Can reference a file instead of inline: "synonyms_path": "analysis/synonyms.txt" — path is relative to config directory.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════
+       01.06 — SCENARIO DRILLS
+  ══════════════════════════════ -->
+  <div class="section">
+    <div class="sec-hd"><span class="sec-num">01.06</span><span class="sec-title">Exam Scenario Drills</span></div>
+    <div class="card">
+      <p>The ECE exam is hands-on. These scenarios mirror real exam tasks. Click each to reveal the full API solution.</p>
+
+      <div class="drills">
+
+        <div class="drill" onclick="toggleDrill(this,'d1')">
+          <div class="drill-hd">
+            <div class="drill-num">01</div>
+            <div class="drill-content">
+              <div class="drill-scenario">Data Stream · ILM · Template</div>
+              <div class="drill-task">Create a complete logs pipeline: ILM policy (hot: rollover at 10GB, warm: forcemerge after 7d, delete after 90d), component templates for settings and mappings, an index template that creates a data stream for <code>logs-app-*</code>, then verify by indexing a test document.</div>
+            </div>
+          </div>
+          <div class="drill-body" id="d1">
+            <div class="drill-solution">
+              <div class="ds-label">// Solution</div>
+              <pre class="ds-code"><span class="ac-cmt">// Step 1: ILM policy</span>
+<span class="ac-method">PUT</span> <span class="ac-path">/_ilm/policy/logs_app_policy</span>
+{
+  <span class="ac-key">"policy"</span>: { <span class="ac-key">"phases"</span>: {
+    <span class="ac-key">"hot"</span>:    { <span class="ac-key">"actions"</span>: { <span class="ac-key">"rollover"</span>: { <span class="ac-key">"max_primary_shard_size"</span>: <span class="ac-str">"10gb"</span> }}},
+    <span class="ac-key">"warm"</span>:   { <span class="ac-key">"min_age"</span>: <span class="ac-str">"7d"</span>,  <span class="ac-key">"actions"</span>: { <span class="ac-key">"forcemerge"</span>: { <span class="ac-key">"max_num_segments"</span>: <span class="ac-num">1</span> }, <span class="ac-key">"readonly"</span>: {} }},
+    <span class="ac-key">"delete"</span>: { <span class="ac-key">"min_age"</span>: <span class="ac-str">"90d"</span>, <span class="ac-key">"actions"</span>: { <span class="ac-key">"delete"</span>: {} }}
+  }}
+}
+
+<span class="ac-cmt">// Step 2: Component template (settings)</span>
+<span class="ac-method">PUT</span> <span class="ac-path">/_component_template/logs_settings</span>
+{
+  <span class="ac-key">"template"</span>: {
+    <span class="ac-key">"settings"</span>: {
+      <span class="ac-key">"number_of_shards"</span>:         <span class="ac-num">1</span>,
+      <span class="ac-key">"number_of_replicas"</span>:       <span class="ac-num">1</span>,
+      <span class="ac-key">"index.lifecycle.name"</span>:     <span class="ac-str">"logs_app_policy"</span>
+    }
+  }
+}
+
+<span class="ac-cmt">// Step 3: Component template (mappings)</span>
+<span class="ac-method">PUT</span> <span class="ac-path">/_component_template/logs_mappings</span>
+{
+  <span class="ac-key">"template"</span>: {
+    <span class="ac-key">"mappings"</span>: {
+      <span class="ac-key">"properties"</span>: {
+        <span class="ac-key">"@timestamp"</span>: { <span class="ac-key">"type"</span>: <span class="ac-str">"date"</span>    },
+        <span class="ac-key">"message"</span>:    { <span class="ac-key">"type"</span>: <span class="ac-str">"text"</span>    },
+        <span class="ac-key">"log_level"</span>:  { <span class="ac-key">"type"</span>: <span class="ac-str">"keyword"</span> },
+        <span class="ac-key">"service"</span>:    { <span class="ac-key">"type"</span>: <span class="ac-str">"keyword"</span> }
+      }
+    }
+  }
+}
+
+<span class="ac-cmt">// Step 4: Index template with data_stream</span>
+<span class="ac-method">PUT</span> <span class="ac-path">/_index_template/logs_app_template</span>
+{
+  <span class="ac-key">"index_patterns"</span>: [<span class="ac-str">"logs-app-*"</span>],
+  <span class="ac-key">"data_stream"</span>:    {},
+  <span class="ac-key">"priority"</span>:       <span class="ac-num">200</span>,
+  <span class="ac-key">"composed_of"</span>: [<span class="ac-str">"logs_settings"</span>, <span class="ac-str">"logs_mappings"</span>]
+}
+
+<span class="ac-cmt">// Step 5: Verify by indexing a document</span>
+<span class="ac-method">POST</span> <span class="ac-path">/logs-app-myservice/_doc</span>
+{
+  <span class="ac-key">"@timestamp"</span>: <span class="ac-str">"2024-03-15T12:00:00Z"</span>,
+  <span class="ac-key">"message"</span>:    <span class="ac-str">"Application started"</span>,
+  <span class="ac-key">"log_level"</span>:  <span class="ac-str">"INFO"</span>,
+  <span class="ac-key">"service"</span>:    <span class="ac-str">"api-gateway"</span>
+}
+
+<span class="ac-cmt">// Confirm data stream exists</span>
+<span class="ac-method">GET</span> <span class="ac-path">/_data_stream/logs-app-myservice</span></pre>
+              <div class="ds-note"><strong>Key points:</strong> data_stream: {} in the index template is what triggers data stream mode. @timestamp must be mapped as date. The ILM policy is linked in the component template settings so all matching indices inherit it automatically.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="drill" onclick="toggleDrill(this,'d2')">
+          <div class="drill-hd">
+            <div class="drill-num">02</div>
+            <div class="drill-content">
+              <div class="drill-scenario">Mapping · Nested · Reindex</div>
+              <div class="drill-task">The <code>ecommerce</code> index has a <code>products</code> object field (array) but queries are returning incorrect cross-object matches. Fix this by creating a new index <code>ecommerce_fixed</code> that correctly maintains nested relationships, then reindex the data and swap the alias.</div>
+            </div>
+          </div>
+          <div class="drill-body" id="d2">
+            <div class="drill-solution">
+              <div class="ds-label">// Solution</div>
+              <pre class="ds-code"><span class="ac-cmt">// Step 1: Create new index with nested type</span>
+<span class="ac-method">PUT</span> <span class="ac-path">/ecommerce_fixed</span>
+{
+  <span class="ac-key">"settings"</span>: { <span class="ac-key">"number_of_shards"</span>: <span class="ac-num">1</span>, <span class="ac-key">"number_of_replicas"</span>: <span class="ac-num">1</span> },
+  <span class="ac-key">"mappings"</span>: {
+    <span class="ac-key">"properties"</span>: {
+      <span class="ac-key">"order_id"</span>:    { <span class="ac-key">"type"</span>: <span class="ac-str">"keyword"</span> },
+      <span class="ac-key">"customer"</span>:    { <span class="ac-key">"type"</span>: <span class="ac-str">"keyword"</span> },
+      <span class="ac-key">"products"</span>: {
+        <span class="ac-key">"type"</span>: <span class="ac-str">"nested"</span>,
+        <span class="ac-key">"properties"</span>: {
+          <span class="ac-key">"product_id"</span>: { <span class="ac-key">"type"</span>: <span class="ac-str">"keyword"</span> },
+          <span class="ac-key">"name"</span>:       { <span class="ac-key">"type"</span>: <span class="ac-str">"text"</span>,    <span class="ac-key">"fields"</span>: { <span class="ac-key">"keyword"</span>: { <span class="ac-key">"type"</span>: <span class="ac-str">"keyword"</span> }}},
+          <span class="ac-key">"price"</span>:      { <span class="ac-key">"type"</span>: <span class="ac-str">"float"</span>   },
+          <span class="ac-key">"quantity"</span>:   { <span class="ac-key">"type"</span>: <span class="ac-str">"integer"</span> }
+        }
+      }
+    }
+  }
+}
+
+<span class="ac-cmt">// Step 2: Reindex data</span>
+<span class="ac-method">POST</span> <span class="ac-path">/_reindex</span>
+{
+  <span class="ac-key">"source"</span>: { <span class="ac-key">"index"</span>: <span class="ac-str">"ecommerce"</span>       },
+  <span class="ac-key">"dest"</span>:   { <span class="ac-key">"index"</span>: <span class="ac-str">"ecommerce_fixed"</span> }
+}
+
+<span class="ac-cmt">// Step 3: Atomic alias swap (zero-downtime)</span>
+<span class="ac-method">POST</span> <span class="ac-path">/_aliases</span>
+{
+  <span class="ac-key">"actions"</span>: [
+    { <span class="ac-key">"add"</span>:    { <span class="ac-key">"index"</span>: <span class="ac-str">"ecommerce_fixed"</span>, <span class="ac-key">"alias"</span>: <span class="ac-str">"ecommerce"</span> }},
+    { <span class="ac-key">"remove"</span>: { <span class="ac-key">"index"</span>: <span class="ac-str">"ecommerce"</span>,       <span class="ac-key">"alias"</span>: <span class="ac-str">"ecommerce"</span> }}
+  ]
+}
+
+<span class="ac-cmt">// Step 4: Verify correct nested behaviour</span>
+<span class="ac-method">GET</span> <span class="ac-path">/ecommerce_fixed/_search</span>
+{
+  <span class="ac-key">"query"</span>: {
+    <span class="ac-key">"nested"</span>: {
+      <span class="ac-key">"path"</span>: <span class="ac-str">"products"</span>,
+      <span class="ac-key">"query"</span>: {
+        <span class="ac-key">"bool"</span>: {
+          <span class="ac-key">"must"</span>: [
+            { <span class="ac-key">"match"</span>: { <span class="ac-key">"products.name"</span>:  <span class="ac-str">"laptop"</span>  }},
+            { <span class="ac-key">"range"</span>: { <span class="ac-key">"products.price"</span>: { <span class="ac-key">"lte"</span>: <span class="ac-num">500</span> }}}
+          ]
+        }
+      }
+    }
+  }
+}</pre>
+              <div class="ds-note"><strong>Why this works:</strong> nested type stores each array element as a hidden Lucene doc, preserving field relationships. The alias swap is atomic — no downtime, no lost writes. The nested query correctly enforces that the product must be BOTH named "laptop" AND priced ≤500.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="drill" onclick="toggleDrill(this,'d3')">
+          <div class="drill-hd">
+            <div class="drill-num">03</div>
+            <div class="drill-content">
+              <div class="drill-scenario">Custom Analyzer · Multi-field</div>
+              <div class="drill-task">Create an index <code>articles</code> with a custom analyzer that: strips HTML, lowercases, applies English stop words and stemming. The <code>title</code> field should use this analyzer for full-text search but also support exact-match aggregations via a keyword sub-field.</div>
+            </div>
+          </div>
+          <div class="drill-body" id="d3">
+            <div class="drill-solution">
+              <div class="ds-label">// Solution</div>
+              <pre class="ds-code"><span class="ac-method">PUT</span> <span class="ac-path">/articles</span>
+{
+  <span class="ac-key">"settings"</span>: {
+    <span class="ac-key">"analysis"</span>: {
+      <span class="ac-key">"char_filter"</span>: {
+        <span class="ac-key">"strip_html"</span>: { <span class="ac-key">"type"</span>: <span class="ac-str">"html_strip"</span> }
+      },
+      <span class="ac-key">"filter"</span>: {
+        <span class="ac-key">"english_stop"</span>: { <span class="ac-key">"type"</span>: <span class="ac-str">"stop"</span>,    <span class="ac-key">"stopwords"</span>: <span class="ac-str">"_english_"</span> },
+        <span class="ac-key">"english_stem"</span>: { <span class="ac-key">"type"</span>: <span class="ac-str">"stemmer"</span>, <span class="ac-key">"language"</span>: <span class="ac-str">"english"</span>   }
+      },
+      <span class="ac-key">"analyzer"</span>: {
+        <span class="ac-key">"html_english"</span>: {
+          <span class="ac-key">"type"</span>:        <span class="ac-str">"custom"</span>,
+          <span class="ac-key">"char_filter"</span>: [<span class="ac-str">"strip_html"</span>],
+          <span class="ac-key">"tokenizer"</span>:   <span class="ac-str">"standard"</span>,
+          <span class="ac-key">"filter"</span>:      [<span class="ac-str">"lowercase"</span>, <span class="ac-str">"english_stop"</span>, <span class="ac-str">"english_stem"</span>]
+        }
+      }
+    }
+  },
+  <span class="ac-key">"mappings"</span>: {
+    <span class="ac-key">"properties"</span>: {
+      <span class="ac-key">"title"</span>: {
+        <span class="ac-key">"type"</span>:     <span class="ac-str">"text"</span>,
+        <span class="ac-key">"analyzer"</span>: <span class="ac-str">"html_english"</span>,
+        <span class="ac-key">"fields"</span>: {
+          <span class="ac-key">"keyword"</span>: {
+            <span class="ac-key">"type"</span>:         <span class="ac-str">"keyword"</span>,
+            <span class="ac-key">"ignore_above"</span>: <span class="ac-num">256</span>
+          }
+        }
+      },
+      <span class="ac-key">"body"</span>:  { <span class="ac-key">"type"</span>: <span class="ac-str">"text"</span>, <span class="ac-key">"analyzer"</span>: <span class="ac-str">"html_english"</span> },
+      <span class="ac-key">"author"</span>:{ <span class="ac-key">"type"</span>: <span class="ac-str">"keyword"</span> }
+    }
+  }
+}
+
+<span class="ac-cmt">// Test the analyzer</span>
+<span class="ac-method">GET</span> <span class="ac-path">/articles/_analyze</span>
+{
+  <span class="ac-key">"analyzer"</span>: <span class="ac-str">"html_english"</span>,
+  <span class="ac-key">"text"</span>: <span class="ac-str">"&lt;h1&gt;The Quick Brown Foxes running&lt;/h1&gt;"</span>
+}
+<span class="ac-cmt">// Expected tokens: ["quick", "brown", "fox", "run"]</span></pre>
+              <div class="ds-note"><strong>Key points:</strong> All three components defined in settings.analysis — then referenced by name in the analyzer's char_filter/tokenizer/filter arrays. The title.keyword multi-field is not analyzed (type: keyword) so it stores the raw string for aggregations and exact-match sorting.</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════
+       QUIZ
+  ══════════════════════════════ -->
+  <div class="quiz">
+    <div class="quiz-header">
+      <div>
+        <div class="quiz-title">// Assessment</div>
+        <div class="quiz-sub">7 exam-style questions · Data Management domain</div>
+      </div>
+    </div>
+
+    <!-- Q1 -->
+    <div class="qb" id="q1">
+      <div class="q-n">QUESTION 01</div>
+      <div class="q-t">You need to change the number_of_shards for an existing index from 3 to 1. What is the correct approach?</div>
+      <div class="opts">
+        <button class="opt" onclick="ans(this,'q1','A','D')"><span class="ol">A</span>PUT /my_index/_settings with {"number_of_shards": 1}</button>
+        <button class="opt" onclick="ans(this,'q1','B','D')"><span class="ol">B</span>Use the shrink API to reduce the shard count in place</button>
+        <button class="opt" onclick="ans(this,'q1','C','D')"><span class="ol">C</span>Close the index, update the setting, then re-open it</button>
+        <button class="opt" onclick="ans(this,'q1','D','D')"><span class="ol">D</span>Create a new index with number_of_shards: 1 and use the _reindex API to copy documents, then swap the alias</button>
+      </div>
+      <div class="exp" id="e-q1"><strong>Correct: Create + reindex + alias swap.</strong> number_of_shards is an <em>immutable</em> setting — it cannot be changed on an existing index by any method including closing/reopening. The only way is to create a new index with the desired shard count, reindex all documents into it, then atomically swap the alias to point to the new index. The shrink API can reduce shards but requires specific preconditions and only works in certain ratios.</div>
+    </div>
+
+    <!-- Q2 -->
+    <div class="qb" id="q2">
+      <div class="q-n">QUESTION 02</div>
+      <div class="q-t">An index stores an array of order objects, each with a <code>product_name</code> and <code>price</code> field. A query for "laptop with price &lt; 500" is incorrectly matching orders where the laptop and the cheap item are different products. What is the root cause?</div>
+      <div class="opts">
+        <button class="opt" onclick="ans(this,'q2','A','B')"><span class="ol">A</span>The price field is mapped as float instead of integer</button>
+        <button class="opt" onclick="ans(this,'q2','B','B')"><span class="ol">B</span>The orders field is mapped as type: object, which flattens array element relationships — it should be type: nested</button>
+        <button class="opt" onclick="ans(this,'q2','C','B')"><span class="ol">C</span>The bool query should use filter instead of must for the price range</button>
+        <button class="opt" onclick="ans(this,'q2','D','B')"><span class="ol">D</span>The index has dynamic mapping enabled, causing inconsistent behavior</button>
+      </div>
+      <div class="exp" id="e-q2"><strong>Correct: object type flattens array relationships.</strong> When type: object is used for an array, Elasticsearch flattens all values into a single array per field: product_name becomes ["laptop","shirt"] and price becomes [499,29]. A query can then match laptop (from element 1) with price 29 (from element 2). The solution is type: nested — each array element is stored as a separate hidden document, preserving the relationship between its own fields.</div>
+    </div>
+
+    <!-- Q3 -->
+    <div class="qb" id="q3">
+      <div class="q-n">QUESTION 03</div>
+      <div class="q-t">You are creating a dynamic template to automatically map any field whose name ends in <code>_count</code> as integer. Which match condition should you use?</div>
+      <pre class="q-code">"dynamic_templates": [{
+  "counts": {
+    "______": "______",
+    "mapping": { "type": "integer" }
+  }
+}]</pre>
+      <div class="opts">
+        <button class="opt" onclick="ans(this,'q3','A','C')"><span class="ol">A</span>match_mapping_type: "long"</button>
+        <button class="opt" onclick="ans(this,'q3','B','C')"><span class="ol">B</span>path_match: "*_count"</button>
+        <button class="opt" onclick="ans(this,'q3','C','C')"><span class="ol">C</span>match: "*_count"</button>
+        <button class="opt" onclick="ans(this,'q3','D','C')"><span class="ol">D</span>match_pattern: "regex", match: ".*_count$"</button>
+      </div>
+      <div class="exp" id="e-q3"><strong>Correct: match: "*_count"</strong> — The match condition uses glob-style patterns against the field name. <code>*_count</code> matches any field name ending with _count. path_match matches dot-notated paths (e.g., "user.address.*"). match_mapping_type matches by inferred type (string, long, etc.), not name. Option D uses match_pattern: "regex" which is valid syntax but the simpler glob match is the correct choice for this name pattern.</div>
+    </div>
+
+    <!-- Q4 -->
+    <div class="qb" id="q4">
+      <div class="q-n">QUESTION 04</div>
+      <div class="q-t">Which of the following statements about data streams is correct?</div>
+      <div class="opts">
+        <button class="opt" onclick="ans(this,'q4','A','C')"><span class="ol">A</span>Documents can be indexed with a custom _id using PUT /stream/_doc/myid</button>
+        <button class="opt" onclick="ans(this,'q4','B','C')"><span class="ol">B</span>The @timestamp field is optional in data streams</button>
+        <button class="opt" onclick="ans(this,'q4','C','C')"><span class="ol">C</span>Data streams require a matching index template with data_stream: {} before they can be created</button>
+        <button class="opt" onclick="ans(this,'q4','D','C')"><span class="ol">D</span>Data streams write to all backing indices simultaneously</button>
+      </div>
+      <div class="exp" id="e-q4"><strong>Correct: data streams require a matching index template with data_stream: {}.</strong> Without a template containing the data_stream: {} object, creating a data stream will fail. @timestamp is REQUIRED (not optional). Custom document IDs are not supported in data streams — only POST (auto-generated IDs) works. Writes go only to the current write index (the most recent backing index), not all backing indices.</div>
+    </div>
+
+    <!-- Q5 -->
+    <div class="qb" id="q5">
+      <div class="q-n">QUESTION 05</div>
+      <div class="q-t">You want multiple ILM policies to apply different lifecycle rules for different teams, but all indices should share the same base mapping. What is the most efficient approach?</div>
+      <div class="opts">
+        <button class="opt" onclick="ans(this,'q5','A','D')"><span class="ol">A</span>Create one large index template with all mappings and ILM settings combined</button>
+        <button class="opt" onclick="ans(this,'q5','B','D')"><span class="ol">B</span>Duplicate the mapping in each team's index template</button>
+        <button class="opt" onclick="ans(this,'q5','C','D')"><span class="ol">C</span>Use a dynamic template that copies settings from a source template</button>
+        <button class="opt" onclick="ans(this,'q5','D','D')"><span class="ol">D</span>Create a shared component template for mappings, then create separate index templates per team that compose_of the shared template plus their own settings component</button>
+      </div>
+      <div class="exp" id="e-q5"><strong>Correct: shared component template + separate index templates.</strong> Component templates are designed exactly for this — define common mappings once in a component template, then reference it via composed_of in multiple index templates. Each team's index template adds its own ILM settings component. Changing the shared mapping component template propagates to all composed index templates. This avoids duplication and is the idiomatic composable template pattern.</div>
+    </div>
+
+    <!-- Q6 -->
+    <div class="qb" id="q6">
+      <div class="q-n">QUESTION 06</div>
+      <div class="q-t">An ILM warm phase is configured with min_age: "7d". When does this 7-day clock start?</div>
+      <div class="opts">
+        <button class="opt" onclick="ans(this,'q6','A','B')"><span class="ol">A</span>7 days after the index was first created</button>
+        <button class="opt" onclick="ans(this,'q6','B','B')"><span class="ol">B</span>7 days after the index rolled over (transitioned out of the hot phase)</button>
+        <button class="opt" onclick="ans(this,'q6','C','B')"><span class="ol">C</span>7 days after the last document was indexed into the index</button>
+        <button class="opt" onclick="ans(this,'q6','D','B')"><span class="ol">D</span>7 days after the ILM policy was attached to the index</button>
+      </div>
+      <div class="exp" id="e-q6"><strong>Correct: 7 days after rollover.</strong> In a hot-warm-cold-delete policy with rollover, min_age is measured from the rollover time. The hot phase contains the rollover action; once the index rolls over it becomes non-write. The warm phase min_age of "7d" means: enter warm 7 days after rollover occurred. This is distinct from index creation time. For indices without rollover (no hot phase), min_age is measured from index creation.</div>
+    </div>
+
+    <!-- Q7 -->
+    <div class="qb" id="q7">
+      <div class="q-n">QUESTION 07</div>
+      <div class="q-t">You define a runtime field <code>hour_of_day</code> in a search request's runtime_mappings. How does this differ from a runtime field defined in the index mappings?</div>
+      <div class="opts">
+        <button class="opt" onclick="ans(this,'q7','A','C')"><span class="ol">A</span>Query-time runtime fields are faster because they are pre-computed</button>
+        <button class="opt" onclick="ans(this,'q7','B','C')"><span class="ol">B</span>Query-time runtime fields are stored in the index and persist between searches</button>
+        <button class="opt" onclick="ans(this,'q7','C','C')"><span class="ol">C</span>Query-time runtime fields only exist for the duration of that search request and are not persisted to the index schema</button>
+        <button class="opt" onclick="ans(this,'q7','D','C')"><span class="ol">D</span>Query-time runtime fields cannot be used in aggregations</button>
+      </div>
+      <div class="exp" id="e-q7"><strong>Correct: query-time runtime fields only exist for that request.</strong> Defining runtime_mappings in a search body creates an ephemeral field that exists only during query execution — it does not modify the index mapping. Mapping-level runtime fields persist in the schema and are available to all queries without re-definition. Both are computed at query time (neither is pre-computed or stored). Both can be used in queries, aggregations, and sorting.</div>
+    </div>
+
+    <div class="scorebox" id="scorebox">
+      <div class="score-big" id="score-num">0/7</div>
+      <div class="score-sub">Data Management · Assessment Complete</div>
+      <div class="score-msg" id="score-msg"></div>
+      <button class="btn-reset" onclick="resetQuiz()">↺ RETRY</button>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="ft">ECE · TOPIC 01 · DATA MANAGEMENT · ELASTIC CERTIFIED ENGINEER</div>
+    <div class="nav-btns">
+      <span class="nbtn" style="cursor:default;opacity:0.3">← Start</span>
+      <button class="nbtn primary" onclick="alert('Topic 2: Searching Data — coming next!')">Topic 2: Searching →</button>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+// ── Tab switcher ──
+function switchTab(group, id, btn) {
+  document.querySelectorAll(`[id^="${group}-"]`).forEach(p => p.classList.remove('active'));
+  document.getElementById(`${group}-${id.replace(group+'-','')}`).classList.add('active');
+  btn.closest('.ae-tabs').querySelectorAll('.ae-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ── ILM phase toggle ──
+let activeILM = null;
+function showILM(phase, detailId) {
+  const det = document.getElementById(detailId);
+  if (activeILM === detailId) {
+    det.classList.remove('show');
+    phase.classList.remove('active');
+    activeILM = null; return;
+  }
+  document.querySelectorAll('.ilm-detail').forEach(d => d.classList.remove('show'));
+  document.querySelectorAll('.ilm-phase').forEach(p => p.classList.remove('active'));
+  det.classList.add('show');
+  phase.classList.add('active');
+  activeILM = detailId;
+}
+
+// ── Drill toggles ──
+function toggleDrill(el, id) {
+  const body = document.getElementById(id);
+  const open = body.classList.contains('show');
+  document.querySelectorAll('.drill-body').forEach(b => b.classList.remove('show'));
+  document.querySelectorAll('.drill').forEach(d => d.classList.remove('open'));
+  if (!open) { body.classList.add('show'); el.classList.add('open'); }
+}
+
+// ── Quiz ──
+const correct = { q1:'D', q2:'B', q3:'C', q4:'C', q5:'D', q6:'B', q7:'C' };
+const answered = {};
+let score = 0;
+
+function ans(btn, qId, chosen) {
+  if (answered[qId]) return;
+  answered[qId] = true;
+  const isRight = chosen === correct[qId];
+  if (isRight) score++;
+  const opts = document.getElementById(qId).querySelectorAll('.opt');
+  const letters = ['A','B','C','D'];
+  opts.forEach((o, i) => {
+    o.classList.add('locked'); o.style.cursor = 'default';
+    if (letters[i] === correct[qId]) o.classList.add(isRight && o===btn ? 'correct' : 'revealc');
+  });
+  if (!isRight) { btn.classList.remove('revealc'); btn.classList.add('wrong'); }
+  else { btn.classList.remove('revealc'); btn.classList.add('correct'); }
+  document.getElementById('e-' + qId).classList.add('show');
+  updateProgress();
+  if (Object.keys(answered).length === 7) setTimeout(showScore, 500);
+}
+
+function updateProgress() {
+  const n = Object.keys(answered).length;
+  document.getElementById('progFill').style.width = (n / 7 * 100) + '%';
+  document.getElementById('progTxt').textContent = n + ' / 7 answered';
+}
+
+function showScore() {
+  document.getElementById('score-num').textContent = score + '/7';
+  const p = score / 7 * 100;
+  document.getElementById('score-msg').textContent =
+    p === 100 ? '█ PERFECT. All data management objectives mastered.' :
+    p >= 85   ? '> Strong. Review ILM min_age timing before the exam.' :
+    p >= 57   ? '> Developing. Focus on nested vs object and reindex patterns.' :
+                '> Keep studying. Priority: mappings, ILM phases, template hierarchy.';
+  document.getElementById('scorebox').classList.add('show');
+}
+
+function resetQuiz() {
+  Object.keys(answered).forEach(k => delete answered[k]);
+  score = 0;
+  document.getElementById('scorebox').classList.remove('show');
+  document.querySelectorAll('.opt').forEach(o => { o.classList.remove('correct','wrong','revealc','locked'); o.style.cursor = ''; });
+  document.querySelectorAll('.exp').forEach(e => e.classList.remove('show'));
+  document.getElementById('progFill').style.width = '0%';
+  document.getElementById('progTxt').textContent = '0 / 7 answered';
+}
+</script>
+</body>
+</html>
