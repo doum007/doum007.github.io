@@ -60,8 +60,8 @@
   {
     "title": "Elastic Certified Engineer",
   "path": "ECE/",
-  "description": "Full study guide to ECA",
-  "tags": ["elastic", "certification","analyst"],
+  "description": "Full study guide to ECE",
+  "tags": ["elastic", "certification","engineer"],
   "pages": [
     { "title": "Overview",  "path": "ece-topic1-data-management.html" },
     { "title": "Queries",   "path": "ece-topic2-searching-data.html" },
@@ -71,15 +71,34 @@
   ]
   },
   {
-    "title": "osquery threat hunt",
-    "path": "osquery-threat-hunt.html",
-    "description": "osquery threat hunt",
-    "tags": ["osquery", "threat-hunting", "security", "endpoint", "detection"]
+    "title": "Elastic Certified Observability",
+  "path": "ECSiem",
+  "description": "Full study guide to ECO",
+  "tags": ["elastic", "certification","observability"],
+  "pages": [
+    { "title": "Overview",  "path": "elastic-observability-topic1-metrics.html" },
+    { "title": "Queries",   "path": "elastic-observability-topic2-logging.html" },
+    { "title": "Queries",   "path": "elastic-observability-topic3-apm.html" },
+    { "title": "Queries",   "path": "elastic-observability-topic4-uptime.html" },
+    { "title": "Queries",   "path": "elastic-observability-topic5-structuring-data.html" },
+    { "title": "Queries",   "path": "elastic-observability-topic6-obs-data.html" },
+        { "title": "Queries",   "path": "elastic-observability-topic7-managing-data.html" }
+  ]
   },
   {
-    "title": "osquery threat hunt",
-    "path": "osquery-threat-hunt.html",
-    "description": "osquery threat hunt",
-    "tags": ["osquery", "threat-hunting", "security", "endpoint", "detection"]
-  }
+    "title": "Elastic Certified SIEM",
+   "path": "ECObservability/",
+  "description": "Full study guide to ECS",
+  "tags": ["elastic", "certification","analyst"],
+  "pages": [
+    { "title": "Overview",  "path": "topic1-elastic-siem-fundamentals.html" },
+    { "title": "Queries",   "path": "topic2-data-ingestion-ecs.html" },
+    { "title": "Queries",   "path": "topic3-detection-engine.html" },
+    { "title": "Queries",   "path": "topic4-alert-triage.html" },
+    { "title": "Queries",   "path": "topic5-threat-hunting.html" },
+    { "title": "Queries",   "path": "topic6-cases-incident-management.html" },
+    { "title": "Queries",   "path": "topic7-rbac-spaces.html" },
+    { "title": "Queries",   "path": "topic8-visualization-dashboards.html" }
+  ]
+    }
 ]
